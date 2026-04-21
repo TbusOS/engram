@@ -90,6 +90,8 @@ def compute_exit_code(issues: list[Issue]) -> int:
 
 def run_validate(project_root: Path) -> list[Issue]:
     """Run every M2 validator and return the aggregated issue list."""
+    from engram.commands.validate_pool import run_pool_checks
+
     issues: list[Issue] = []
     issues.extend(_check_structural(project_root))
 
@@ -102,6 +104,7 @@ def run_validate(project_root: Path) -> list[Issue]:
     asset_records = _collect_local_assets(project_root, issues, asset_ids)
     issues.extend(_check_memory_index(project_root, asset_records))
     issues.extend(_check_references(project_root, asset_records, asset_ids))
+    issues.extend(run_pool_checks(project_root))
     return issues
 
 
