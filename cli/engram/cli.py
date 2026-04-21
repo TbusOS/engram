@@ -138,6 +138,7 @@ def _register_subcommands() -> None:
     from engram.commands.config import config_group
     from engram.commands.context import context_cmd
     from engram.commands.init import init_cmd
+    from engram.commands.mcp import mcp_cmd
     from engram.commands.memory import memory_group
     from engram.commands.review import review_cmd
     from engram.commands.status import status_cmd
@@ -160,6 +161,7 @@ def _register_subcommands() -> None:
     cli.add_command(org_group)
     cli.add_command(migrate_cmd)
     cli.add_command(context_cmd)
+    cli.add_command(mcp_cmd)
 
 
 _register_subcommands()
