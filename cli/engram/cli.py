@@ -136,6 +136,7 @@ def _register_subcommands() -> None:
     from this module without introducing a circular import.
     """
     from engram.commands.config import config_group
+    from engram.commands.context import context_cmd
     from engram.commands.init import init_cmd
     from engram.commands.memory import memory_group
     from engram.commands.review import review_cmd
@@ -158,6 +159,7 @@ def _register_subcommands() -> None:
     cli.add_command(team_group)
     cli.add_command(org_group)
     cli.add_command(migrate_cmd)
+    cli.add_command(context_cmd)
 
 
 _register_subcommands()
