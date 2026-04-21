@@ -48,6 +48,9 @@ from engram.core.graph_db import (
 from engram.core.paths import engram_dir, memory_dir, user_root
 
 __all__ = [
+    "ENFORCEMENT_WEIGHTS",
+    "SCOPE_WEIGHTS",
+    "apply_scope_weighting",
     "bm25_scores",
     "compute_id",
     "graph_db_path",
@@ -57,6 +60,60 @@ __all__ = [
     "sha256_hex",
     "slugify",
 ]
+
+
+# Scope weighting per DESIGN §5.1 Stage 6. The full Relevance Gate (M4/T-40)
+# supersedes these, but the M3 `engram memory search` uses them today so
+# operators get deterministic scope-aware ranking without waiting for the
+# vector + temporal pipeline.
+SCOPE_WEIGHTS: dict[str, float] = {
+    "project": 1.5,
+    "user": 1.2,
+    "team": 1.0,
+    "org": 0.8,
+    "pool": 1.0,  # default when subscribed_at is not resolvable
+}
+
+# Enforcement weighting (M3 subset of T-38). The Relevance Gate will
+# unconditionally include `mandatory` assets as a Stage-1 bypass;
+# in M3 we fold enforcement into the ranking multiplier instead so
+# every search result is a single sorted list.
+ENFORCEMENT_WEIGHTS: dict[str, float] = {
+    "mandatory": 2.0,
+    "default": 1.0,
+    "hint": 0.5,
+}
+
+
+def apply_scope_weighting(
+    ranked: list[tuple[str, float]],
+    meta: dict[str, tuple[str, str, str | None]],
+) -> list[tuple[str, float]]:
+    """Fold scope + enforcement multipliers into a BM25 ranking.
+
+    :param ranked: output of :func:`bm25_scores` — ``[(id, raw_score)]``.
+    :param meta: ``{id: (scope, enforcement, subscribed_at_or_None)}``.
+        ``subscribed_at`` is consulted only when ``scope == "pool"``, to
+        project the pool's effective hierarchy level onto the weight table.
+    :return: ``[(id, weighted_score)]`` sorted by weighted score descending.
+
+    Unknown scope / enforcement values collapse to a neutral ``1.0``
+    multiplier rather than raising; a search command that crashes on a
+    slightly malformed asset would be worse than one that degrades to
+    unweighted BM25 for that asset. Upstream validation (``engram
+    validate``) is responsible for surfacing the underlying schema error.
+    """
+    out: list[tuple[str, float]] = []
+    for doc_id, raw in ranked:
+        scope, enforcement, subscribed_at = meta.get(doc_id, ("project", "default", None))
+        if scope == "pool" and subscribed_at in SCOPE_WEIGHTS:
+            scope_weight = SCOPE_WEIGHTS[subscribed_at]
+        else:
+            scope_weight = SCOPE_WEIGHTS.get(scope, 1.0)
+        enf_weight = ENFORCEMENT_WEIGHTS.get(enforcement, 1.0)
+        out.append((doc_id, raw * scope_weight * enf_weight))
+    out.sort(key=lambda x: x[1], reverse=True)
+    return out
 
 
 # ------------------------------------------------------------------
@@ -638,6 +695,7 @@ def search_cmd(cfg: GlobalConfig, query: str, limit: int) -> None:
         rows = conn.execute("SELECT id, path FROM assets WHERE kind = 'memory'").fetchall()
 
     documents: list[tuple[str, str]] = []
+    meta: dict[str, tuple[str, str, str | None]] = {}
     for r in rows:
         path = memory_dir(root) / r["path"]
         if not path.exists():
@@ -648,11 +706,25 @@ def search_cmd(cfg: GlobalConfig, query: str, limit: int) -> None:
             continue
         corpus = f"{fm.name}\n{fm.description}\n{body}"
         documents.append((r["id"], corpus))
+        meta[r["id"]] = (fm.scope.value, fm.enforcement.value, fm.subscribed_at)
 
-    ranked = bm25_scores(query, documents)[:limit]
+    raw_ranked = bm25_scores(query, documents)
+    raw_lookup = dict(raw_ranked)
+    weighted = apply_scope_weighting(raw_ranked, meta)[:limit]
 
     if cfg.output_format == "json":
-        click.echo(json.dumps([{"id": did, "score": round(score, 4)} for did, score in ranked]))
+        payload = [
+            {
+                "id": did,
+                "score": round(weighted_score, 4),
+                "raw_score": round(raw_lookup.get(did, 0.0), 4),
+                "scope": meta.get(did, ("project", "default", None))[0],
+                "enforcement": meta.get(did, ("project", "default", None))[1],
+            }
+            for did, weighted_score in weighted
+        ]
+        click.echo(json.dumps(payload))
         return
-    for did, score in ranked:
-        click.echo(f"{score:7.3f}  {did}")
+    for did, weighted_score in weighted:
+        scope, enforcement, _ = meta.get(did, ("project", "default", None))
+        click.echo(f"{weighted_score:7.3f}  {did}  [{scope}/{enforcement}]")
