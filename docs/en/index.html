@@ -61,8 +61,41 @@
     </p>
     <div class="engram-hero-ctas">
       <a class="anth-button" href="https://github.com/TbusOS/engram">View on GitHub</a>
-      <a class="anth-button anth-button--ghost" href="https://github.com/TbusOS/engram/blob/main/SPEC.md">Read the SPEC</a>
+      <a class="anth-button anth-button--ghost" href="https://github.com/TbusOS/engram/blob/main/docs/QUICKSTART.md">5-minute quickstart</a>
     </div>
+
+    <!-- Hero demo: GIF when present, CLI transcript fallback otherwise -->
+    <figure style="margin:var(--space-7) auto 0; max-width:780px;">
+      <div style="background:#1a1a18; color:#f5f4ee; border-radius:var(--radius-lg); overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+        <div style="padding:var(--space-3) var(--space-4); background:#2a2926; font-family:var(--font-heading); font-size:12px; letter-spacing:0.04em; color:#b0aea5; display:flex; gap:var(--space-3); align-items:center;">
+          <span style="width:10px; height:10px; border-radius:50%; background:#ff5f57;"></span>
+          <span style="width:10px; height:10px; border-radius:50%; background:#ffbd2e;"></span>
+          <span style="width:10px; height:10px; border-radius:50%; background:#28c840;"></span>
+          <span style="margin-left:var(--space-3);">~/acme-platform — engram</span>
+        </div>
+        <pre style="margin:0; padding:var(--space-5); font-family:'SF Mono','Menlo','Consolas',monospace; font-size:13.5px; line-height:1.7; white-space:pre; overflow-x:auto;"><span style="color:#7f7e74;">$</span> engram init --name=acme-platform
+<span style="color:#9fbf89;">→ engram initialized at ~/acme-platform/.memory</span>
+
+<span style="color:#7f7e74;">$</span> engram memory add --type=feedback --enforcement=mandatory \
+    --name="confirm before push" \
+    --description="never push without explicit go-ahead" \
+    --body="Ask before pushing. **Why:** prior force-push..."
+<span style="color:#9fbf89;">→ added local/feedback_confirm_before_push [mandatory]</span>
+
+<span style="color:#7f7e74;">$</span> engram memory search "push"
+   3.420  local/feedback_confirm_before_push  [project/mandatory]
+
+<span style="color:#7f7e74;">$</span> engram validate
+<span style="color:#9fbf89;">→ clean — no errors, no warnings</span>
+
+<span style="color:#7f7e74;">$</span> engram status
+<span style="color:#9fbf89;">→ .memory at ~/acme-platform · store 0.2 · 1 asset · 0 pools</span></pre>
+      </div>
+      <figcaption class="anth-caption" style="text-align:center; margin-top:var(--space-3);">
+        Five commands, five minutes, first memory on disk. A full demo recording will land at
+        <code>docs/assets/demo.gif</code> — the transcript above is the same flow.
+      </figcaption>
+    </figure>
 
     <!-- Hero SVG: 5-layer architecture node-graph -->
     <figure style="margin:var(--space-8) 0 0; padding:0;">

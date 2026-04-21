@@ -61,8 +61,41 @@
     </p>
     <div class="engram-hero-ctas">
       <a class="anth-button" href="https://github.com/TbusOS/engram">在 GitHub 上查看</a>
-      <a class="anth-button anth-button--ghost" href="https://github.com/TbusOS/engram/blob/main/SPEC.md">阅读 SPEC</a>
+      <a class="anth-button anth-button--ghost" href="https://github.com/TbusOS/engram/blob/main/docs/QUICKSTART.md">5 分钟快速上手</a>
     </div>
+
+    <!-- Hero 演示:GIF 到位前用等宽字体 CLI 回放占位 -->
+    <figure style="margin:var(--space-7) auto 0; max-width:780px;">
+      <div style="background:#1a1a18; color:#f5f4ee; border-radius:var(--radius-lg); overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+        <div style="padding:var(--space-3) var(--space-4); background:#2a2926; font-family:var(--font-heading); font-size:12px; letter-spacing:0.04em; color:#b0aea5; display:flex; gap:var(--space-3); align-items:center;">
+          <span style="width:10px; height:10px; border-radius:50%; background:#ff5f57;"></span>
+          <span style="width:10px; height:10px; border-radius:50%; background:#ffbd2e;"></span>
+          <span style="width:10px; height:10px; border-radius:50%; background:#28c840;"></span>
+          <span style="margin-left:var(--space-3);">~/acme-platform — engram</span>
+        </div>
+        <pre style="margin:0; padding:var(--space-5); font-family:'SF Mono','Menlo','Consolas',monospace; font-size:13.5px; line-height:1.7; white-space:pre; overflow-x:auto;"><span style="color:#7f7e74;">$</span> engram init --name=acme-platform
+<span style="color:#9fbf89;">→ engram 仓已在 ~/acme-platform/.memory 初始化</span>
+
+<span style="color:#7f7e74;">$</span> engram memory add --type=feedback --enforcement=mandatory \
+    --name="confirm before push" \
+    --description="推送前必须先得到明确同意" \
+    --body="推前先问。**Why:** 之前一次 force-push..."
+<span style="color:#9fbf89;">→ 添加 local/feedback_confirm_before_push [mandatory]</span>
+
+<span style="color:#7f7e74;">$</span> engram memory search "push"
+   3.420  local/feedback_confirm_before_push  [project/mandatory]
+
+<span style="color:#7f7e74;">$</span> engram validate
+<span style="color:#9fbf89;">→ clean —— 无 error 无 warning</span>
+
+<span style="color:#7f7e74;">$</span> engram status
+<span style="color:#9fbf89;">→ .memory 位于 ~/acme-platform · store 0.2 · 1 asset · 0 pools</span></pre>
+      </div>
+      <figcaption class="anth-caption" style="text-align:center; margin-top:var(--space-3);">
+        5 条命令,5 分钟,第一条记忆落盘。完整演示录屏将放在
+        <code>docs/assets/demo.gif</code> —— 上面这段 transcript 就是同一个流程。
+      </figcaption>
+    </figure>
 
     <!-- Hero SVG: 五层架构总图 -->
     <figure style="margin:var(--space-8) 0 0; padding:0;">
