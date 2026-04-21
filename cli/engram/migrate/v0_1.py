@@ -130,7 +130,7 @@ def plan_migration(project_root: Path) -> dict[str, Any]:
     memory = project_root / ".memory"
     moves: list[dict[str, Any]] = []
     for md in sorted(memory.glob("*.md")):
-        if not md.is_file():
+        if not md.is_file() or md.name == "MEMORY.md":
             continue
         text = md.read_text(encoding="utf-8")
         fm, _body = _split_frontmatter(text)
