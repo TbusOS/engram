@@ -135,6 +135,7 @@ def _register_subcommands() -> None:
     Deferred to a function so that command modules can import ``GlobalConfig``
     from this module without introducing a circular import.
     """
+    from engram.commands.adapter import adapter_cmd
     from engram.commands.config import config_group
     from engram.commands.context import context_cmd
     from engram.commands.init import init_cmd
@@ -162,6 +163,7 @@ def _register_subcommands() -> None:
     cli.add_command(migrate_cmd)
     cli.add_command(context_cmd)
     cli.add_command(mcp_cmd)
+    cli.add_command(adapter_cmd)
 
 
 _register_subcommands()
