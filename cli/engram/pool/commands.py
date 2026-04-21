@@ -9,9 +9,9 @@ from typing import Any
 import click
 
 from engram.cli import GlobalConfig
-from engram.core.fs import atomic_symlink
+from engram.pool.actions import subscribe_to_pool
 from engram.pool.git_sync import list_git_pools, pool_has_git, pull_pool
-from engram.pool.propagation import resolve_pool_target, sync_subscriptions
+from engram.pool.propagation import sync_subscriptions
 from engram.pool.subscriptions import (
     pools_toml_path,
     read_toml,
@@ -72,46 +72,18 @@ def subscribe_cmd(
     force: bool,
 ) -> None:
     """Subscribe the current project to pool NAME."""
-    if propagation_mode == "pinned" and not pinned_revision:
-        raise click.ClickException(
-            "--mode=pinned requires --revision=<rN> (SPEC §9.2 pinned subscriptions)"
-        )
-    if propagation_mode != "pinned" and pinned_revision is not None:
-        raise click.ClickException("--revision is only valid with --mode=pinned")
-
-    pool_dir = user_pool_path(name)
-    if not pool_dir.is_dir():
-        raise click.ClickException(
-            f"pool {name!r} not found at {pool_dir}; create or git-sync it first"
-        )
-
-    target, last_synced = resolve_pool_target(name, propagation_mode, pinned_revision)
-
     root = cfg.resolve_project_root()
-    data = read_toml(pools_toml_path(root))
-    subs = data.setdefault("subscribe", {})
-    if not isinstance(subs, dict):
-        raise click.ClickException("pools.toml `subscribe` key is not a table")
-    if name in subs and not force:
-        raise click.ClickException(
-            f"already subscribed to {name!r}; re-run with --force to overwrite"
-        )
-
-    entry: dict[str, Any] = {
-        "subscribed_at": subscribed_at,
-        "propagation_mode": propagation_mode,
-    }
-    if pinned_revision is not None:
-        entry["pinned_revision"] = pinned_revision
-    if last_synced is not None:
-        entry["last_synced_rev"] = last_synced
-
-    subs[name] = entry
-    write_toml(pools_toml_path(root), data)
-    atomic_symlink(target, subscription_link_path(root, name))
+    entry = subscribe_to_pool(
+        root,
+        name,
+        subscribed_at=subscribed_at,
+        propagation_mode=propagation_mode,
+        pinned_revision=pinned_revision,
+        force=force,
+    )
 
     if cfg.output_format == "json":
-        click.echo(json.dumps({"pool": name, **entry}))
+        click.echo(json.dumps(entry))
     else:
         click.echo(f"subscribed to {name} (subscribed_at={subscribed_at}, mode={propagation_mode})")
 
