@@ -17,11 +17,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import re
 import shutil
 import sys
-from collections import Counter
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -46,6 +44,12 @@ from engram.core.graph_db import (
     open_graph_db,
 )
 from engram.core.paths import engram_dir, memory_dir, user_root
+from engram.relevance.bm25 import bm25_scores as _bm25_scores
+from engram.relevance.weights import (
+    ENFORCEMENT_WEIGHTS,
+    SCOPE_WEIGHTS,
+    apply_scope_weighting,
+)
 
 __all__ = [
     "ENFORCEMENT_WEIGHTS",
@@ -62,58 +66,11 @@ __all__ = [
 ]
 
 
-# Scope weighting per DESIGN §5.1 Stage 6. The full Relevance Gate (M4/T-40)
-# supersedes these, but the M3 `engram memory search` uses them today so
-# operators get deterministic scope-aware ranking without waiting for the
-# vector + temporal pipeline.
-SCOPE_WEIGHTS: dict[str, float] = {
-    "project": 1.5,
-    "user": 1.2,
-    "team": 1.0,
-    "org": 0.8,
-    "pool": 1.0,  # default when subscribed_at is not resolvable
-}
-
-# Enforcement weighting (M3 subset of T-38). The Relevance Gate will
-# unconditionally include `mandatory` assets as a Stage-1 bypass;
-# in M3 we fold enforcement into the ranking multiplier instead so
-# every search result is a single sorted list.
-ENFORCEMENT_WEIGHTS: dict[str, float] = {
-    "mandatory": 2.0,
-    "default": 1.0,
-    "hint": 0.5,
-}
-
-
-def apply_scope_weighting(
-    ranked: list[tuple[str, float]],
-    meta: dict[str, tuple[str, str, str | None]],
-) -> list[tuple[str, float]]:
-    """Fold scope + enforcement multipliers into a BM25 ranking.
-
-    :param ranked: output of :func:`bm25_scores` — ``[(id, raw_score)]``.
-    :param meta: ``{id: (scope, enforcement, subscribed_at_or_None)}``.
-        ``subscribed_at`` is consulted only when ``scope == "pool"``, to
-        project the pool's effective hierarchy level onto the weight table.
-    :return: ``[(id, weighted_score)]`` sorted by weighted score descending.
-
-    Unknown scope / enforcement values collapse to a neutral ``1.0``
-    multiplier rather than raising; a search command that crashes on a
-    slightly malformed asset would be worse than one that degrades to
-    unweighted BM25 for that asset. Upstream validation (``engram
-    validate``) is responsible for surfacing the underlying schema error.
-    """
-    out: list[tuple[str, float]] = []
-    for doc_id, raw in ranked:
-        scope, enforcement, subscribed_at = meta.get(doc_id, ("project", "default", None))
-        if scope == "pool" and subscribed_at in SCOPE_WEIGHTS:
-            scope_weight = SCOPE_WEIGHTS[subscribed_at]
-        else:
-            scope_weight = SCOPE_WEIGHTS.get(scope, 1.0)
-        enf_weight = ENFORCEMENT_WEIGHTS.get(enforcement, 1.0)
-        out.append((doc_id, raw * scope_weight * enf_weight))
-    out.sort(key=lambda x: x[1], reverse=True)
-    return out
+# Scope + enforcement weighting — canonical implementation lives in
+# engram.relevance.weights so the Relevance Gate (T-40) can import it
+# without triggering click's command registration chain. Re-exported
+# here (via the import block above) for backward compatibility with
+# existing tests and callers.
 
 
 # ------------------------------------------------------------------
@@ -619,13 +576,10 @@ def archive_cmd(cfg: GlobalConfig, memory_id: str) -> None:
 
 
 # -- search (BM25) -------------------------------------------------
-
-
-_TOKEN_RE = re.compile(r"[a-z0-9]+")
-
-
-def _tokenize(text: str) -> list[str]:
-    return _TOKEN_RE.findall(text.lower())
+#
+# The real implementation lives in engram.relevance.bm25 (T-42). This
+# thin re-export keeps the legacy `engram.commands.memory.bm25_scores`
+# import path working for existing tests and downstream consumers.
 
 
 def bm25_scores(
@@ -635,43 +589,8 @@ def bm25_scores(
     k1: float = 1.5,
     b: float = 0.75,
 ) -> list[tuple[str, float]]:
-    """Pure-Python BM25. Returns ``[(doc_id, score)]`` sorted by score desc.
-
-    Good enough for M2-scale stores (≤ 10K assets). M4's Relevance Gate (T-40)
-    replaces this with a proper hybrid pipeline including vector recall and
-    temporal boost. Queries with zero matching terms return empty rather than
-    an all-zero-score ranking.
-    """
-    q_tokens = _tokenize(query)
-    doc_tokens = [(did, _tokenize(text)) for did, text in documents]
-    n = len(doc_tokens)
-    if n == 0 or not q_tokens:
-        return []
-
-    avg_dl = sum(len(t) for _, t in doc_tokens) / n
-    df: Counter[str] = Counter()
-    for _, toks in doc_tokens:
-        for w in set(toks):
-            df[w] += 1
-
-    scored: list[tuple[str, float]] = []
-    for did, toks in doc_tokens:
-        tf = Counter(toks)
-        dl = len(toks)
-        score = 0.0
-        for w in q_tokens:
-            if w not in df:
-                continue
-            idf = math.log((n - df[w] + 0.5) / (df[w] + 0.5) + 1.0)
-            f = tf.get(w, 0)
-            denom = f + k1 * (1 - b + b * dl / avg_dl) if avg_dl else 1.0
-            norm = f * (k1 + 1) / denom if denom else 0.0
-            score += idf * norm
-        if score > 0:
-            scored.append((did, score))
-
-    scored.sort(key=lambda x: x[1], reverse=True)
-    return scored
+    """Backwards-compat re-export of :func:`engram.relevance.bm25.bm25_scores`."""
+    return _bm25_scores(query, documents, k1=k1, b=b)
 
 
 @memory_group.command("search")
