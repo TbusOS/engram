@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>收件箱 — engram Web UI</title>
+  <link rel="stylesheet" href="../../assets/fonts.css">
+  <link rel="stylesheet" href="../../assets/anthropic.css">
+  <link rel="stylesheet" href="../../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">总览面板</a>
+      <a href="graph.html">知识图谱</a>
+      <a href="inbox.html" class="is-active">收件箱 <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff; padding:1px 6px; font-size:10px;">7</span></a>
+      <a href="context-preview.html">上下文预览</a>
+      <a href="wisdom.html">智慧指标</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">设计原型</span>
+      <a href="../inbox.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">English</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← 所有页面</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="页面导航">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">概览</div>
+      <a href="dashboard.html" class="engram-sidebar-link">总览面板</a>
+      <a href="graph.html" class="engram-sidebar-link">知识图谱</a>
+      <a href="project-overview.html" class="engram-sidebar-link">项目</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">资产</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">记忆</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">工作流</a>
+      <a href="kb-article.html" class="engram-sidebar-link">知识库</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">工具</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">池管理</a>
+      <a href="context-preview.html" class="engram-sidebar-link">上下文预览</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">自学习</a>
+      <a href="inbox.html" class="engram-sidebar-link is-active">收件箱</a>
+      <a href="wisdom.html" class="engram-sidebar-link">智慧指标</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- 页面标题 -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-4);">
+      <h1 style="font-size:24px;">收件箱</h1>
+      <span class="anth-caption">通过跨仓库通信机制接收的消息</span>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-4); flex-wrap:wrap;">
+      <div class="anth-tabs" role="tablist" aria-label="状态筛选">
+        <button class="anth-tab is-active" role="tab">待处理 <span style="font-size:10px;">(7)</span></button>
+        <button class="anth-tab" role="tab">已确认</button>
+        <button class="anth-tab" role="tab">已解决</button>
+        <button class="anth-tab" role="tab">已拒绝</button>
+      </div>
+      <select class="anth-select" style="font-size:12px; padding:6px 10px; width:160px;">
+        <option>全部意图</option>
+        <option>api-change</option>
+        <option>bug-report</option>
+        <option>question</option>
+        <option>update-notify</option>
+        <option>task</option>
+      </select>
+      <input class="anth-input" type="search" placeholder="搜索消息…" style="width:200px; font-size:13px; padding:6px 12px;">
+    </div>
+
+    <!-- 主区：消息列表 + 消息详情 -->
+    <div class="engram-split engram-split--1-2" style="align-items:start;">
+
+      <!-- 消息列表 -->
+      <div class="engram-msg-list">
+
+        <!-- 消息 1 — 已选中 -->
+        <div class="engram-msg-item is-selected">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">acme-billing</div>
+              <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">api-change</span>
+            </div>
+            <div class="engram-msg-preview">60 天后将废弃 /v1/charge 端点</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">2 小时前</span>
+            <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">高</span>
+          </div>
+        </div>
+
+        <!-- 消息 2 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">platform-infra</div>
+              <span class="anth-badge" style="background:rgba(106,155,204,0.15); color:var(--anth-blue); font-size:9px;">update-notify</span>
+            </div>
+            <div class="engram-msg-preview">PostgreSQL 将于 2026-04-20 升级至 16.4</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">4 小时前</span>
+            <span class="anth-badge" style="font-size:9px;">中</span>
+          </div>
+        </div>
+
+        <!-- 消息 3 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">acme-search-api</div>
+              <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">bug-report</span>
+            </div>
+            <div class="engram-msg-preview">v2.3.8 起 checkout 回调 URL 返回 404</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">6 小时前</span>
+            <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">高</span>
+          </div>
+        </div>
+
+        <!-- 消息 4 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">compliance-pool</div>
+              <span class="anth-badge" style="background:rgba(120,140,93,0.15); color:var(--anth-green); font-size:9px;">update-notify</span>
+            </div>
+            <div class="engram-msg-preview">SOC 2 Type II 新要求将于 2026-07 生效</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">昨天</span>
+            <span class="anth-badge" style="font-size:9px;">中</span>
+          </div>
+        </div>
+
+        <!-- 消息 5 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">example-cli-tool</div>
+              <span class="anth-badge" style="font-size:9px;">question</span>
+            </div>
+            <div class="engram-msg-preview">acme-checkout-service 对 cart_id 格式有何要求？</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">昨天</span>
+            <span class="anth-badge" style="font-size:9px;">低</span>
+          </div>
+        </div>
+
+        <!-- 消息 6 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">platform-infra</div>
+              <span class="anth-badge" style="background:rgba(106,155,204,0.15); color:var(--anth-blue); font-size:9px;">task</span>
+            </div>
+            <div class="engram-msg-preview">请在 2026-05-01 前迁移至新密钥管理服务</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">2 天前</span>
+            <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">高</span>
+          </div>
+        </div>
+
+        <!-- 消息 7 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">acme-billing</div>
+              <span class="anth-badge" style="font-size:9px;">question</span>
+            </div>
+            <div class="engram-msg-preview">checkout-service 是否支持 500 错误时重试 webhook？</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">3 天前</span>
+            <span class="anth-badge" style="font-size:9px;">低</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 消息详情 -->
+      <div class="engram-detail-panel">
+        <!-- 消息头部 -->
+        <div style="display:flex; align-items:flex-start; gap:var(--space-4); margin-bottom:var(--space-4); padding-bottom:var(--space-4); border-bottom:1px solid var(--anth-light-gray);">
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:var(--space-3); flex-wrap:wrap; margin-bottom:var(--space-2);">
+              <h3 style="font-size:17px; font-family:var(--font-heading); margin:0;">废弃 /v1/charge 端点通告</h3>
+              <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12;">api-change</span>
+              <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12;">严重级别：高</span>
+            </div>
+            <div style="font-family:var(--font-heading); font-size:12px; color:var(--anth-text-secondary);">
+              发件方：<strong>acme-billing</strong> → 收件方：<strong>acme-checkout-service</strong>
+              &nbsp;·&nbsp; 2026-04-18 12:14 UTC &nbsp;·&nbsp; msg-id: msg-2026-04-18-0034
+            </div>
+          </div>
+          <span class="engram-status engram-status--warn">待处理</span>
+        </div>
+
+        <!-- 消息正文 -->
+        <div style="font-family:var(--font-body); font-size:15px; line-height:1.75; margin-bottom:var(--space-5);">
+          <p>acme-billing 的 <code>/v1/charge</code> 端点将于 <strong>2026-06-18</strong> 下线（自今日起 60 天通知期）。请在该日期前将所有调用方迁移至 <code>/v2/payment</code>。</p>
+
+          <p><code>/v2/payment</code> 的主要变化：</p>
+          <ul>
+            <li>请求体改用 <code>amount_cents</code>（整数）替代 <code>amount</code>（浮点数），以避免浮点精度问题</li>
+            <li>幂等键为必填项，通过 <code>X-Idempotency-Key</code> 请求头传入</li>
+            <li>响应中包含 <code>payment_id</code>，可用于状态轮询</li>
+          </ul>
+
+          <p>迁移指南：<code>https://docs.acme.internal/billing/v2-migration</code></p>
+
+          <p>如果 acme-checkout-service 有疑问或需要在非工作时间安排迁移窗口，请回复本消息或联系计费团队的 <code>#billing-eng</code> 频道。</p>
+        </div>
+
+        <!-- 回复线索（折叠） -->
+        <details class="anth-details" style="margin-bottom:var(--space-4);">
+          <summary>回复线索（0 条回复）</summary>
+          <p style="color:var(--anth-text-secondary); font-family:var(--font-heading); font-size:13px; margin:var(--space-3) 0 0;">暂无回复。</p>
+        </details>
+
+        <!-- 操作按钮 -->
+        <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
+          <button class="anth-button" style="font-size:13px; padding:10px 20px;">确认</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:10px 20px;">标记为已解决</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:10px 20px; color:var(--anth-danger);">拒绝</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:10px 20px; margin-left:auto;">回复</button>
+        </div>
+
+        <!-- 确认备注 -->
+        <div style="margin-top:var(--space-4);">
+          <span class="anth-label">确认备注（可选）</span>
+          <textarea class="anth-textarea" rows="2" placeholder="例如：已分配给 checkout-squad，计划在 Q2-W4 冲刺中完成迁移…" style="margin-top:var(--space-2);"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 撰写消息悬浮按钮 -->
+    <div style="position:fixed; bottom:var(--space-6); right:var(--space-6);">
+      <button class="anth-button" style="font-size:14px; padding:12px 24px; box-shadow:var(--shadow-pop);">
+        + 撰写消息
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 设计原型。正式实现在 M7 里程碑。
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← 设计中心</a>
+</footer>
+
+</body>
+</html>

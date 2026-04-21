@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>上下文预览 — engram Web UI</title>
+  <link rel="stylesheet" href="../../assets/fonts.css">
+  <link rel="stylesheet" href="../../assets/anthropic.css">
+  <link rel="stylesheet" href="../../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">总览面板</a>
+      <a href="graph.html">知识图谱</a>
+      <a href="inbox.html">收件箱</a>
+      <a href="context-preview.html" class="is-active" style="color:var(--anth-orange); font-weight:600;">上下文预览</a>
+      <a href="wisdom.html">智慧指标</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">设计原型</span>
+      <a href="../context-preview.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">English</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← 全部页面</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="页面导航">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">概览</div>
+      <a href="dashboard.html" class="engram-sidebar-link">总览面板</a>
+      <a href="graph.html" class="engram-sidebar-link">知识图谱</a>
+      <a href="project-overview.html" class="engram-sidebar-link">项目总览</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">资产</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">记忆</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">工作流</a>
+      <a href="kb-article.html" class="engram-sidebar-link">知识库</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">工具</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">池管理</a>
+      <a href="context-preview.html" class="engram-sidebar-link is-active">
+        上下文预览
+        <div class="engram-sidebar-dot" style="margin-left:auto;"></div>
+      </a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">自学习</a>
+      <a href="inbox.html" class="engram-sidebar-link">收件箱</a>
+      <a href="wisdom.html" class="engram-sidebar-link">智慧指标</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Page header -->
+    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-5);">
+      <div>
+        <h1 style="font-size:24px; margin-bottom:var(--space-1);">上下文预览</h1>
+        <p style="font-family:var(--font-heading); font-size:13px; color:var(--anth-text-secondary);">
+          在调用 LLM 之前，精确模拟 LLM 将看到的内容。这是相关性闸门的首要诊断页面。
+        </p>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:var(--space-3);">
+        <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 16px;">A/B 对比</button>
+      </div>
+    </div>
+
+    <!-- Main split: left input (1/3), right output (2/3) -->
+    <div style="display:grid; grid-template-columns:1fr 2fr; gap:var(--space-5); align-items:start;">
+
+      <!-- Left: input panel -->
+      <div class="engram-input-panel">
+        <h3 style="font-family:var(--font-heading); font-size:15px; margin-bottom:var(--space-4);">任务描述</h3>
+
+        <label>
+          <span class="anth-label">今天要做什么？</span>
+          <textarea class="anth-textarea" rows="5" style="font-size:14px; line-height:1.6;">审查并合并 PR #448：为 acme-checkout-service 中的支付方调用添加重试逻辑</textarea>
+        </label>
+
+        <!-- Token budget slider -->
+        <div class="engram-slider-wrap" style="margin-top:var(--space-4);">
+          <div class="engram-slider-label">
+            <span>Token 预算</span>
+            <strong style="color:var(--anth-orange);">4,000 tokens</strong>
+          </div>
+          <input type="range" min="500" max="32000" value="4000" step="100"
+            style="width:100%; accent-color:var(--anth-orange);">
+          <div style="display:flex; justify-content:space-between; font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary); margin-top:var(--space-1);">
+            <span>500</span><span>32 000</span>
+          </div>
+        </div>
+
+        <!-- Model selector -->
+        <label style="margin-top:var(--space-4); display:block;">
+          <span class="anth-label">模型配置</span>
+          <select class="anth-select" style="font-size:13px;">
+            <option>Claude Opus 4 (200K context)</option>
+            <option selected>Claude Sonnet 4 (200K context)</option>
+            <option>Claude Haiku 4.5 (200K context)</option>
+            <option>Local Qwen 2.5-32B (128K)</option>
+            <option>GPT-4o (128K context)</option>
+            <option>Gemini 2.5 Pro (1M context)</option>
+          </select>
+        </label>
+
+        <!-- Scope filter -->
+        <div style="margin-top:var(--space-4);">
+          <span class="anth-label" style="display:block; margin-bottom:var(--space-2);">包含范围</span>
+          <div class="engram-scope-checks">
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox" checked> project
+            </label>
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox" checked> user
+            </label>
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox" checked> team
+            </label>
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox"> org
+            </label>
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox" checked> pool
+            </label>
+          </div>
+        </div>
+
+        <button class="anth-button" style="width:100%; margin-top:var(--space-5); font-size:14px; padding:12px;">
+          运行预览
+        </button>
+
+        <!-- Stats summary after run -->
+        <div style="margin-top:var(--space-4); padding:var(--space-3); background:var(--anth-bg-subtle); border-radius:var(--radius-sm);">
+          <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary); margin-bottom:var(--space-2);">上次运行 — 2.3 秒</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-2);">
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">已评分候选</div>
+              <div style="font-family:var(--font-heading); font-size:18px; font-weight:700;">62</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">已收录</div>
+              <div style="font-family:var(--font-heading); font-size:18px; font-weight:700; color:var(--anth-green);">14</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">已排除</div>
+              <div style="font-family:var(--font-heading); font-size:18px; font-weight:700; color:var(--anth-mid-gray);">48</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">已用 token</div>
+              <div style="font-family:var(--font-heading); font-size:18px; font-weight:700;">3,847</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: output panel -->
+      <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+
+        <!-- Packed prompt preview -->
+        <div class="engram-detail-panel">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+            <h3 style="font-size:15px; font-family:var(--font-heading); margin:0;">打包提示词预览</h3>
+            <div style="display:flex; gap:var(--space-2);">
+              <span class="anth-badge">3,847 / 4,000 tokens</span>
+              <button class="anth-button" style="font-size:12px; padding:6px 14px;">复制打包提示词</button>
+            </div>
+          </div>
+          <div class="engram-packed-prompt"># ENGRAM CONTEXT PACK
+# Task: 审查并合并 PR #448：为 acme-checkout-service 中的支付方调用添加重试逻辑
+# Model: Claude Sonnet 4 · Budget: 4000 tokens · Packed: 3847 tokens
+# Scopes: project, user, team, pool
+# Generated: 2026-04-18T14:32:01Z
+# Assets included: 14 of 62 candidates
+
+---
+## [MEMORY:project/feedback_push_confirm] [score:0.87] [tokens:210]
+id: feedback_push_confirm
+subtype: user, enforcement: default
+
+Always ask for explicit confirmation before running `git push` or any command
+that writes to a remote. This preference applies to all branches.
+
+---
+## [MEMORY:project/payment_provider_retry_policy] [score:0.96] [tokens:340]
+id: payment_provider_retry_policy
+subtype: feedback, enforcement: mandatory
+
+Payment provider calls must use exponential backoff with jitter.
+Max retries: 3. Base delay: 200ms. Max delay: 5s.
+Idempotency keys required for all POST requests.
+
+---
+## [MEMORY:project/pr_review_checklist] [score:0.91] [tokens:285]
+id: pr_review_checklist
+subtype: feedback, enforcement: default
+
+Code review checklist:
+1. Tests added for new code paths
+2. Error handling covers timeout and 5xx responses
+3. No hardcoded credentials or URLs
+4. Circuit breaker configured if calling external APIs
+5. Metrics instrumentation for new service calls
+
+---
+## [MEMORY:team/api_versioning_policy] [score:0.79] [tokens:198]
+id: api_versioning_policy
+subtype: feedback, enforcement: mandatory, scope: team
+
+All external API clients must pin to a specific API version.
+Breaking changes to the payment provider API require a separate PR.
+
+---
+## [MEMORY:project/sprint_context_2026q2] [score:0.74] [tokens:420]
+id: sprint_context_2026q2
+subtype: project, enforcement: hint
+
+Sprint goal Q2 2026: Improve payment reliability to 99.95% success rate.
+Current: 99.87%. Root cause: transient network errors not retried.
+PR #448 is the primary deliverable for this sprint.
+
+---
+## [WORKFLOW_PTR:release-checklist] [score:0.71] [tokens:95]
+...
+# [还有 8 条资产 — 已用 token 共 2,299，以下显示预算截止线]
+# BOUNDARY ↑ 已收录 / 已排除 ↓（预算已用尽）
+</div>
+        </div>
+
+        <!-- Candidate ranking table -->
+        <div class="engram-detail-panel">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+            <h3 style="font-size:15px; font-family:var(--font-heading); margin:0;">相关性闸门 — 候选排名</h3>
+            <span class="anth-caption">62 条已评分 · 截止于第 14 位</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="engram-candidate-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>资产 ID</th>
+                  <th>子类型</th>
+                  <th>范围</th>
+                  <th>评分</th>
+                  <th>Token</th>
+                  <th>累计</th>
+                  <th>收录原因</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>1</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">payment_provider_retry_policy</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>project</td>
+                  <td><strong style="color:var(--anth-green);">0.96</strong></td>
+                  <td>340</td>
+                  <td>340</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">关键词匹配："payment provider"、"retry"</td>
+                </tr>
+                <tr>
+                  <td><strong>2</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">pr_review_checklist</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>project</td>
+                  <td><strong style="color:var(--anth-green);">0.91</strong></td>
+                  <td>285</td>
+                  <td>625</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">关键词匹配："PR"、"review"；强制级标签</td>
+                </tr>
+                <tr>
+                  <td><strong>3</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">feedback_push_confirm</td>
+                  <td><span class="anth-badge">user</span></td>
+                  <td>project</td>
+                  <td><strong style="color:var(--anth-green);">0.87</strong></td>
+                  <td>210</td>
+                  <td>835</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">调用次数高（34）；git 操作时始终收录</td>
+                </tr>
+                <tr>
+                  <td><strong>4</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">circuit_breaker_config</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>project</td>
+                  <td><strong>0.85</strong></td>
+                  <td>188</td>
+                  <td>1,023</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">关键词匹配："circuit breaker"；与重试相关</td>
+                </tr>
+                <tr>
+                  <td><strong>5</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">checkout_service_sla</td>
+                  <td><span class="anth-badge">reference</span></td>
+                  <td>project</td>
+                  <td><strong>0.82</strong></td>
+                  <td>165</td>
+                  <td>1,188</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">来自 payment_provider_retry_policy 的入向引用</td>
+                </tr>
+                <tr>
+                  <td><strong>6</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">api_versioning_policy</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>team</td>
+                  <td><strong>0.79</strong></td>
+                  <td>198</td>
+                  <td>1,386</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">团队强制规则；涉及外部 API</td>
+                </tr>
+                <tr>
+                  <td><strong>7</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">sprint_context_2026q2</td>
+                  <td><span class="anth-badge">project</span></td>
+                  <td>project</td>
+                  <td><strong>0.74</strong></td>
+                  <td>420</td>
+                  <td>1,806</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">关键词匹配："payment reliability"、"PR #448"</td>
+                </tr>
+                <tr>
+                  <td><strong>8</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">release-checklist (ptr)</td>
+                  <td><span class="anth-badge">workflow_ptr</span></td>
+                  <td>project</td>
+                  <td><strong>0.71</strong></td>
+                  <td>95</td>
+                  <td>1,901</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">scope=project 时 workflow_ptr 始终收录</td>
+                </tr>
+                <tr>
+                  <td><strong>9</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">idempotency_key_spec</td>
+                  <td><span class="anth-badge">reference</span></td>
+                  <td>pool</td>
+                  <td><strong>0.68</strong></td>
+                  <td>240</td>
+                  <td>2,141</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">关键词匹配："idempotency"；来自 compliance-checklists 池</td>
+                </tr>
+                <tr>
+                  <td><strong>10</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">error_handling_guide</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>team</td>
+                  <td><strong>0.65</strong></td>
+                  <td>312</td>
+                  <td>2,453</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">语义相似：错误处理模式</td>
+                </tr>
+                <tr>
+                  <td><strong>11</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">payment_provider_docs_ptr</td>
+                  <td><span class="anth-badge">reference</span></td>
+                  <td>project</td>
+                  <td><strong>0.62</strong></td>
+                  <td>88</td>
+                  <td>2,541</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">来自 payment_provider_retry_policy 的入向引用</td>
+                </tr>
+                <tr>
+                  <td><strong>12</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">testing_conventions</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>project</td>
+                  <td><strong>0.60</strong></td>
+                  <td>265</td>
+                  <td>2,806</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">PR review checklist 共现率 88%</td>
+                </tr>
+                <tr>
+                  <td><strong>13</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">observability_standards</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>team</td>
+                  <td><strong>0.58</strong></td>
+                  <td>580</td>
+                  <td>3,386</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">检查清单中提及指标；在剩余预算内</td>
+                </tr>
+                <tr>
+                  <td><strong>14</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">user_profile_sky</td>
+                  <td><span class="anth-badge">user</span></td>
+                  <td>user</td>
+                  <td><strong>0.55</strong></td>
+                  <td>461</td>
+                  <td>3,847</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">预算允许时始终在末尾收录用户档案</td>
+                </tr>
+                <!-- Budget boundary -->
+                <tr class="is-boundary is-excluded">
+                  <td colspan="8" style="padding:var(--space-2) var(--space-3); font-family:var(--font-heading); font-size:11px; color:var(--anth-orange); background:rgba(217,119,87,0.06);">
+                    ↑ 已收录（3,847 tokens） &nbsp;·&nbsp; 预算已用尽 — 以下 48 条候选已评分但被排除
+                  </td>
+                </tr>
+                <tr class="is-excluded">
+                  <td><strong>15</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">staging_environment_ref</td>
+                  <td><span class="anth-badge">reference</span></td>
+                  <td>project</td>
+                  <td>0.52</td>
+                  <td>320</td>
+                  <td>—</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">预算已用尽</td>
+                </tr>
+                <tr class="is-excluded">
+                  <td><strong>16</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">old_deploy_runbook</td>
+                  <td><span class="anth-badge">project</span></td>
+                  <td>project</td>
+                  <td>0.48</td>
+                  <td>890</td>
+                  <td>—</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">预算已用尽</td>
+                </tr>
+                <tr class="is-excluded">
+                  <td><strong>17</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">frontend_styling_guide</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>team</td>
+                  <td>0.11</td>
+                  <td>210</td>
+                  <td>—</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">评分低于 0.15 阈值；与任务无关</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bottom action bar -->
+        <div style="display:flex; align-items:center; gap:var(--space-3);">
+          <button class="anth-button" style="font-size:13px; padding:10px 24px;">复制打包提示词</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:10px 20px;">A/B 对比</button>
+          <span class="anth-caption" style="margin-left:auto;">
+            相关性闸门运行耗时 2.3 秒 · 62 条资产已评分 · 每次按键防抖 500 毫秒
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 设计原型。真实实现在 M7。
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← 设计导航</a>
+</footer>
+
+</body>
+</html>

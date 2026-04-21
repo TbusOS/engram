@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>engram — local, portable, LLM-agnostic memory</title>
+  <meta name="description" content="engram is a local, portable, LLM-agnostic memory system that grows smarter with use. Plain markdown. You own it." />
+  <meta name="keywords" content="engram, LLM memory, AI memory, markdown memory, open source, Claude, memory system" />
+  <meta property="og:title" content="engram — Your memory should outlive the model" />
+  <meta property="og:description" content="A local, portable, LLM-agnostic memory system that grows smarter with use." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tbusOS.github.io/engram/" />
+  <link rel="stylesheet" href="assets/fonts.css" />
+  <link rel="stylesheet" href="assets/anthropic.css" />
+  <link rel="stylesheet" href="assets/app.css" />
+  <script>
+    (function () {
+      var lang = navigator.language || navigator.userLanguage || '';
+      if (lang.toLowerCase().startsWith('zh')) {
+        setTimeout(function () { window.location.href = 'zh/'; }, 2000);
+      } else {
+        setTimeout(function () { window.location.href = 'en/'; }, 2000);
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="engram-chooser-wrap">
+    <div class="engram-chooser-center">
+      <!-- wordmark -->
+      <div class="engram-wordmark" aria-label="engram">
+        <svg viewBox="0 0 160 40" width="160" height="40" role="img" aria-label="engram logo" style="display:block;">
+          <circle cx="20" cy="20" r="14" fill="#d97757" opacity="0.9"/>
+          <circle cx="20" cy="20" r="7"  fill="#faf9f5" opacity="0.9"/>
+          <text x="42" y="28" font-family="Poppins,Arial,sans-serif" font-size="22" font-weight="600" fill="#141413">engram</text>
+        </svg>
+      </div>
+
+      <p class="engram-chooser-tag">
+        local · portable · LLM-agnostic memory
+      </p>
+
+      <div class="engram-chooser-buttons">
+        <a href="en/" class="anth-button engram-chooser-btn">English</a>
+        <a href="zh/" class="anth-button engram-chooser-btn">中文</a>
+      </div>
+
+      <p class="anth-caption engram-chooser-hint">
+        Auto-redirecting in 2 s based on your browser language&ensp;·&ensp;正在根据浏览器语言自动跳转
+      </p>
+    </div>
+  </div>
+</body>
+</html>

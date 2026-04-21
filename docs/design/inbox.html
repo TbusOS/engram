@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inbox — engram Web UI</title>
+  <link rel="stylesheet" href="../assets/fonts.css">
+  <link rel="stylesheet" href="../assets/anthropic.css">
+  <link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="graph.html">Graph</a>
+      <a href="inbox.html" class="is-active">Inbox <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff; padding:1px 6px; font-size:10px;">7</span></a>
+      <a href="context-preview.html">Context Preview</a>
+      <a href="wisdom.html">Wisdom</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">Design Mockup</span>
+      <a href="zh/inbox.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">中文</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← All pages</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="Page navigation">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Overview</div>
+      <a href="dashboard.html" class="engram-sidebar-link">Dashboard</a>
+      <a href="graph.html" class="engram-sidebar-link">Graph</a>
+      <a href="project-overview.html" class="engram-sidebar-link">Projects</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Assets</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">Memory</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">Workflows</a>
+      <a href="kb-article.html" class="engram-sidebar-link">Knowledge Base</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Tools</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">Pool Manager</a>
+      <a href="context-preview.html" class="engram-sidebar-link">Context Preview</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">Autolearn</a>
+      <a href="inbox.html" class="engram-sidebar-link is-active">Inbox</a>
+      <a href="wisdom.html" class="engram-sidebar-link">Wisdom</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Page header -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-4);">
+      <h1 style="font-size:24px;">Inbox</h1>
+      <span class="anth-caption">Cross-repo messages via Inter-Repo Messenger</span>
+    </div>
+
+    <!-- Filter bar -->
+    <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-4); flex-wrap:wrap;">
+      <div class="anth-tabs" role="tablist" aria-label="Status filter">
+        <button class="anth-tab is-active" role="tab">Pending <span style="font-size:10px;">(7)</span></button>
+        <button class="anth-tab" role="tab">Acknowledged</button>
+        <button class="anth-tab" role="tab">Resolved</button>
+        <button class="anth-tab" role="tab">Rejected</button>
+      </div>
+      <select class="anth-select" style="font-size:12px; padding:6px 10px; width:160px;">
+        <option>All intents</option>
+        <option>api-change</option>
+        <option>bug-report</option>
+        <option>question</option>
+        <option>update-notify</option>
+        <option>task</option>
+      </select>
+      <input class="anth-input" type="search" placeholder="Search messages…" style="width:200px; font-size:13px; padding:6px 12px;">
+    </div>
+
+    <!-- Main: message list + selected message -->
+    <div class="engram-split engram-split--1-2" style="align-items:start;">
+
+      <!-- Message list -->
+      <div class="engram-msg-list">
+
+        <!-- Message 1 — selected -->
+        <div class="engram-msg-item is-selected">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">acme-billing</div>
+              <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">api-change</span>
+            </div>
+            <div class="engram-msg-preview">Deprecating /v1/charge endpoint in 60 days</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">2 hr ago</span>
+            <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">high</span>
+          </div>
+        </div>
+
+        <!-- Message 2 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">platform-infra</div>
+              <span class="anth-badge" style="background:rgba(106,155,204,0.15); color:var(--anth-blue); font-size:9px;">update-notify</span>
+            </div>
+            <div class="engram-msg-preview">PostgreSQL upgraded to 16.4 on 2026-04-20</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">4 hr ago</span>
+            <span class="anth-badge" style="font-size:9px;">medium</span>
+          </div>
+        </div>
+
+        <!-- Message 3 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">acme-search-api</div>
+              <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">bug-report</span>
+            </div>
+            <div class="engram-msg-preview">Checkout callback URL returning 404 since v2.3.8</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">6 hr ago</span>
+            <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">high</span>
+          </div>
+        </div>
+
+        <!-- Message 4 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">compliance-pool</div>
+              <span class="anth-badge" style="background:rgba(120,140,93,0.15); color:var(--anth-green); font-size:9px;">update-notify</span>
+            </div>
+            <div class="engram-msg-preview">New SOC 2 Type II requirements effective 2026-07</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">Yesterday</span>
+            <span class="anth-badge" style="font-size:9px;">medium</span>
+          </div>
+        </div>
+
+        <!-- Message 5 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">example-cli-tool</div>
+              <span class="anth-badge" style="font-size:9px;">question</span>
+            </div>
+            <div class="engram-msg-preview">What does acme-checkout-service expect for cart_id format?</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">Yesterday</span>
+            <span class="anth-badge" style="font-size:9px;">low</span>
+          </div>
+        </div>
+
+        <!-- Message 6 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">platform-infra</div>
+              <span class="anth-badge" style="background:rgba(106,155,204,0.15); color:var(--anth-blue); font-size:9px;">task</span>
+            </div>
+            <div class="engram-msg-preview">Please migrate to new secrets manager by 2026-05-01</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">2 days ago</span>
+            <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12; font-size:9px;">high</span>
+          </div>
+        </div>
+
+        <!-- Message 7 -->
+        <div class="engram-msg-item">
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <div class="engram-msg-from">acme-billing</div>
+              <span class="anth-badge" style="font-size:9px;">question</span>
+            </div>
+            <div class="engram-msg-preview">Does checkout-service support webhook retry on 500?</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+            <span class="engram-msg-time">3 days ago</span>
+            <span class="anth-badge" style="font-size:9px;">low</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected message detail -->
+      <div class="engram-detail-panel">
+        <!-- Message header -->
+        <div style="display:flex; align-items:flex-start; gap:var(--space-4); margin-bottom:var(--space-4); padding-bottom:var(--space-4); border-bottom:1px solid var(--anth-light-gray);">
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:var(--space-3); flex-wrap:wrap; margin-bottom:var(--space-2);">
+              <h3 style="font-size:17px; font-family:var(--font-heading); margin:0;">Deprecating /v1/charge endpoint</h3>
+              <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12;">api-change</span>
+              <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12;">severity: high</span>
+            </div>
+            <div style="font-family:var(--font-heading); font-size:12px; color:var(--anth-text-secondary);">
+              From: <strong>acme-billing</strong> → To: <strong>acme-checkout-service</strong>
+              &nbsp;·&nbsp; 2026-04-18 12:14 UTC &nbsp;·&nbsp; msg-id: msg-2026-04-18-0034
+            </div>
+          </div>
+          <span class="engram-status engram-status--warn">pending</span>
+        </div>
+
+        <!-- Message body -->
+        <div style="font-family:var(--font-body); font-size:15px; line-height:1.75; margin-bottom:var(--space-5);">
+          <p>The <code>/v1/charge</code> endpoint in acme-billing will be removed on <strong>2026-06-18</strong> (60-day notice from today). Please migrate all callers to <code>/v2/payment</code> before that date.</p>
+
+          <p>Key differences in <code>/v2/payment</code>:</p>
+          <ul>
+            <li>Request body uses <code>amount_cents</code> (integer) instead of <code>amount</code> (float) — avoids floating-point rounding issues</li>
+            <li>Idempotency keys are required (pass as <code>X-Idempotency-Key</code> header)</li>
+            <li>Response includes <code>payment_id</code> for status polling</li>
+          </ul>
+
+          <p>Migration guide: <code>https://docs.acme.internal/billing/v2-migration</code></p>
+
+          <p>If acme-checkout-service has questions or needs a migration window outside normal hours, reply to this message or contact the billing team in <code>#billing-eng</code>.</p>
+        </div>
+
+        <!-- Reply thread (collapsed) -->
+        <details class="anth-details" style="margin-bottom:var(--space-4);">
+          <summary>Thread (0 replies)</summary>
+          <p style="color:var(--anth-text-secondary); font-family:var(--font-heading); font-size:13px; margin:var(--space-3) 0 0;">No replies yet.</p>
+        </details>
+
+        <!-- Actions -->
+        <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
+          <button class="anth-button" style="font-size:13px; padding:10px 20px;">Acknowledge</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:10px 20px;">Mark resolved</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:10px 20px; color:var(--anth-danger);">Reject</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:10px 20px; margin-left:auto;">Reply</button>
+        </div>
+
+        <!-- Acknowledge note -->
+        <div style="margin-top:var(--space-4);">
+          <span class="anth-label">Acknowledgment note (optional)</span>
+          <textarea class="anth-textarea" rows="2" placeholder="e.g. Assigned to checkout-squad, targeting migration in sprint Q2-W4…" style="margin-top:var(--space-2);"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compose floating action -->
+    <div style="position:fixed; bottom:var(--space-6); right:var(--space-6);">
+      <button class="anth-button" style="font-size:14px; padding:12px 24px; box-shadow:var(--shadow-pop);">
+        + Compose message
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 design mockup. Real implementation in M7.
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← Design hub</a>
+</footer>
+
+</body>
+</html>

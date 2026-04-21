@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>项目总览 — engram Web UI</title>
+  <link rel="stylesheet" href="../../assets/fonts.css">
+  <link rel="stylesheet" href="../../assets/anthropic.css">
+  <link rel="stylesheet" href="../../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">总览面板</a>
+      <a href="graph.html">知识图谱</a>
+      <a href="inbox.html">收件箱</a>
+      <a href="context-preview.html">上下文预览</a>
+      <a href="wisdom.html">智慧指标</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">设计原型</span>
+      <a href="../project-overview.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">English</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← 全部页面</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="页面导航">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">概览</div>
+      <a href="dashboard.html" class="engram-sidebar-link">总览面板</a>
+      <a href="graph.html" class="engram-sidebar-link">知识图谱</a>
+      <a href="project-overview.html" class="engram-sidebar-link is-active">项目总览</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">资产</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">记忆</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">工作流</a>
+      <a href="kb-article.html" class="engram-sidebar-link">知识库</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">工具</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">池管理</a>
+      <a href="context-preview.html" class="engram-sidebar-link">上下文预览</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">自学习</a>
+      <a href="inbox.html" class="engram-sidebar-link">收件箱</a>
+      <a href="wisdom.html" class="engram-sidebar-link">智慧指标</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Page header -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-6);">
+      <div>
+        <h1 style="font-size:24px; margin-bottom:var(--space-1);">项目总览</h1>
+        <p style="font-family:var(--font-heading); font-size:13px; color:var(--anth-text-secondary);">本机共 5 个已启用 engram 的项目</p>
+      </div>
+      <div style="display:flex; gap:var(--space-3);">
+        <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 16px;">批量同步所有池</button>
+      </div>
+    </div>
+
+    <!-- Selected project expanded view -->
+    <div class="engram-detail-panel" style="margin-bottom:var(--space-6); border:2px solid var(--anth-orange);">
+      <div style="display:flex; align-items:flex-start; gap:var(--space-5);">
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-4);">
+            <div class="engram-health engram-health--green" style="width:10px; height:10px;"></div>
+            <h2 style="font-size:20px; font-family:var(--font-mono); margin:0;">acme-checkout-service</h2>
+            <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">当前项目</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:var(--space-4); margin-bottom:var(--space-4);">
+            <div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">资产数</div>
+              <div style="font-family:var(--font-heading); font-size:24px; font-weight:700;">487</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">待处理提案</div>
+              <div style="font-family:var(--font-heading); font-size:24px; font-weight:700; color:var(--anth-orange);">2</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">收件箱未读</div>
+              <div style="font-family:var(--font-heading); font-size:24px; font-weight:700;">7</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">池数量</div>
+              <div style="font-family:var(--font-heading); font-size:24px; font-weight:700;">3</div>
+            </div>
+          </div>
+          <div style="font-family:var(--font-heading); font-size:12px; color:var(--anth-text-secondary);">
+            路径：<code>/Users/dev/projects/acme-checkout-service</code> &nbsp;·&nbsp; 最后活动：2 分钟前 &nbsp;·&nbsp; 智慧趋势：本月 +8%
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:var(--space-2); min-width:160px;">
+          <a href="dashboard.html" class="anth-button" style="font-size:13px; padding:8px 16px; text-align:center;">打开项目 →</a>
+          <button class="anth-button anth-button--ghost" style="font-size:12px; padding:6px 16px;">在终端中打开</button>
+          <button class="anth-button anth-button--ghost" style="font-size:12px; padding:6px 16px;">同步池</button>
+        </div>
+      </div>
+      <!-- Wisdom sparkline for selected project -->
+      <div style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--anth-light-gray);">
+        <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary); margin-bottom:var(--space-2);">智慧趋势 — 近 30 天</div>
+        <svg viewBox="0 0 600 40" width="100%" role="img" aria-label="当前项目智慧趋势图">
+          <polyline points="0,32 60,28 120,26 180,22 240,20 300,16 360,14 420,10 480,8 540,4 600,2"
+            fill="none" stroke="#d97757" stroke-width="2" stroke-linecap="round"/>
+          <polyline points="0,35 60,32 120,30 180,27 240,26 300,24 360,22 420,19 480,17 540,15 600,12"
+            fill="none" stroke="#6a9bcc" stroke-width="2" stroke-linecap="round" stroke-dasharray="4,3"/>
+        </svg>
+        <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary); margin-top:var(--space-1);">
+          — 工作流掌握度 &nbsp;&nbsp;&nbsp;-- 任务效率
+        </div>
+      </div>
+    </div>
+
+    <!-- Project grid -->
+    <div class="engram-section-head">
+      <span class="engram-section-title">全部项目</span>
+      <span class="anth-caption">点击选中 · 双击切换当前项目</span>
+    </div>
+    <div class="engram-project-grid">
+
+      <!-- acme-checkout (selected/active) -->
+      <div class="engram-project-card is-selected">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--green"></div>
+          <div class="engram-project-name" style="flex:1;">acme-checkout-service</div>
+          <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff; font-size:9px;">当前</span>
+        </div>
+        <div class="engram-project-meta">最后活动 2 分钟前</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>487 条资产</span>
+          <span style="color:var(--anth-orange);">2 个提案</span>
+          <span>3 个池</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="智慧折线图">
+          <polyline points="0,22 30,18 60,16 90,12 120,10 150,7 180,4"
+            fill="none" stroke="#d97757" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- acme-billing -->
+      <div class="engram-project-card">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--green"></div>
+          <div class="engram-project-name" style="flex:1;">acme-billing</div>
+        </div>
+        <div class="engram-project-meta">最后活动 4 小时前</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>312 条资产</span>
+          <span>0 个提案</span>
+          <span>2 个池</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="acme-billing 智慧折线图">
+          <polyline points="0,24 30,22 60,20 90,18 120,16 150,14 180,12"
+            fill="none" stroke="#6a9bcc" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- platform-infra -->
+      <div class="engram-project-card">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--yellow"></div>
+          <div class="engram-project-name" style="flex:1;">platform-infra</div>
+        </div>
+        <div class="engram-project-meta">最后活动 2 天前</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>178 条资产</span>
+          <span style="color:var(--anth-orange);">1 个提案</span>
+          <span>1 个池</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="platform-infra 智慧折线图">
+          <polyline points="0,18 30,20 60,22 90,18 120,20 150,19 180,17"
+            fill="none" stroke="#c9a227" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- example-cli-tool -->
+      <div class="engram-project-card">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--green"></div>
+          <div class="engram-project-name" style="flex:1;">example-cli-tool</div>
+        </div>
+        <div class="engram-project-meta">最后活动 1 天前</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>94 条资产</span>
+          <span>0 个提案</span>
+          <span>0 个池</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="example-cli-tool 智慧折线图">
+          <polyline points="0,20 30,18 60,16 90,14 120,13 150,11 180,9"
+            fill="none" stroke="#788c5d" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- acme-search-api -->
+      <div class="engram-project-card">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--red"></div>
+          <div class="engram-project-name" style="flex:1;">acme-search-api</div>
+        </div>
+        <div class="engram-project-meta">最后活动 3 周前</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>156 条资产</span>
+          <span style="color:var(--anth-danger);">4 个提案</span>
+          <span>1 个池</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="acme-search-api 智慧折线图">
+          <polyline points="0,10 30,12 60,14 90,16 120,18 150,20 180,24"
+            fill="none" stroke="#a14238" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- Switch project hint -->
+    <aside class="anth-admonition" style="margin-top:var(--space-4);">
+      <h5>切换项目</h5>
+      <p style="margin:0;">双击项目卡片可将其设为当前项目，后续所有 CLI 命令都将在该项目下执行。此操作会更新 <code>~/.engram/projects.toml</code>，并关闭当前项目的 SSE 连接。</p>
+    </aside>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 设计原型。真实实现在 M7。
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← 设计导航</a>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Context Preview — engram Web UI</title>
+  <link rel="stylesheet" href="../assets/fonts.css">
+  <link rel="stylesheet" href="../assets/anthropic.css">
+  <link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="graph.html">Graph</a>
+      <a href="inbox.html">Inbox</a>
+      <a href="context-preview.html" class="is-active" style="color:var(--anth-orange); font-weight:600;">Context Preview</a>
+      <a href="wisdom.html">Wisdom</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">Design Mockup</span>
+      <a href="zh/context-preview.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">中文</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← All pages</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="Page navigation">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Overview</div>
+      <a href="dashboard.html" class="engram-sidebar-link">Dashboard</a>
+      <a href="graph.html" class="engram-sidebar-link">Graph</a>
+      <a href="project-overview.html" class="engram-sidebar-link">Projects</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Assets</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">Memory</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">Workflows</a>
+      <a href="kb-article.html" class="engram-sidebar-link">Knowledge Base</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Tools</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">Pool Manager</a>
+      <a href="context-preview.html" class="engram-sidebar-link is-active">
+        Context Preview
+        <div class="engram-sidebar-dot" style="margin-left:auto;"></div>
+      </a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">Autolearn</a>
+      <a href="inbox.html" class="engram-sidebar-link">Inbox</a>
+      <a href="wisdom.html" class="engram-sidebar-link">Wisdom</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Page header -->
+    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-5);">
+      <div>
+        <h1 style="font-size:24px; margin-bottom:var(--space-1);">Context Preview</h1>
+        <p style="font-family:var(--font-heading); font-size:13px; color:var(--anth-text-secondary);">
+          Simulate exactly what the LLM will see before any LLM is invoked. The primary diagnostic page for the Relevance Gate.
+        </p>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:var(--space-3);">
+        <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 16px;">A/B compare</button>
+      </div>
+    </div>
+
+    <!-- Main split: left input (1/3), right output (2/3) -->
+    <div style="display:grid; grid-template-columns:1fr 2fr; gap:var(--space-5); align-items:start;">
+
+      <!-- Left: input panel -->
+      <div class="engram-input-panel">
+        <h3 style="font-family:var(--font-heading); font-size:15px; margin-bottom:var(--space-4);">Task description</h3>
+
+        <label>
+          <span class="anth-label">What are we doing today?</span>
+          <textarea class="anth-textarea" rows="5" style="font-size:14px; line-height:1.6;">Review and merge PR #448: add retry logic to payment provider calls in acme-checkout-service</textarea>
+        </label>
+
+        <!-- Token budget slider -->
+        <div class="engram-slider-wrap" style="margin-top:var(--space-4);">
+          <div class="engram-slider-label">
+            <span>Token budget</span>
+            <strong style="color:var(--anth-orange);">4,000 tokens</strong>
+          </div>
+          <input type="range" min="500" max="32000" value="4000" step="100"
+            style="width:100%; accent-color:var(--anth-orange);">
+          <div style="display:flex; justify-content:space-between; font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary); margin-top:var(--space-1);">
+            <span>500</span><span>32 000</span>
+          </div>
+        </div>
+
+        <!-- Model selector -->
+        <label style="margin-top:var(--space-4); display:block;">
+          <span class="anth-label">Model profile</span>
+          <select class="anth-select" style="font-size:13px;">
+            <option>Claude Opus 4 (200K context)</option>
+            <option selected>Claude Sonnet 4 (200K context)</option>
+            <option>Claude Haiku 4.5 (200K context)</option>
+            <option>Local Qwen 2.5-32B (128K)</option>
+            <option>GPT-4o (128K context)</option>
+            <option>Gemini 2.5 Pro (1M context)</option>
+          </select>
+        </label>
+
+        <!-- Scope filter -->
+        <div style="margin-top:var(--space-4);">
+          <span class="anth-label" style="display:block; margin-bottom:var(--space-2);">Include scopes</span>
+          <div class="engram-scope-checks">
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox" checked> project
+            </label>
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox" checked> user
+            </label>
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox" checked> team
+            </label>
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox"> org
+            </label>
+            <label style="font-family:var(--font-heading); font-size:13px; display:flex; align-items:center; gap:var(--space-2);">
+              <input class="anth-checkbox" type="checkbox" checked> pool
+            </label>
+          </div>
+        </div>
+
+        <button class="anth-button" style="width:100%; margin-top:var(--space-5); font-size:14px; padding:12px;">
+          Run preview
+        </button>
+
+        <!-- Stats summary after run -->
+        <div style="margin-top:var(--space-4); padding:var(--space-3); background:var(--anth-bg-subtle); border-radius:var(--radius-sm);">
+          <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary); margin-bottom:var(--space-2);">LAST RUN — 2.3 s</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-2);">
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">Candidates scored</div>
+              <div style="font-family:var(--font-heading); font-size:18px; font-weight:700;">62</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">Included</div>
+              <div style="font-family:var(--font-heading); font-size:18px; font-weight:700; color:var(--anth-green);">14</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">Excluded</div>
+              <div style="font-family:var(--font-heading); font-size:18px; font-weight:700; color:var(--anth-mid-gray);">48</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">Tokens used</div>
+              <div style="font-family:var(--font-heading); font-size:18px; font-weight:700;">3,847</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: output panel -->
+      <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+
+        <!-- Packed prompt preview -->
+        <div class="engram-detail-panel">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+            <h3 style="font-size:15px; font-family:var(--font-heading); margin:0;">Packed prompt preview</h3>
+            <div style="display:flex; gap:var(--space-2);">
+              <span class="anth-badge">3,847 / 4,000 tokens</span>
+              <button class="anth-button" style="font-size:12px; padding:6px 14px;">Copy packed prompt</button>
+            </div>
+          </div>
+          <div class="engram-packed-prompt"># ENGRAM CONTEXT PACK
+# Task: Review and merge PR #448: add retry logic to payment provider calls in acme-checkout-service
+# Model: Claude Sonnet 4 · Budget: 4000 tokens · Packed: 3847 tokens
+# Scopes: project, user, team, pool
+# Generated: 2026-04-18T14:32:01Z
+# Assets included: 14 of 62 candidates
+
+---
+## [MEMORY:project/feedback_push_confirm] [score:0.87] [tokens:210]
+id: feedback_push_confirm
+subtype: user, enforcement: default
+
+Always ask for explicit confirmation before running `git push` or any command
+that writes to a remote. This preference applies to all branches.
+
+---
+## [MEMORY:project/payment_provider_retry_policy] [score:0.96] [tokens:340]
+id: payment_provider_retry_policy
+subtype: feedback, enforcement: mandatory
+
+Payment provider calls must use exponential backoff with jitter.
+Max retries: 3. Base delay: 200ms. Max delay: 5s.
+Idempotency keys required for all POST requests.
+
+---
+## [MEMORY:project/pr_review_checklist] [score:0.91] [tokens:285]
+id: pr_review_checklist
+subtype: feedback, enforcement: default
+
+Code review checklist:
+1. Tests added for new code paths
+2. Error handling covers timeout and 5xx responses
+3. No hardcoded credentials or URLs
+4. Circuit breaker configured if calling external APIs
+5. Metrics instrumentation for new service calls
+
+---
+## [MEMORY:team/api_versioning_policy] [score:0.79] [tokens:198]
+id: api_versioning_policy
+subtype: feedback, enforcement: mandatory, scope: team
+
+All external API clients must pin to a specific API version.
+Breaking changes to the payment provider API require a separate PR.
+
+---
+## [MEMORY:project/sprint_context_2026q2] [score:0.74] [tokens:420]
+id: sprint_context_2026q2
+subtype: project, enforcement: hint
+
+Sprint goal Q2 2026: Improve payment reliability to 99.95% success rate.
+Current: 99.87%. Root cause: transient network errors not retried.
+PR #448 is the primary deliverable for this sprint.
+
+---
+## [WORKFLOW_PTR:release-checklist] [score:0.71] [tokens:95]
+...
+# [8 more assets follow — 2,299 tokens remaining shown below]
+# BOUNDARY ↑ included / excluded ↓ (budget exhausted)
+</div>
+        </div>
+
+        <!-- Candidate ranking table -->
+        <div class="engram-detail-panel">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+            <h3 style="font-size:15px; font-family:var(--font-heading); margin:0;">Relevance Gate — candidate ranking</h3>
+            <span class="anth-caption">62 scored · cutoff at rank 14</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="engram-candidate-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Asset ID</th>
+                  <th>Subtype</th>
+                  <th>Scope</th>
+                  <th>Score</th>
+                  <th>Tokens</th>
+                  <th>Cumul.</th>
+                  <th>Inclusion reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>1</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">payment_provider_retry_policy</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>project</td>
+                  <td><strong style="color:var(--anth-green);">0.96</strong></td>
+                  <td>340</td>
+                  <td>340</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">keyword match: "payment provider", "retry"</td>
+                </tr>
+                <tr>
+                  <td><strong>2</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">pr_review_checklist</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>project</td>
+                  <td><strong style="color:var(--anth-green);">0.91</strong></td>
+                  <td>285</td>
+                  <td>625</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">keyword match: "PR", "review"; mandatory tag</td>
+                </tr>
+                <tr>
+                  <td><strong>3</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">feedback_push_confirm</td>
+                  <td><span class="anth-badge">user</span></td>
+                  <td>project</td>
+                  <td><strong style="color:var(--anth-green);">0.87</strong></td>
+                  <td>210</td>
+                  <td>835</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">high usage_count (34); always included for git ops</td>
+                </tr>
+                <tr>
+                  <td><strong>4</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">circuit_breaker_config</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>project</td>
+                  <td><strong>0.85</strong></td>
+                  <td>188</td>
+                  <td>1,023</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">keyword match: "circuit breaker"; related to retry</td>
+                </tr>
+                <tr>
+                  <td><strong>5</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">checkout_service_sla</td>
+                  <td><span class="anth-badge">reference</span></td>
+                  <td>project</td>
+                  <td><strong>0.82</strong></td>
+                  <td>165</td>
+                  <td>1,188</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">inbound ref from payment_provider_retry_policy</td>
+                </tr>
+                <tr>
+                  <td><strong>6</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">api_versioning_policy</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>team</td>
+                  <td><strong>0.79</strong></td>
+                  <td>198</td>
+                  <td>1,386</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">mandatory team rule; external API involved</td>
+                </tr>
+                <tr>
+                  <td><strong>7</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">sprint_context_2026q2</td>
+                  <td><span class="anth-badge">project</span></td>
+                  <td>project</td>
+                  <td><strong>0.74</strong></td>
+                  <td>420</td>
+                  <td>1,806</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">keyword match: "payment reliability", "PR #448"</td>
+                </tr>
+                <tr>
+                  <td><strong>8</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">release-checklist (ptr)</td>
+                  <td><span class="anth-badge">workflow_ptr</span></td>
+                  <td>project</td>
+                  <td><strong>0.71</strong></td>
+                  <td>95</td>
+                  <td>1,901</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">workflow_ptr always included when scope=project</td>
+                </tr>
+                <tr>
+                  <td><strong>9</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">idempotency_key_spec</td>
+                  <td><span class="anth-badge">reference</span></td>
+                  <td>pool</td>
+                  <td><strong>0.68</strong></td>
+                  <td>240</td>
+                  <td>2,141</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">keyword match: "idempotency"; from compliance-checklists pool</td>
+                </tr>
+                <tr>
+                  <td><strong>10</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">error_handling_guide</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>team</td>
+                  <td><strong>0.65</strong></td>
+                  <td>312</td>
+                  <td>2,453</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">semantic similarity: error handling patterns</td>
+                </tr>
+                <tr>
+                  <td><strong>11</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">payment_provider_docs_ptr</td>
+                  <td><span class="anth-badge">reference</span></td>
+                  <td>project</td>
+                  <td><strong>0.62</strong></td>
+                  <td>88</td>
+                  <td>2,541</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">inbound ref from payment_provider_retry_policy</td>
+                </tr>
+                <tr>
+                  <td><strong>12</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">testing_conventions</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>project</td>
+                  <td><strong>0.60</strong></td>
+                  <td>265</td>
+                  <td>2,806</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">PR review checklist co-loaded 88% of sessions</td>
+                </tr>
+                <tr>
+                  <td><strong>13</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">observability_standards</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>team</td>
+                  <td><strong>0.58</strong></td>
+                  <td>580</td>
+                  <td>3,386</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">metrics mentioned in checklist; fits remaining budget</td>
+                </tr>
+                <tr>
+                  <td><strong>14</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">user_profile_sky</td>
+                  <td><span class="anth-badge">user</span></td>
+                  <td>user</td>
+                  <td><strong>0.55</strong></td>
+                  <td>461</td>
+                  <td>3,847</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">user profile always in tail if budget allows</td>
+                </tr>
+                <!-- Budget boundary -->
+                <tr class="is-boundary is-excluded">
+                  <td colspan="8" style="padding:var(--space-2) var(--space-3); font-family:var(--font-heading); font-size:11px; color:var(--anth-orange); background:rgba(217,119,87,0.06);">
+                    ↑ Included (3,847 tokens) &nbsp;·&nbsp; Budget exhausted — 48 candidates below this line were scored but excluded
+                  </td>
+                </tr>
+                <tr class="is-excluded">
+                  <td><strong>15</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">staging_environment_ref</td>
+                  <td><span class="anth-badge">reference</span></td>
+                  <td>project</td>
+                  <td>0.52</td>
+                  <td>320</td>
+                  <td>—</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">budget exhausted</td>
+                </tr>
+                <tr class="is-excluded">
+                  <td><strong>16</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">old_deploy_runbook</td>
+                  <td><span class="anth-badge">project</span></td>
+                  <td>project</td>
+                  <td>0.48</td>
+                  <td>890</td>
+                  <td>—</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">budget exhausted</td>
+                </tr>
+                <tr class="is-excluded">
+                  <td><strong>17</strong></td>
+                  <td style="font-family:var(--font-mono); font-size:11px;">frontend_styling_guide</td>
+                  <td><span class="anth-badge">feedback</span></td>
+                  <td>team</td>
+                  <td>0.11</td>
+                  <td>210</td>
+                  <td>—</td>
+                  <td style="font-size:11px; color:var(--anth-text-secondary);">score below 0.15 threshold; unrelated to task</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bottom action bar -->
+        <div style="display:flex; align-items:center; gap:var(--space-3);">
+          <button class="anth-button" style="font-size:13px; padding:10px 24px;">Copy packed prompt</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:10px 20px;">A/B compare</button>
+          <span class="anth-caption" style="margin-left:auto;">
+            Relevance Gate run in 2.3 s · 62 assets scored · debounced 500 ms per keystroke
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 design mockup. Real implementation in M7.
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← Design hub</a>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autolearn Console — engram Web UI</title>
+  <link rel="stylesheet" href="../assets/fonts.css">
+  <link rel="stylesheet" href="../assets/anthropic.css">
+  <link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="graph.html">Graph</a>
+      <a href="inbox.html">Inbox</a>
+      <a href="context-preview.html">Context Preview</a>
+      <a href="wisdom.html">Wisdom</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">Design Mockup</span>
+      <a href="zh/autolearn-console.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">中文</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← All pages</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="Page navigation">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Overview</div>
+      <a href="dashboard.html" class="engram-sidebar-link">Dashboard</a>
+      <a href="graph.html" class="engram-sidebar-link">Graph</a>
+      <a href="project-overview.html" class="engram-sidebar-link">Projects</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Assets</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">Memory</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">Workflows</a>
+      <a href="kb-article.html" class="engram-sidebar-link">Knowledge Base</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Tools</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">Pool Manager</a>
+      <a href="context-preview.html" class="engram-sidebar-link">Context Preview</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link is-active">Autolearn</a>
+      <a href="inbox.html" class="engram-sidebar-link">Inbox</a>
+      <a href="wisdom.html" class="engram-sidebar-link">Wisdom</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Page header + workflow selector -->
+    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-5);">
+      <div style="flex:1;">
+        <h1 style="font-size:24px; margin-bottom:var(--space-3);">Autolearn Console</h1>
+        <div style="display:flex; align-items:center; gap:var(--space-3);">
+          <label>
+            <span class="anth-label" style="display:inline; margin-right:var(--space-2);">Workflow:</span>
+            <select class="anth-select" style="font-size:13px; width:220px;">
+              <option selected>release-checklist</option>
+              <option>deploy-pipeline</option>
+              <option>incident-response</option>
+              <option>code-review-flow</option>
+            </select>
+          </label>
+          <span class="engram-status engram-status--running">Running round 9/10</span>
+          <span class="anth-caption">Started 4 min ago · ETA ~6 min</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:var(--space-3);">
+        <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 16px;">Pause</button>
+        <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 16px; color:var(--anth-danger);">Abort</button>
+        <button class="anth-button" style="font-size:13px; padding:8px 20px;">+ Start new run</button>
+      </div>
+    </div>
+
+    <!-- Main: evolution table + diff viewer -->
+    <div class="engram-split engram-split--2-1" style="align-items:start;">
+
+      <!-- Left: evolution table + metric chart -->
+      <div>
+
+        <!-- evolution.tsv tail -->
+        <div class="engram-section-head">
+          <span class="engram-section-title">evolution.tsv — last 20 rounds</span>
+          <span class="anth-caption">Live tail · auto-refreshes via SSE</span>
+        </div>
+        <div style="background:#ffffff; border-radius:var(--radius-md); box-shadow:var(--shadow-card); overflow:hidden; margin-bottom:var(--space-5);">
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-family:var(--font-heading); font-size:11px;">
+              <thead>
+                <tr style="background:var(--anth-bg-subtle);">
+                  <th style="padding:var(--space-2) var(--space-3); text-align:left; font-weight:600; color:var(--anth-text-secondary); border-bottom:1px solid var(--anth-light-gray);">round</th>
+                  <th style="padding:var(--space-2) var(--space-3); text-align:left; font-weight:600; color:var(--anth-text-secondary); border-bottom:1px solid var(--anth-light-gray);">timestamp</th>
+                  <th style="padding:var(--space-2) var(--space-3); text-align:left; font-weight:600; color:var(--anth-text-secondary); border-bottom:1px solid var(--anth-light-gray);">pass_rate</th>
+                  <th style="padding:var(--space-2) var(--space-3); text-align:left; font-weight:600; color:var(--anth-text-secondary); border-bottom:1px solid var(--anth-light-gray);">Δ pass_rate</th>
+                  <th style="padding:var(--space-2) var(--space-3); text-align:left; font-weight:600; color:var(--anth-text-secondary); border-bottom:1px solid var(--anth-light-gray);">static_score</th>
+                  <th style="padding:var(--space-2) var(--space-3); text-align:left; font-weight:600; color:var(--anth-text-secondary); border-bottom:1px solid var(--anth-light-gray);">proposer</th>
+                  <th style="padding:var(--space-2) var(--space-3); text-align:left; font-weight:600; color:var(--anth-text-secondary); border-bottom:1px solid var(--anth-light-gray);">judge</th>
+                  <th style="padding:var(--space-2) var(--space-3); text-align:left; font-weight:600; color:var(--anth-text-secondary); border-bottom:1px solid var(--anth-light-gray);">outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows newest first -->
+                <tr style="background:rgba(106,155,204,0.06);">
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-weight:600; color:var(--anth-blue);">r9 ←</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-text-secondary);">14:34:07</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">—</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-text-secondary);">running…</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">—</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">opus-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">sonnet-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">
+                    <span class="engram-status engram-status--running">running</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-weight:600;">r8</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-text-secondary);">14:28:44</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">0.940</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-green); font-weight:600;">+0.030</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">58/60</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">opus-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">sonnet-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">
+                    <span class="engram-status engram-status--ok">accepted</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-weight:600;">r7</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-text-secondary);">14:22:11</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">0.910</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-green); font-weight:600;">+0.030</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">57/60</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">sonnet-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">sonnet-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">
+                    <span class="engram-status engram-status--ok">accepted</span>
+                  </td>
+                </tr>
+                <tr style="opacity:0.7;">
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-weight:600;">r6</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-text-secondary);">14:15:03</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">0.840</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-danger); font-weight:600;">-0.040</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">53/60</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">opus-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">haiku-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">
+                    <span class="engram-status engram-status--err">rejected</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-weight:600;">r5</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-text-secondary);">14:08:32</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">0.880</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-green); font-weight:600;">+0.030</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">56/60</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">sonnet-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">opus-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">
+                    <span class="engram-status engram-status--ok">accepted ★ phase gate</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-weight:600;">r4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-text-secondary);">2026-04-17</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">0.850</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-green);">+0.040</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">55/60</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">opus-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">sonnet-4</td>
+                  <td><span class="engram-status engram-status--ok">accepted</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">r3</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-text-secondary);">2026-04-16</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">0.810</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-green);">+0.040</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">54/60</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">sonnet-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">opus-4</td>
+                  <td><span class="engram-status engram-status--ok">accepted</span></td>
+                </tr>
+                <tr style="opacity:0.7;">
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">r2</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); color:var(--anth-text-secondary);">2026-04-15</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">—</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">parse error</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray);">41/60</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">opus-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--anth-light-gray); font-family:var(--font-mono);">sonnet-4</td>
+                  <td><span class="engram-status engram-status--err">rejected</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:var(--space-2) var(--space-3);">r1</td>
+                  <td style="padding:var(--space-2) var(--space-3); color:var(--anth-text-secondary);">2026-04-14</td>
+                  <td style="padding:var(--space-2) var(--space-3);">0.740</td>
+                  <td style="padding:var(--space-2) var(--space-3); color:var(--anth-text-secondary);">baseline</td>
+                  <td style="padding:var(--space-2) var(--space-3);">49/60</td>
+                  <td style="padding:var(--space-2) var(--space-3); font-family:var(--font-mono);">sonnet-4</td>
+                  <td style="padding:var(--space-2) var(--space-3); font-family:var(--font-mono);">sonnet-4</td>
+                  <td><span class="engram-status engram-status--ok">accepted</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Metric trend chart -->
+        <div class="engram-chart-wrap">
+          <div class="engram-chart-header">
+            <div class="engram-chart-title">pass_rate trend — all rounds</div>
+            <span class="anth-caption">Ratchet: scores monotonically increase</span>
+          </div>
+          <svg viewBox="0 0 480 140" width="100%" role="img" aria-label="Pass rate trend chart for all autolearn rounds">
+            <!-- Axes -->
+            <line x1="45" y1="10" x2="45" y2="115" stroke="#e8e6dc" stroke-width="1"/>
+            <line x1="45" y1="115" x2="470" y2="115" stroke="#e8e6dc" stroke-width="1"/>
+            <!-- Y labels -->
+            <text x="38" y="118" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.7</text>
+            <text x="38" y="85" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.8</text>
+            <text x="38" y="52" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.9</text>
+            <text x="38" y="19" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">1.0</text>
+            <line x1="43" y1="85" x2="470" y2="85" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <line x1="43" y1="52" x2="470" y2="52" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <!-- X labels -->
+            <g font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5" text-anchor="middle">
+              <text x="90"  y="128">r1</text>
+              <text x="138" y="128">r2</text>
+              <text x="186" y="128">r3</text>
+              <text x="234" y="128">r4</text>
+              <text x="282" y="128">r5</text>
+              <text x="330" y="128">r6</text>
+              <text x="378" y="128">r7</text>
+              <text x="426" y="128">r8</text>
+            </g>
+            <!-- Rejected rounds (grayed) -->
+            <rect x="318" y="10" width="24" height="105" fill="rgba(161,66,56,0.06)" rx="2"/>
+            <rect x="126" y="10" width="24" height="105" fill="rgba(161,66,56,0.06)" rx="2"/>
+            <!-- pass_rate line (accepted only) -->
+            <polyline points="90,97 186,90 234,81 282,74 378,65 426,44"
+              fill="none" stroke="#d97757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- rejected points -->
+            <circle cx="138" cy="104" r="4" fill="none" stroke="#a14238" stroke-width="1.5"/>
+            <circle cx="330" cy="106" r="4" fill="none" stroke="#a14238" stroke-width="1.5"/>
+            <!-- accepted points -->
+            <g fill="#d97757">
+              <circle cx="90"  cy="97" r="3"/>
+              <circle cx="186" cy="90" r="3"/>
+              <circle cx="234" cy="81" r="3"/>
+              <circle cx="282" cy="74" r="3"/>
+              <circle cx="378" cy="65" r="3"/>
+              <circle cx="426" cy="44" r="4"/>
+            </g>
+            <!-- running indicator -->
+            <circle cx="470" cy="36" r="5" fill="#6a9bcc" opacity="0.6"/>
+            <text x="470" y="28" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="#6a9bcc">r9…</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Right: current round diff viewer -->
+      <div>
+        <div class="engram-detail-panel">
+          <h4 style="font-family:var(--font-heading); font-size:14px; margin-bottom:var(--space-3);">Round 9 — proposed change</h4>
+          <div style="display:flex; gap:var(--space-2); margin-bottom:var(--space-3);">
+            <span class="anth-badge">spine.py</span>
+            <span class="anth-caption">Proposer: claude-opus-4</span>
+          </div>
+          <div class="engram-diff">
+<span class="engram-diff-ctx">@@ -28,10 +28,14 @@</span>
+<span class="engram-diff-ctx">def validate_release_tag(tag: str) -> bool:</span>
+<span class="engram-diff-ctx">    """Validate semver release tag format."""</span>
+<span class="engram-diff-del">-    pattern = r"^v\d+\.\d+\.\d+$"</span>
+<span class="engram-diff-add">+    pattern = r"^v\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$"</span>
+<span class="engram-diff-add">+    # Allow pre-release suffixes: v1.2.3-rc1, v1.2.3-beta</span>
+<span class="engram-diff-ctx">    return bool(re.match(pattern, tag))</span>
+<span class="engram-diff-ctx"> </span>
+<span class="engram-diff-ctx">def get_release_notes(version: str) -> str:</span>
+<span class="engram-diff-del">-    path = f"CHANGELOG.md"</span>
+<span class="engram-diff-add">+    path = Path("CHANGELOG.md")</span>
+<span class="engram-diff-add">+    if not path.exists():</span>
+<span class="engram-diff-add">+        raise FileNotFoundError(f"CHANGELOG.md not found in {Path.cwd()}")</span>
+<span class="engram-diff-ctx">    return path.read_text(encoding="utf-8")</span></div>
+
+          <div style="margin-top:var(--space-4);">
+            <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary); margin-bottom:var(--space-2);">
+              Fixture: <code>test_prerelease_tag_accepted</code> was previously failing — this change fixes it.
+            </div>
+          </div>
+
+          <div style="display:flex; gap:var(--space-2); margin-top:var(--space-4);">
+            <button class="anth-button" style="font-size:12px; padding:6px 16px; flex:1;">Accept now</button>
+            <button class="anth-button anth-button--ghost" style="font-size:12px; padding:6px 16px; flex:1; color:var(--anth-danger);">Reject</button>
+          </div>
+        </div>
+
+        <!-- Live log tail -->
+        <div class="engram-detail-panel" style="margin-top:var(--space-4);">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+            <h4 style="font-family:var(--font-heading); font-size:14px; margin:0;">Live log</h4>
+            <span class="engram-status engram-status--running" style="font-size:10px;">streaming</span>
+          </div>
+          <div style="background:var(--anth-bg-subtle); border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:11px; line-height:1.8; padding:var(--space-3); max-height:220px; overflow-y:auto; color:var(--anth-text);">
+            <div style="color:var(--anth-text-secondary);">[14:34:07] Autolearn round 9 started</div>
+            <div style="color:var(--anth-text-secondary);">[14:34:08] Loading workflow: release-checklist</div>
+            <div style="color:var(--anth-text-secondary);">[14:34:08] Loading fixtures: 14 test cases</div>
+            <div style="color:var(--anth-text-secondary);">[14:34:09] Proposer model: claude-opus-4</div>
+            <div>[14:34:12] Proposer generated diff (18 lines)</div>
+            <div>[14:34:12] Running static checks…</div>
+            <div style="color:var(--anth-green);">[14:34:13] Static check passed: parseable ✓</div>
+            <div style="color:var(--anth-green);">[14:34:13] Static check passed: no secrets ✓</div>
+            <div style="color:var(--anth-green);">[14:34:13] Static check passed: SPEC compliance ✓</div>
+            <div>[14:34:14] Running fixture suite (14 tests)…</div>
+            <div style="color:var(--anth-green);">[14:34:18] fixture 1/14: test_happy_path … PASS</div>
+            <div style="color:var(--anth-green);">[14:34:20] fixture 2/14: test_staging_smoke … PASS</div>
+            <div style="color:var(--anth-green);">[14:34:22] fixture 3/14: test_prerelease_tag_accepted … PASS ← was FAIL in r8</div>
+            <div style="color:var(--anth-green);">[14:34:24] fixture 4/14: test_missing_changelog … PASS ← was FAIL in r8</div>
+            <div style="color:var(--anth-text-secondary);">[14:34:26] fixture 5/14: test_rollback_procedure … running…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 design mockup. Real implementation in M7.
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← Design hub</a>
+</footer>
+
+</body>
+</html>

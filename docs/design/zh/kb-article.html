@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>知识文章 — engram Web UI</title>
+  <link rel="stylesheet" href="../../assets/fonts.css">
+  <link rel="stylesheet" href="../../assets/anthropic.css">
+  <link rel="stylesheet" href="../../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">总览面板</a>
+      <a href="graph.html">知识图谱</a>
+      <a href="inbox.html">收件箱</a>
+      <a href="context-preview.html">上下文预览</a>
+      <a href="wisdom.html">智慧指标</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">设计原型</span>
+      <a href="../kb-article.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">English</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← 全部页面</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="页面导航">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">概览</div>
+      <a href="dashboard.html" class="engram-sidebar-link">总览面板</a>
+      <a href="graph.html" class="engram-sidebar-link">知识图谱</a>
+      <a href="project-overview.html" class="engram-sidebar-link">项目总览</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">资产</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">记忆</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">工作流</a>
+      <a href="kb-article.html" class="engram-sidebar-link is-active">知识库</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">工具</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">池管理</a>
+      <a href="context-preview.html" class="engram-sidebar-link">上下文预览</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">自学习</a>
+      <a href="inbox.html" class="engram-sidebar-link">收件箱</a>
+      <a href="wisdom.html" class="engram-sidebar-link">智慧指标</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Breadcrumb + tabs -->
+    <div class="engram-breadcrumb">
+      <a href="dashboard.html">总览面板</a>
+      <span class="engram-breadcrumb-sep">›</span>
+      <a href="#">知识库</a>
+      <span class="engram-breadcrumb-sep">›</span>
+      <span style="color:var(--anth-text); font-weight:500;">acme-checkout-architecture</span>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-4);">
+      <h1 style="font-size:22px;">acme-checkout-architecture</h1>
+      <div style="display:flex; align-items:center; gap:var(--space-3);">
+        <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12;">摘要已过期 — 3 天</span>
+        <button class="anth-button" style="font-size:13px; padding:8px 18px;">重新生成编译摘要</button>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-4);">
+      <div class="anth-tabs" role="tablist">
+        <button class="anth-tab is-active" role="tab">源文</button>
+        <button class="anth-tab" role="tab">编译摘要</button>
+      </div>
+      <span class="anth-caption" style="margin-left:auto;">12 章 · 18,400 字 · 最后更新 2026-04-15</span>
+    </div>
+
+    <!-- 3-column layout -->
+    <div class="engram-split engram-split--3" style="align-items:start;">
+
+      <!-- TOC sidebar -->
+      <div>
+        <div class="engram-detail-panel" style="padding:var(--space-4);">
+          <div style="font-family:var(--font-heading); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--anth-text-secondary); margin-bottom:var(--space-3);">目录</div>
+          <nav class="engram-toc" aria-label="文章章节">
+            <a href="#overview" class="is-active">1. 概述</a>
+            <a href="#services">2. 核心服务</a>
+            <a href="#data-flow">3. 数据流</a>
+            <a href="#payment">4. 支付处理</a>
+            <a href="#fraud">5. 欺诈检测</a>
+            <a href="#inventory">6. 库存同步</a>
+            <a href="#notifications">7. 通知</a>
+            <a href="#api">8. 外部 API</a>
+            <a href="#observability">9. 可观测性</a>
+            <a href="#deployment">10. 部署</a>
+            <a href="#runbooks">11. 运维手册</a>
+            <a href="#appendix">12. 附录</a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Article content -->
+      <div>
+        <div style="font-family:var(--font-body); font-size:16px; line-height:1.75; color:var(--anth-text);">
+          <h2 id="overview" style="font-family:var(--font-heading); font-size:20px; margin-top:0; margin-bottom:var(--space-4);">1. 概述</h2>
+          <p>acme-checkout-service 负责处理 Acme 平台的所有购买流程：购物车管理、支付处理、库存预留、收据发送和订单确认。峰值时每小时处理约 4,200 笔交易。</p>
+
+          <p>该服务是一个 Python FastAPI 应用，以 3 个副本的形式部署在 Nginx 入口后。服务本身不存储持久状态 — 所有状态存放在 PostgreSQL（订单）、Redis（购物车会话）和支付方账本中。</p>
+
+          <figure style="margin:var(--space-5) 0;">
+            <svg viewBox="0 0 560 200" width="100%" role="img" aria-label="结账服务架构图，展示 Web 前端、结账服务、支付方、库存服务和通知服务">
+              <!-- Background -->
+              <rect width="560" height="200" rx="8" fill="#f0ede3"/>
+
+              <!-- Web frontend -->
+              <rect x="20" y="70" width="90" height="60" rx="8" fill="#6a9bcc"/>
+              <text x="65" y="96" text-anchor="middle" font-family="Poppins, sans-serif" font-size="10" font-weight="600" fill="#ffffff">Web</text>
+              <text x="65" y="110" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="#ffffff">Frontend</text>
+
+              <!-- Arrow right -->
+              <line x1="112" y1="100" x2="148" y2="100" stroke="#b0aea5" stroke-width="1.5" marker-end="url(#arr)"/>
+              <defs>
+                <marker id="arr" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="#b0aea5"/>
+                </marker>
+              </defs>
+
+              <!-- Checkout service (center) -->
+              <rect x="150" y="60" width="110" height="80" rx="8" fill="#d97757"/>
+              <text x="205" y="96" text-anchor="middle" font-family="Poppins, sans-serif" font-size="10" font-weight="600" fill="#ffffff">Checkout</text>
+              <text x="205" y="110" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="#ffffff">Service</text>
+              <text x="205" y="123" text-anchor="middle" font-family="Poppins, sans-serif" font-size="8" fill="rgba(255,255,255,0.8)">FastAPI · 3 副本</text>
+
+              <!-- Arrow to payment -->
+              <line x1="262" y1="85" x2="298" y2="75" stroke="#b0aea5" stroke-width="1.5" marker-end="url(#arr)"/>
+              <!-- Arrow to inventory -->
+              <line x1="262" y1="100" x2="298" y2="100" stroke="#b0aea5" stroke-width="1.5" marker-end="url(#arr)"/>
+              <!-- Arrow to notifications -->
+              <line x1="262" y1="115" x2="298" y2="125" stroke="#b0aea5" stroke-width="1.5" marker-end="url(#arr)"/>
+
+              <!-- Payment provider -->
+              <rect x="300" y="40" width="100" height="50" rx="8" fill="#788c5d"/>
+              <text x="350" y="62" text-anchor="middle" font-family="Poppins, sans-serif" font-size="10" font-weight="600" fill="#ffffff">支付方</text>
+              <text x="350" y="76" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="#ffffff">Payment Provider</text>
+
+              <!-- Inventory -->
+              <rect x="300" y="80" width="100" height="40" rx="8" fill="#6a9bcc" opacity="0.8"/>
+              <text x="350" y="100" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" font-weight="600" fill="#ffffff">库存</text>
+              <text x="350" y="112" text-anchor="middle" font-family="Poppins, sans-serif" font-size="8" fill="#ffffff">Inventory Service</text>
+
+              <!-- Notifications -->
+              <rect x="300" y="110" width="100" height="40" rx="8" fill="#b0aea5"/>
+              <text x="350" y="130" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" font-weight="600" fill="#ffffff">通知</text>
+              <text x="350" y="142" text-anchor="middle" font-family="Poppins, sans-serif" font-size="8" fill="#ffffff">邮件 · 短信</text>
+
+              <!-- Databases -->
+              <rect x="420" y="60" width="80" height="36" rx="6" fill="#ffffff" stroke="#e8e6dc" stroke-width="1"/>
+              <text x="460" y="76" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="#141413">PostgreSQL</text>
+              <text x="460" y="88" text-anchor="middle" font-family="Poppins, sans-serif" font-size="8" fill="#6b6a5f">订单</text>
+              <rect x="420" y="104" width="80" height="36" rx="6" fill="#ffffff" stroke="#e8e6dc" stroke-width="1"/>
+              <text x="460" y="120" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="#141413">Redis</text>
+              <text x="460" y="132" text-anchor="middle" font-family="Poppins, sans-serif" font-size="8" fill="#6b6a5f">购物车会话</text>
+
+              <line x1="402" y1="100" x2="418" y2="80" stroke="#e8e6dc" stroke-width="1" stroke-dasharray="3,3"/>
+              <line x1="402" y1="100" x2="418" y2="120" stroke="#e8e6dc" stroke-width="1" stroke-dasharray="3,3"/>
+            </svg>
+            <figcaption class="anth-caption" style="text-align:center; margin-top:var(--space-2);">图 1. 服务整体拓扑。</figcaption>
+          </figure>
+
+          <h2 id="services" style="font-family:var(--font-heading); font-size:20px; margin-top:var(--space-6); margin-bottom:var(--space-4);">2. 核心服务</h2>
+
+          <p>结账服务协调 4 个下游系统。每次调用都套用了熔断器，配置为 2 秒超时和 3 次重试。</p>
+
+          <table class="anth-table" style="margin-top:var(--space-4);">
+            <thead>
+              <tr>
+                <th>服务</th>
+                <th>协议</th>
+                <th>SLA</th>
+                <th>降级策略</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>payment-provider</code></td>
+                <td>HTTPS REST</td>
+                <td>99.95%</td>
+                <td>入队重试</td>
+              </tr>
+              <tr>
+                <td><code>inventory-svc</code></td>
+                <td>gRPC</td>
+                <td>99.9%</td>
+                <td>软预留</td>
+              </tr>
+              <tr>
+                <td><code>notifications-svc</code></td>
+                <td>AMQP（异步）</td>
+                <td>99.5%</td>
+                <td>记录日志并在下一小时重试</td>
+              </tr>
+              <tr>
+                <td><code>fraud-svc</code></td>
+                <td>HTTPS REST</td>
+                <td>99.9%</td>
+                <td>转人工审核队列</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2 id="data-flow" style="font-family:var(--font-heading); font-size:20px; margin-top:var(--space-6); margin-bottom:var(--space-4);">3. 数据流</h2>
+
+          <p>一次结账请求经历 5 个阶段：购物车校验 → 欺诈检测 → 支付授权 → 库存预留 → 确认通知。每个阶段在调用下一个服务之前，都会向 <code>orders</code> 表写入一条结构化事件。</p>
+
+          <aside class="anth-admonition">
+            <h5>说明</h5>
+            <p style="margin:0;">从用户角度看，第 3 阶段和第 4 阶段是原子操作，但在系统层面并非如此 — 支付可能成功而库存预留失败。Saga 模式负责处理回滚；恢复步骤详见第 11 章运维手册。</p>
+          </aside>
+        </div>
+      </div>
+
+      <!-- Right meta sidebar -->
+      <div>
+        <div class="engram-detail-panel" style="margin-bottom:var(--space-4);">
+          <div style="font-family:var(--font-heading); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--anth-text-secondary); margin-bottom:var(--space-3);">文章元数据</div>
+          <div class="engram-detail-field">
+            <div class="engram-detail-field-label">作者</div>
+            <div style="font-family:var(--font-heading); font-size:12px;">platform-team, checkout-squad</div>
+          </div>
+          <div class="engram-detail-field">
+            <div class="engram-detail-field-label">最后编辑</div>
+            <div style="font-family:var(--font-heading); font-size:12px;">2026-04-15</div>
+          </div>
+          <div class="engram-detail-field">
+            <div class="engram-detail-field-label">编译状态</div>
+            <span class="engram-status engram-status--warn">已过期（3 天）</span>
+          </div>
+          <div class="engram-detail-field">
+            <div class="engram-detail-field-label">范围</div>
+            <div style="font-family:var(--font-heading); font-size:12px;">project</div>
+          </div>
+        </div>
+
+        <div class="engram-detail-panel" style="margin-bottom:var(--space-4);">
+          <div style="font-family:var(--font-heading); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--anth-text-secondary); margin-bottom:var(--space-3);">关联工作流</div>
+          <div style="display:flex; flex-direction:column; gap:var(--space-2);">
+            <a href="workflow-detail.html" style="font-family:var(--font-mono); font-size:11px; color:var(--anth-orange); text-decoration:none;">release-checklist</a>
+            <a href="workflow-detail.html" style="font-family:var(--font-mono); font-size:11px; color:var(--anth-orange); text-decoration:none;">deploy-pipeline</a>
+            <a href="workflow-detail.html" style="font-family:var(--font-mono); font-size:11px; color:var(--anth-orange); text-decoration:none;">incident-response</a>
+          </div>
+        </div>
+
+        <div class="engram-detail-panel">
+          <div style="font-family:var(--font-heading); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--anth-text-secondary); margin-bottom:var(--space-3);">操作</div>
+          <div style="display:flex; flex-direction:column; gap:var(--space-2);">
+            <button class="anth-button" style="font-size:12px; padding:8px 16px;">重新生成摘要</button>
+            <button class="anth-button anth-button--ghost" style="font-size:12px; padding:8px 16px;">编辑章节</button>
+            <button class="anth-button anth-button--ghost" style="font-size:12px; padding:8px 16px;">导出为 PDF</button>
+            <button class="anth-button anth-button--ghost" style="font-size:12px; padding:8px 16px;">查看编译摘要</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 设计原型。真实实现在 M7。
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← 设计导航</a>
+</footer>
+
+</body>
+</html>

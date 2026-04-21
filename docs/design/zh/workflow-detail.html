@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工作流详情 — engram Web UI</title>
+  <link rel="stylesheet" href="../../assets/fonts.css">
+  <link rel="stylesheet" href="../../assets/anthropic.css">
+  <link rel="stylesheet" href="../../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">总览面板</a>
+      <a href="graph.html">知识图谱</a>
+      <a href="inbox.html">收件箱</a>
+      <a href="context-preview.html">上下文预览</a>
+      <a href="wisdom.html">智慧指标</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">设计原型</span>
+      <a href="../workflow-detail.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">English</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← 全部页面</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="页面导航">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">概览</div>
+      <a href="dashboard.html" class="engram-sidebar-link">总览面板</a>
+      <a href="graph.html" class="engram-sidebar-link">知识图谱</a>
+      <a href="project-overview.html" class="engram-sidebar-link">项目总览</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">资产</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">记忆</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link is-active">工作流</a>
+      <a href="kb-article.html" class="engram-sidebar-link">知识库</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">工具</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">池管理</a>
+      <a href="context-preview.html" class="engram-sidebar-link">上下文预览</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">自学习</a>
+      <a href="inbox.html" class="engram-sidebar-link">收件箱</a>
+      <a href="wisdom.html" class="engram-sidebar-link">智慧指标</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Breadcrumb -->
+    <div class="engram-breadcrumb">
+      <a href="dashboard.html">总览面板</a>
+      <span class="engram-breadcrumb-sep">›</span>
+      <a href="graph.html">工作流</a>
+      <span class="engram-breadcrumb-sep">›</span>
+      <span style="color:var(--anth-text); font-weight:500;">release-checklist</span>
+    </div>
+
+    <!-- Title + controls -->
+    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-5);">
+      <h1 style="font-size:22px; font-family:var(--font-mono);">release-checklist</h1>
+      <span class="engram-status engram-status--ok">活跃</span>
+      <span class="anth-badge">范围：project</span>
+      <div style="margin-left:auto; display:flex; gap:var(--space-3);">
+        <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 16px;">停止自学习</button>
+        <button class="anth-button" style="font-size:13px; padding:8px 20px; background:var(--anth-orange);">启动自学习</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="anth-tabs" role="tablist" style="margin-bottom:var(--space-5);">
+      <button class="anth-tab is-active" role="tab">概览</button>
+      <button class="anth-tab" role="tab">Spine</button>
+      <button class="anth-tab" role="tab">Fixtures</button>
+      <button class="anth-tab" role="tab">指标</button>
+      <button class="anth-tab" role="tab">版本历史</button>
+    </div>
+
+    <!-- Overview tab content -->
+    <div class="engram-split engram-split--2-1" style="align-items:start;">
+
+      <!-- Left: workflow content -->
+      <div>
+        <!-- Workflow doc -->
+        <div class="engram-detail-panel" style="margin-bottom:var(--space-4);">
+          <h3 style="font-size:16px; font-family:var(--font-heading); margin-bottom:var(--space-4);">workflow.md</h3>
+          <div style="font-family:var(--font-body); font-size:15px; line-height:1.7; color:var(--anth-text);">
+            <h4 style="font-family:var(--font-heading); font-size:14px; margin-bottom:var(--space-2);">用途</h4>
+            <p>acme-checkout-service 的端到端发布检查清单。覆盖发布前校验、预发布部署、冒烟测试、生产推送及上线后监控等步骤。</p>
+            <h4 style="font-family:var(--font-heading); font-size:14px; margin-top:var(--space-4); margin-bottom:var(--space-2);">核心指标</h4>
+            <p>14 步发布 fixture 套件的通过率。升级为当前版本的目标：≥ 0.92。</p>
+            <h4 style="font-family:var(--font-heading); font-size:14px; margin-top:var(--space-4); margin-bottom:var(--space-2);">生命周期</h4>
+            <p>当前版本：<strong>r8</strong>（2026-04-10 升级）。自学习已完成第 8/10 轮。第 10 轮结束后触发阶段闸门。</p>
+          </div>
+        </div>
+
+        <!-- Last autolearn summary -->
+        <div class="anth-admonition anth-admonition--success" style="margin-bottom:var(--space-4);">
+          <h5>自学习第 8 轮 — 已接受</h5>
+          <p style="margin:0;">pass_rate 从 0.88 提升至 0.94。静态评分：58/60。性能评分：38/40。提案模型：claude-opus-4。评审模型：claude-sonnet-4。未检测到密钥泄露。</p>
+        </div>
+
+        <!-- Metric chart -->
+        <div class="engram-chart-wrap">
+          <div class="engram-chart-header">
+            <div class="engram-chart-title">各轮次 pass_rate 与置信分</div>
+            <span class="anth-caption">共 10 轮</span>
+          </div>
+          <svg viewBox="0 0 560 180" width="100%" role="img" aria-label="折线图：10 轮自学习的 pass_rate 与置信分变化">
+            <!-- Axes -->
+            <line x1="50" y1="10" x2="50" y2="155" stroke="#e8e6dc" stroke-width="1"/>
+            <line x1="50" y1="155" x2="540" y2="155" stroke="#e8e6dc" stroke-width="1"/>
+            <!-- Y ticks -->
+            <text x="40" y="158" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.6</text>
+            <text x="40" y="120" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.7</text>
+            <text x="40" y="82" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.8</text>
+            <text x="40" y="44" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.9</text>
+            <line x1="48" y1="120" x2="540" y2="120" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <line x1="48" y1="82" x2="540" y2="82" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <line x1="48" y1="44" x2="540" y2="44" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <!-- X labels r1..r8 -->
+            <g font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5" text-anchor="middle">
+              <text x="105" y="168">r1</text>
+              <text x="163" y="168">r2</text>
+              <text x="221" y="168">r3</text>
+              <text x="279" y="168">r4</text>
+              <text x="337" y="168">r5</text>
+              <text x="395" y="168">r6</text>
+              <text x="453" y="168">r7</text>
+              <text x="511" y="168">r8</text>
+            </g>
+            <!-- pass_rate line (orange) -->
+            <polyline points="105,135 163,128 221,118 279,106 337,95 395,82 453,70 511,36"
+              fill="none" stroke="#d97757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- confidence line (blue) -->
+            <polyline points="105,140 163,133 221,122 279,112 337,100 395,88 453,75 511,42"
+              fill="none" stroke="#6a9bcc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5,3"/>
+            <!-- Data points -->
+            <g fill="#d97757">
+              <circle cx="105" cy="135" r="3"/>
+              <circle cx="163" cy="128" r="3"/>
+              <circle cx="221" cy="118" r="3"/>
+              <circle cx="279" cy="106" r="3"/>
+              <circle cx="337" cy="95" r="3"/>
+              <circle cx="395" cy="82" r="3"/>
+              <circle cx="453" cy="70" r="3"/>
+              <circle cx="511" cy="36" r="4"/>
+            </g>
+            <!-- Legend -->
+            <line x1="60" y1="20" x2="80" y2="20" stroke="#d97757" stroke-width="2"/>
+            <text x="84" y="24" font-family="Poppins, sans-serif" font-size="9" fill="#141413">pass_rate</text>
+            <line x1="140" y1="20" x2="160" y2="20" stroke="#6a9bcc" stroke-width="2" stroke-dasharray="5,3"/>
+            <text x="164" y="24" font-family="Poppins, sans-serif" font-size="9" fill="#141413">置信分</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Right: revision timeline -->
+      <div>
+        <div class="engram-detail-panel">
+          <h4 style="font-size:14px; font-family:var(--font-heading); margin-bottom:var(--space-4);">版本时间线</h4>
+
+          <!-- Compact vertical timeline -->
+          <div style="display:flex; flex-direction:column; gap:0;">
+            <div style="display:flex; align-items:stretch; gap:var(--space-3);">
+              <div style="display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0;">
+                <div class="engram-rev-badge engram-rev-badge--current" style="width:28px; height:28px; font-size:10px; flex-shrink:0;">r8</div>
+                <div style="width:2px; flex:1; background:var(--anth-light-gray); margin:var(--space-1) 0;"></div>
+              </div>
+              <div style="padding-bottom:var(--space-4);">
+                <div style="font-family:var(--font-heading); font-size:13px; font-weight:500;">第 8 轮 — 已接受 <span class="anth-badge" style="background:rgba(120,140,93,0.15); color:var(--anth-green); font-size:10px; margin-left:4px;">当前</span></div>
+                <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">pass_rate 0.94 · 2026-04-18</div>
+                <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">改进了冒烟测试步骤的上下文处理</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:stretch; gap:var(--space-3);">
+              <div style="display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0;">
+                <div class="engram-rev-badge engram-rev-badge--accept" style="width:28px; height:28px; font-size:10px; flex-shrink:0;">r7</div>
+                <div style="width:2px; flex:1; background:var(--anth-light-gray); margin:var(--space-1) 0;"></div>
+              </div>
+              <div style="padding-bottom:var(--space-4);">
+                <div style="font-family:var(--font-heading); font-size:13px; font-weight:500;">第 7 轮 — 已接受</div>
+                <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">pass_rate 0.91 · 2026-04-16</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:stretch; gap:var(--space-3);">
+              <div style="display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0;">
+                <div class="engram-rev-badge engram-rev-badge--reject" style="width:28px; height:28px; font-size:10px; flex-shrink:0;">r6</div>
+                <div style="width:2px; flex:1; background:var(--anth-light-gray); margin:var(--space-1) 0;"></div>
+              </div>
+              <div style="padding-bottom:var(--space-4);">
+                <div style="font-family:var(--font-heading); font-size:13px; font-weight:500;">第 6 轮 — 已拒绝</div>
+                <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">pass_rate 0.84 — 指标下降 · 已自动回滚</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:stretch; gap:var(--space-3);">
+              <div style="display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0;">
+                <div class="engram-rev-badge engram-rev-badge--accept" style="width:28px; height:28px; font-size:10px; flex-shrink:0;">r5</div>
+                <div style="width:2px; flex:1; background:var(--anth-light-gray); margin:var(--space-1) 0;"></div>
+              </div>
+              <div style="padding-bottom:var(--space-4);">
+                <div style="font-family:var(--font-heading); font-size:13px; font-weight:500;">第 5 轮 — 已接受</div>
+                <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">pass_rate 0.88 · 阶段闸门通过</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:stretch; gap:var(--space-3);">
+              <div style="display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0;">
+                <div class="engram-rev-badge engram-rev-badge--accept" style="width:28px; height:28px; font-size:10px; flex-shrink:0;">r4</div>
+                <div style="width:2px; flex:1; background:var(--anth-light-gray); margin:var(--space-1) 0;"></div>
+              </div>
+              <div style="padding-bottom:var(--space-4);">
+                <div style="font-family:var(--font-heading); font-size:13px; font-weight:500;">第 4 轮 — 已接受</div>
+                <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">pass_rate 0.85 · 2026-04-08</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:stretch; gap:var(--space-3);">
+              <div style="display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0;">
+                <div class="engram-rev-badge engram-rev-badge--accept" style="width:28px; height:28px; font-size:10px; flex-shrink:0;">r3</div>
+                <div style="width:2px; flex:1; background:var(--anth-light-gray); margin:var(--space-1) 0;"></div>
+              </div>
+              <div style="padding-bottom:var(--space-4);">
+                <div style="font-family:var(--font-heading); font-size:13px; font-weight:500;">第 3 轮 — 已接受</div>
+                <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">pass_rate 0.81 · 2026-04-06</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:stretch; gap:var(--space-3);">
+              <div style="display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0;">
+                <div class="engram-rev-badge engram-rev-badge--reject" style="width:28px; height:28px; font-size:10px; flex-shrink:0;">r2</div>
+                <div style="width:2px; flex:1; background:var(--anth-light-gray); margin:var(--space-1) 0;"></div>
+              </div>
+              <div style="padding-bottom:var(--space-4);">
+                <div style="font-family:var(--font-heading); font-size:13px; font-weight:500;">第 2 轮 — 已拒绝</div>
+                <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">spine.py 解析错误 · 已自动回滚</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:stretch; gap:var(--space-3);">
+              <div style="display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0;">
+                <div class="engram-rev-badge engram-rev-badge--accept" style="width:28px; height:28px; font-size:10px; flex-shrink:0;">r1</div>
+              </div>
+              <div style="padding-bottom:var(--space-2);">
+                <div style="font-family:var(--font-heading); font-size:13px; font-weight:500;">第 1 轮 — 已接受</div>
+                <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">pass_rate 0.74 · 初始自学习</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="anth-button anth-button--ghost" style="font-size:12px; padding:6px 14px; width:100%; margin-top:var(--space-3);">
+            查看 r8 的 diff
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diff viewer for r8 -->
+    <div class="engram-detail-panel" style="margin-top:var(--space-5);">
+      <h4 style="font-size:14px; font-family:var(--font-heading); margin-bottom:var(--space-3);">Diff — r7 → r8（spine.py）</h4>
+      <div class="engram-diff">
+<span class="engram-diff-ctx">@@ -42,8 +42,12 @@ def run_smoke_tests(env: str) -> bool:</span>
+<span class="engram-diff-ctx">     """Run smoke tests against the deployed environment."""</span>
+<span class="engram-diff-del">-    timeout = 30</span>
+<span class="engram-diff-add">+    timeout = 60  # 延长为两倍 — 原 30s 在预发布环境中导致测试不稳定</span>
+<span class="engram-diff-ctx">     result = subprocess.run(</span>
+<span class="engram-diff-ctx">         ["pytest", "tests/smoke/", f"--env={env}"],</span>
+<span class="engram-diff-del">-        timeout=timeout</span>
+<span class="engram-diff-add">+        timeout=timeout,</span>
+<span class="engram-diff-add">+        capture_output=True,</span>
+<span class="engram-diff-add">+        text=True,</span>
+<span class="engram-diff-ctx">     )</span>
+<span class="engram-diff-ctx">     return result.returncode == 0</span></div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 设计原型。真实实现在 M7。
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← 设计导航</a>
+</footer>
+
+</body>
+</html>

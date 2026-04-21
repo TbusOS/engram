@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>engram Web UI — Design Mockups</title>
+  <link rel="stylesheet" href="../assets/fonts.css">
+  <link rel="stylesheet" href="../assets/anthropic.css">
+  <link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+
+<nav class="anth-nav">
+  <div class="anth-nav-inner">
+    <a href="../en/" class="engram-nav-brand">engram</a>
+    <nav aria-label="Primary" style="display:flex; align-items:center; gap:var(--space-5);">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="graph.html">Graph</a>
+      <a href="inbox.html">Inbox</a>
+      <a href="context-preview.html">Context Preview</a>
+      <a href="wisdom.html">Wisdom</a>
+    </nav>
+    <div style="display:flex; align-items:center; gap:var(--space-3);">
+      <span class="anth-badge">Design Mockup</span>
+      <a href="zh/index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">中文</a>
+      <a href="../en/" class="anth-link anth-link--no-arrow" style="font-size:13px;">Back to landing</a>
+    </div>
+  </div>
+</nav>
+
+<section class="anth-hero" style="text-align:center; padding:var(--space-10) 0 var(--space-8);">
+  <div class="anth-container">
+    <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff; margin-bottom:var(--space-4); display:inline-block;">v0.2 Design Preview</span>
+    <h1 style="margin-top:var(--space-4); font-size:48px;">engram Web UI</h1>
+    <p style="font-size:20px; max-width:640px; margin:var(--space-5) auto; color:var(--anth-text-secondary);">
+      Static HTML previews of the 11 pages defined in DESIGN §7.1. The real implementation will be FastAPI + SvelteKit with live data over SSE.
+    </p>
+
+    <figure aria-hidden="true" style="margin:var(--space-7) auto 0; max-width:900px;">
+      <svg viewBox="0 0 900 200" width="100%" role="img" aria-label="engram Web UI architecture diagram"
+           style="border-radius:var(--radius-lg); background:linear-gradient(135deg,#faf9f5 0%,#f0ede3 100%);">
+        <!-- Browser chrome -->
+        <rect x="20" y="20" width="860" height="160" rx="12" fill="#ffffff" stroke="#e8e6dc" stroke-width="1.5"/>
+        <!-- Browser bar -->
+        <rect x="20" y="20" width="860" height="36" rx="12" fill="#f0ede3"/>
+        <rect x="20" y="44" width="860" height="12" fill="#f0ede3"/>
+        <!-- dots -->
+        <circle cx="46" cy="38" r="5" fill="#d97757" opacity="0.6"/>
+        <circle cx="62" cy="38" r="5" fill="#c9a227" opacity="0.6"/>
+        <circle cx="78" cy="38" r="5" fill="#788c5d" opacity="0.6"/>
+        <!-- URL bar -->
+        <rect x="200" y="28" width="400" height="20" rx="10" fill="#ffffff" stroke="#e8e6dc" stroke-width="1"/>
+        <text x="310" y="42" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6a5f">localhost:8787/dashboard</text>
+        <!-- sidebar -->
+        <rect x="36" y="72" width="120" height="92" rx="8" fill="#faf9f5"/>
+        <rect x="46" y="82" width="70" height="6" rx="3" fill="#d97757" opacity="0.8"/>
+        <rect x="46" y="96" width="55" height="5" rx="2.5" fill="#b0aea5"/>
+        <rect x="46" y="108" width="60" height="5" rx="2.5" fill="#b0aea5"/>
+        <rect x="46" y="120" width="50" height="5" rx="2.5" fill="#b0aea5"/>
+        <rect x="46" y="132" width="65" height="5" rx="2.5" fill="#b0aea5"/>
+        <rect x="46" y="144" width="58" height="5" rx="2.5" fill="#b0aea5"/>
+        <!-- main stat tiles -->
+        <rect x="176" y="72" width="90" height="44" rx="6" fill="#ffffff" stroke="#e8e6dc" stroke-width="1"/>
+        <text x="185" y="90" font-family="Poppins, sans-serif" font-size="16" font-weight="700" fill="#141413">487</text>
+        <text x="185" y="104" font-family="Poppins, sans-serif" font-size="8" fill="#6b6a5f">Total assets</text>
+        <rect x="276" y="72" width="90" height="44" rx="6" fill="#ffffff" stroke="#e8e6dc" stroke-width="1"/>
+        <text x="285" y="90" font-family="Poppins, sans-serif" font-size="16" font-weight="700" fill="#141413">3</text>
+        <text x="285" y="104" font-family="Poppins, sans-serif" font-size="8" fill="#6b6a5f">Pools</text>
+        <rect x="376" y="72" width="90" height="44" rx="6" fill="#ffffff" stroke="#e8e6dc" stroke-width="1"/>
+        <text x="385" y="90" font-family="Poppins, sans-serif" font-size="16" font-weight="700" fill="#141413">2</text>
+        <text x="385" y="104" font-family="Poppins, sans-serif" font-size="8" fill="#6b6a5f">Proposals</text>
+        <rect x="476" y="72" width="90" height="44" rx="6" fill="#ffffff" stroke="#e8e6dc" stroke-width="1"/>
+        <text x="485" y="90" font-family="Poppins, sans-serif" font-size="16" font-weight="700" fill="#141413">7</text>
+        <text x="485" y="104" font-family="Poppins, sans-serif" font-size="8" fill="#6b6a5f">Inbox</text>
+        <!-- sparkline area -->
+        <rect x="176" y="126" width="560" height="30" rx="6" fill="#faf9f5"/>
+        <polyline points="185,148 210,142 235,145 260,140 285,136 310,138 335,132" stroke="#d97757" stroke-width="1.5" fill="none"/>
+        <polyline points="390,148 415,145 440,148 465,143 490,140 515,142 540,137" stroke="#6a9bcc" stroke-width="1.5" fill="none"/>
+        <polyline points="595,148 620,143 645,146 670,141 695,138 720,136 745,130" stroke="#788c5d" stroke-width="1.5" fill="none"/>
+        <!-- right area -->
+        <rect x="746" y="72" width="114" height="92" rx="8" fill="#faf9f5"/>
+        <rect x="756" y="82" width="90" height="5" rx="2.5" fill="#d97757" opacity="0.5"/>
+        <rect x="756" y="94" width="78" height="4" rx="2" fill="#b0aea5"/>
+        <rect x="756" y="104" width="82" height="4" rx="2" fill="#b0aea5"/>
+        <rect x="756" y="114" width="70" height="4" rx="2" fill="#b0aea5"/>
+        <rect x="756" y="124" width="85" height="4" rx="2" fill="#b0aea5"/>
+        <rect x="756" y="134" width="72" height="4" rx="2" fill="#b0aea5"/>
+        <rect x="756" y="144" width="80" height="4" rx="2" fill="#b0aea5"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<section class="anth-section anth-section--subtle" style="padding-top:var(--space-7);">
+  <div class="anth-container anth-container--wide">
+    <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:var(--space-5);">
+      <h2 style="font-size:28px;">11 Pages</h2>
+      <span class="anth-caption">Click any card to view the mockup</span>
+    </div>
+    <div class="engram-hub-grid">
+
+      <a href="dashboard.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-orange)"/>
+          <rect x="10" y="10" width="14" height="14" rx="3" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <rect x="10" y="28" width="14" height="18" rx="3" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <rect x="28" y="10" width="18" height="36" rx="3" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+        </svg>
+        <div class="engram-hub-card-title">Dashboard</div>
+        <div class="engram-hub-card-desc">Project-level overview — asset counts, wisdom sparklines, activity feed, open proposals.</div>
+        <span class="anth-caption">/dashboard</span>
+      </a>
+
+      <a href="graph.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-blue)"/>
+          <circle cx="28" cy="28" r="6" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <circle cx="14" cy="16" r="4" fill="#ffffff" opacity="0.8"/>
+          <circle cx="42" cy="16" r="4" fill="#ffffff" opacity="0.8"/>
+          <circle cx="14" cy="40" r="4" fill="#ffffff" opacity="0.8"/>
+          <circle cx="42" cy="40" r="4" fill="#ffffff" opacity="0.8"/>
+          <line x1="18" y1="18" x2="24" y2="24" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+          <line x1="38" y1="18" x2="32" y2="24" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+          <line x1="18" y1="38" x2="24" y2="32" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+          <line x1="38" y1="38" x2="32" y2="32" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+        </svg>
+        <div class="engram-hub-card-title">Graph</div>
+        <div class="engram-hub-card-desc">Visual asset graph — D3 force-directed nodes colored by subtype, with filter sidebar and detail panel.</div>
+        <span class="anth-caption">/graph</span>
+      </a>
+
+      <a href="memory-detail.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-green)"/>
+          <rect x="12" y="10" width="32" height="36" rx="4" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <line x1="18" y1="18" x2="38" y2="18" stroke="#ffffff" stroke-width="1.5" opacity="0.8"/>
+          <line x1="18" y1="24" x2="38" y2="24" stroke="#ffffff" stroke-width="1.5" opacity="0.8"/>
+          <line x1="18" y1="30" x2="30" y2="30" stroke="#ffffff" stroke-width="1.5" opacity="0.8"/>
+        </svg>
+        <div class="engram-hub-card-title">Memory Detail</div>
+        <div class="engram-hub-card-desc">Frontmatter editor, body editor, inbound references, confidence gauge, and usage history.</div>
+        <span class="anth-caption">/memory/&lt;id&gt;</span>
+      </a>
+
+      <a href="workflow-detail.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-orange)"/>
+          <circle cx="14" cy="28" r="5" fill="#ffffff" opacity="0.9"/>
+          <circle cx="28" cy="16" r="5" fill="#ffffff" opacity="0.9"/>
+          <circle cx="28" cy="40" r="5" fill="#ffffff" opacity="0.9"/>
+          <circle cx="42" cy="28" r="5" fill="#ffffff" opacity="0.9"/>
+          <line x1="19" y1="28" x2="23" y2="18" stroke="#ffffff" stroke-width="1.5"/>
+          <line x1="19" y1="28" x2="23" y2="38" stroke="#ffffff" stroke-width="1.5"/>
+          <line x1="33" y1="16" x2="37" y2="26" stroke="#ffffff" stroke-width="1.5"/>
+          <line x1="33" y1="40" x2="37" y2="30" stroke="#ffffff" stroke-width="1.5"/>
+        </svg>
+        <div class="engram-hub-card-title">Workflow Detail</div>
+        <div class="engram-hub-card-desc">Tabbed view of workflow.md, spine, fixtures, metrics, and revision timeline with diff viewer.</div>
+        <span class="anth-caption">/workflow/&lt;name&gt;</span>
+      </a>
+
+      <a href="kb-article.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-blue)"/>
+          <rect x="10" y="10" width="36" height="36" rx="4" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <line x1="10" y1="22" x2="46" y2="22" stroke="#ffffff" stroke-width="1.5" opacity="0.5"/>
+          <line x1="22" y1="22" x2="22" y2="46" stroke="#ffffff" stroke-width="1.5" opacity="0.5"/>
+          <line x1="28" y1="28" x2="40" y2="28" stroke="#ffffff" stroke-width="1.2" opacity="0.7"/>
+          <line x1="28" y1="33" x2="40" y2="33" stroke="#ffffff" stroke-width="1.2" opacity="0.7"/>
+          <line x1="28" y1="38" x2="36" y2="38" stroke="#ffffff" stroke-width="1.2" opacity="0.7"/>
+        </svg>
+        <div class="engram-hub-card-title">KB Article</div>
+        <div class="engram-hub-card-desc">Three-column reader — TOC sidebar, article content, and meta panel with compile status.</div>
+        <span class="anth-caption">/kb/&lt;topic&gt;</span>
+      </a>
+
+      <a href="pool-manager.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-green)"/>
+          <ellipse cx="28" cy="18" rx="14" ry="6" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <line x1="14" y1="18" x2="14" y2="38" stroke="#ffffff" stroke-width="1.8"/>
+          <line x1="42" y1="18" x2="42" y2="38" stroke="#ffffff" stroke-width="1.8"/>
+          <ellipse cx="28" cy="38" rx="14" ry="6" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <ellipse cx="28" cy="28" rx="14" ry="6" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.5"/>
+        </svg>
+        <div class="engram-hub-card-title">Pool Manager</div>
+        <div class="engram-hub-card-desc">Subscribed pool table, propagation mode controls, dependency graph, and sync actions.</div>
+        <span class="anth-caption">/pools</span>
+      </a>
+
+      <a href="project-overview.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-orange)"/>
+          <rect x="10" y="10" width="16" height="16" rx="4" fill="#ffffff" opacity="0.9"/>
+          <rect x="30" y="10" width="16" height="16" rx="4" fill="#ffffff" opacity="0.6"/>
+          <rect x="10" y="30" width="16" height="16" rx="4" fill="#ffffff" opacity="0.6"/>
+          <rect x="30" y="30" width="16" height="16" rx="4" fill="#ffffff" opacity="0.9"/>
+        </svg>
+        <div class="engram-hub-card-title">Project Overview</div>
+        <div class="engram-hub-card-desc">Grid of engram-enabled projects — asset counts, health badges, wisdom sparklines, and project switcher.</div>
+        <span class="anth-caption">/projects</span>
+      </a>
+
+      <a href="context-preview.html" class="engram-hub-card" style="border:2px solid var(--anth-orange);">
+        <div style="display:flex; align-items:center; gap:var(--space-2);">
+          <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+            <rect width="56" height="56" rx="14" fill="var(--anth-orange)"/>
+            <rect x="10" y="14" width="20" height="28" rx="4" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+            <rect x="34" y="14" width="12" height="28" rx="4" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+            <line x1="14" y1="22" x2="26" y2="22" stroke="#ffffff" stroke-width="1.2" opacity="0.8"/>
+            <line x1="14" y1="27" x2="26" y2="27" stroke="#ffffff" stroke-width="1.2" opacity="0.8"/>
+            <line x1="14" y1="32" x2="22" y2="32" stroke="#ffffff" stroke-width="1.2" opacity="0.8"/>
+            <line x1="36" y1="22" x2="44" y2="22" stroke="#ffffff" stroke-width="1.2" opacity="0.8"/>
+            <line x1="36" y1="27" x2="44" y2="27" stroke="#ffffff" stroke-width="1.2" opacity="0.8"/>
+            <line x1="36" y1="32" x2="41" y2="32" stroke="#ffffff" stroke-width="1.2" opacity="0.8"/>
+            <line x1="36" y1="37" x2="44" y2="37" stroke="#ffffff" stroke-width="1.2" opacity="0.8"/>
+          </svg>
+          <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff; font-size:10px;">Critical</span>
+        </div>
+        <div class="engram-hub-card-title">Context Preview</div>
+        <div class="engram-hub-card-desc">Simulate what the LLM will see — task input, token budget, ranked candidates, packed prompt. The key diagnostic page.</div>
+        <span class="anth-caption">/context-preview</span>
+      </a>
+
+      <a href="autolearn-console.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-blue)"/>
+          <polyline points="10,38 18,30 24,34 32,22 38,26 46,14" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="10" cy="38" r="2.5" fill="#ffffff"/>
+          <circle cx="46" cy="14" r="2.5" fill="#ffffff"/>
+        </svg>
+        <div class="engram-hub-card-title">Autolearn Console</div>
+        <div class="engram-hub-card-desc">Live evolution.tsv tail, metric trend chart, and current round diff viewer for the Autolearn Engine.</div>
+        <span class="anth-caption">/autolearn</span>
+      </a>
+
+      <a href="inbox.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-green)"/>
+          <rect x="10" y="16" width="36" height="26" rx="4" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <polyline points="10,20 28,32 46,20" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+        </svg>
+        <div class="engram-hub-card-title">Inbox</div>
+        <div class="engram-hub-card-desc">Cross-repo message center — filter, read, acknowledge, resolve, or reject Inter-Repo Messenger messages.</div>
+        <span class="anth-caption">/inbox</span>
+      </a>
+
+      <a href="wisdom.html" class="engram-hub-card">
+        <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+          <rect width="56" height="56" rx="14" fill="var(--anth-orange)"/>
+          <rect x="10" y="10" width="8" height="36" rx="2" fill="#ffffff" opacity="0.5"/>
+          <rect x="22" y="18" width="8" height="28" rx="2" fill="#ffffff" opacity="0.7"/>
+          <rect x="34" y="24" width="8" height="22" rx="2" fill="#ffffff" opacity="0.9"/>
+          <polyline points="10,36 22,28 34,22 46,14" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="engram-hub-card-title">Wisdom Metrics</div>
+        <div class="engram-hub-card-desc">Four Wisdom Metrics curves — Workflow Mastery, Task Efficiency, Curation Ratio, Context Efficiency.</div>
+        <span class="anth-caption">/wisdom</span>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<section class="anth-section" style="padding-top:var(--space-6); padding-bottom:var(--space-8);">
+  <div class="anth-container">
+    <div class="anth-admonition">
+      <h5>These are static mockups</h5>
+      <p style="margin:0;">Every page here shows representative data. The real application (milestone M7) will render live data from <code>graph.db</code> via FastAPI endpoints and SvelteKit components. Interactions are non-functional in these mockups — buttons, tabs, and links navigate within the mockup set only.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 design mockup. Real implementation in M7. &nbsp;·&nbsp;
+  <a href="../en/" style="color:var(--anth-orange);">Landing page (English)</a>
+  &nbsp;·&nbsp;
+  <a href="../zh/" style="color:var(--anth-orange);">Landing page (中文)</a>
+</footer>
+
+</body>
+</html>

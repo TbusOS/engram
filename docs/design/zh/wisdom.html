@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>智慧指标 — engram Web UI</title>
+  <link rel="stylesheet" href="../../assets/fonts.css">
+  <link rel="stylesheet" href="../../assets/anthropic.css">
+  <link rel="stylesheet" href="../../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">总览面板</a>
+      <a href="graph.html">知识图谱</a>
+      <a href="inbox.html">收件箱</a>
+      <a href="context-preview.html">上下文预览</a>
+      <a href="wisdom.html" class="is-active">智慧指标</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">设计原型</span>
+      <a href="../wisdom.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">English</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← 所有页面</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="页面导航">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">概览</div>
+      <a href="dashboard.html" class="engram-sidebar-link">总览面板</a>
+      <a href="graph.html" class="engram-sidebar-link">知识图谱</a>
+      <a href="project-overview.html" class="engram-sidebar-link">项目</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">资产</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">记忆</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">工作流</a>
+      <a href="kb-article.html" class="engram-sidebar-link">知识库</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">工具</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">池管理</a>
+      <a href="context-preview.html" class="engram-sidebar-link">上下文预览</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">自学习</a>
+      <a href="inbox.html" class="engram-sidebar-link">收件箱</a>
+      <a href="wisdom.html" class="engram-sidebar-link is-active">智慧指标</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- 页面标题 -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-4);">
+      <div>
+        <h1 style="font-size:24px; margin-bottom:var(--space-1);">智慧指标</h1>
+        <p style="font-family:var(--font-heading); font-size:13px; color:var(--anth-text-secondary);">四条量化曲线，衡量系统是否随时间持续改进。</p>
+      </div>
+      <div style="display:flex; align-items:center; gap:var(--space-3);">
+        <div class="engram-time-range">
+          <button class="engram-time-btn">7天</button>
+          <button class="engram-time-btn is-active">30天</button>
+          <button class="engram-time-btn">90天</button>
+          <button class="engram-time-btn">1年</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 回退告警横幅 -->
+    <div class="engram-alert-banner">
+      <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="var(--anth-orange)" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="10" cy="10" r="9"/>
+        <line x1="10" y1="6" x2="10" y2="10"/>
+        <circle cx="10" cy="14" r="0.5" fill="var(--anth-orange)"/>
+      </svg>
+      <div style="flex:1;">
+        <strong>回退告警：</strong>上下文效率环比下降 11%（2026-04-11 → 2026-04-18）。可能原因：新增大型参考资产时未相应调整预算。请检查相关性闸门的动态预算分配。
+      </div>
+      <button class="anth-button anth-button--ghost" style="font-size:12px; padding:4px 12px; flex-shrink:0;">调查</button>
+    </div>
+
+    <!-- 4 个图表区 + 下钻面板 -->
+    <div style="display:grid; grid-template-columns:1fr 320px; gap:var(--space-5); align-items:start;">
+
+      <div>
+        <!-- 图表 1：工作流掌握度 -->
+        <div class="engram-chart-wrap">
+          <div class="engram-chart-header">
+            <div>
+              <div class="engram-chart-title">工作流掌握度</div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">各工作流在自学习轮次中的 pass_rate</div>
+            </div>
+            <div style="display:flex; gap:var(--space-2);">
+              <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px;">导出 CSV</button>
+              <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px;">下钻</button>
+            </div>
+          </div>
+          <svg viewBox="0 0 640 160" width="100%" role="img" aria-label="折线图：30 天内各工作流掌握度均呈上升趋势">
+            <!-- 坐标轴 -->
+            <line x1="50" y1="10" x2="50" y2="130" stroke="#e8e6dc" stroke-width="1"/>
+            <line x1="50" y1="130" x2="625" y2="130" stroke="#e8e6dc" stroke-width="1"/>
+            <!-- Y 轴刻度 -->
+            <text x="44" y="133" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.60</text>
+            <text x="44" y="100" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.75</text>
+            <text x="44" y="67" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.85</text>
+            <text x="44" y="34" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0.95</text>
+            <line x1="50" y1="100" x2="625" y2="100" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <line x1="50" y1="67" x2="625" y2="67" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <line x1="50" y1="34" x2="625" y2="34" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <!-- X 轴标签（周标记） -->
+            <g font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5" text-anchor="middle">
+              <text x="50"  y="143">Apr 1</text>
+              <text x="195" y="143">Apr 8</text>
+              <text x="340" y="143">Apr 15</text>
+              <text x="485" y="143">Apr 22</text>
+              <text x="625" y="143">Apr 30</text>
+            </g>
+            <!-- release-checklist（橙色） -->
+            <polyline points="50,120 100,115 150,108 200,100 250,92 300,82 350,72 400,62 450,52 500,44 550,40 600,36"
+              fill="none" stroke="#d97757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- deploy-pipeline（蓝色） -->
+            <polyline points="50,118 100,113 150,108 200,104 250,98 300,92 350,86 400,80 450,74 500,68 550,64 600,60"
+              fill="none" stroke="#6a9bcc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5,3"/>
+            <!-- incident-response（绿色） -->
+            <polyline points="50,125 100,122 150,118 200,115 250,110 300,106 350,102 400,98 450,94 500,90 550,87 600,84"
+              fill="none" stroke="#788c5d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3,2"/>
+            <!-- 图例 -->
+            <line x1="58" y1="20" x2="76" y2="20" stroke="#d97757" stroke-width="2"/>
+            <text x="80" y="24" font-family="Poppins, sans-serif" font-size="9" fill="#141413">release-checklist</text>
+            <line x1="165" y1="20" x2="183" y2="20" stroke="#6a9bcc" stroke-width="2" stroke-dasharray="5,3"/>
+            <text x="187" y="24" font-family="Poppins, sans-serif" font-size="9" fill="#141413">deploy-pipeline</text>
+            <line x1="267" y1="20" x2="285" y2="20" stroke="#788c5d" stroke-width="2" stroke-dasharray="3,2"/>
+            <text x="289" y="24" font-family="Poppins, sans-serif" font-size="9" fill="#141413">incident-response</text>
+          </svg>
+        </div>
+
+        <!-- 图表 2：任务复用效率 -->
+        <div class="engram-chart-wrap">
+          <div class="engram-chart-header">
+            <div>
+              <div class="engram-chart-title">任务复用效率</div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">周成本比：重复任务成本 vs. 首次执行成本</div>
+            </div>
+            <div style="display:flex; gap:var(--space-2);">
+              <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px;">导出 CSV</button>
+            </div>
+          </div>
+          <svg viewBox="0 0 640 140" width="100%" role="img" aria-label="周柱状图：4 周内任务成本比持续改善">
+            <!-- 坐标轴 -->
+            <line x1="50" y1="10" x2="50" y2="110" stroke="#e8e6dc" stroke-width="1"/>
+            <line x1="50" y1="110" x2="625" y2="110" stroke="#e8e6dc" stroke-width="1"/>
+            <!-- Y 轴刻度 -->
+            <text x="44" y="113" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0%</text>
+            <text x="44" y="80" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">30%</text>
+            <text x="44" y="47" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">60%</text>
+            <text x="44" y="14" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">90%</text>
+            <line x1="50" y1="80" x2="625" y2="80" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <line x1="50" y1="47" x2="625" y2="47" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <!-- 4 周堆叠柱（低于首次/持平/首次） -->
+            <!-- 第 1 周 (Apr 1-7) -->
+            <rect x="80"  y="88" width="60" height="22" rx="3" fill="#d97757" opacity="0.85"/>
+            <rect x="80"  y="66" width="60" height="22" rx="3" fill="#6a9bcc" opacity="0.7"/>
+            <rect x="80"  y="35" width="60" height="31" rx="3" fill="#b0aea5" opacity="0.5"/>
+            <!-- 第 2 周 (Apr 8-14) -->
+            <rect x="220" y="82" width="60" height="28" rx="3" fill="#d97757" opacity="0.85"/>
+            <rect x="220" y="60" width="60" height="22" rx="3" fill="#6a9bcc" opacity="0.7"/>
+            <rect x="220" y="36" width="60" height="24" rx="3" fill="#b0aea5" opacity="0.5"/>
+            <!-- 第 3 周 (Apr 15-21) -->
+            <rect x="360" y="75" width="60" height="35" rx="3" fill="#d97757" opacity="0.85"/>
+            <rect x="360" y="57" width="60" height="18" rx="3" fill="#6a9bcc" opacity="0.7"/>
+            <rect x="360" y="37" width="60" height="20" rx="3" fill="#b0aea5" opacity="0.5"/>
+            <!-- 第 4 周 (Apr 22-28) -->
+            <rect x="500" y="66" width="60" height="44" rx="3" fill="#d97757" opacity="0.85"/>
+            <rect x="500" y="50" width="60" height="16" rx="3" fill="#6a9bcc" opacity="0.7"/>
+            <rect x="500" y="36" width="60" height="14" rx="3" fill="#b0aea5" opacity="0.5"/>
+            <!-- X 轴标签 -->
+            <g font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5" text-anchor="middle">
+              <text x="110" y="123">Apr 1–7</text>
+              <text x="250" y="123">Apr 8–14</text>
+              <text x="390" y="123">Apr 15–21</text>
+              <text x="530" y="123">Apr 22–28</text>
+            </g>
+            <!-- 图例 -->
+            <rect x="58" y="12" width="10" height="6" rx="2" fill="#d97757" opacity="0.85"/>
+            <text x="72" y="18" font-family="Poppins, sans-serif" font-size="9" fill="#141413">低于首次成本</text>
+            <rect x="200" y="12" width="10" height="6" rx="2" fill="#6a9bcc" opacity="0.7"/>
+            <text x="214" y="18" font-family="Poppins, sans-serif" font-size="9" fill="#141413">持平</text>
+            <rect x="290" y="12" width="10" height="6" rx="2" fill="#b0aea5" opacity="0.5"/>
+            <text x="304" y="18" font-family="Poppins, sans-serif" font-size="9" fill="#141413">首次执行（成本较高）</text>
+          </svg>
+        </div>
+
+        <!-- 图表 3：记忆维护率 -->
+        <div class="engram-chart-wrap">
+          <div class="engram-chart-header">
+            <div>
+              <div class="engram-chart-title">记忆维护率</div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">堆叠面积图：活跃 / 已废弃 / 已归档随时间变化</div>
+            </div>
+            <div style="display:flex; gap:var(--space-2);">
+              <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px;">导出 CSV</button>
+            </div>
+          </div>
+          <svg viewBox="0 0 640 140" width="100%" role="img" aria-label="堆叠面积图：活跃记忆增长，已废弃减少，已归档平稳">
+            <!-- 坐标轴 -->
+            <line x1="50" y1="10" x2="50" y2="115" stroke="#e8e6dc" stroke-width="1"/>
+            <line x1="50" y1="115" x2="625" y2="115" stroke="#e8e6dc" stroke-width="1"/>
+            <!-- Y 轴刻度 -->
+            <text x="44" y="118" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">0</text>
+            <text x="44" y="88" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">100</text>
+            <text x="44" y="58" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">300</text>
+            <text x="44" y="28" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">500</text>
+            <line x1="50" y1="88" x2="625" y2="88" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <line x1="50" y1="58" x2="625" y2="58" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <!-- 已归档区域（底部，灰色稳定） -->
+            <polygon points="50,115 625,115 625,102 50,104"
+              fill="#b0aea5" opacity="0.3"/>
+            <!-- 已废弃区域 -->
+            <polygon points="50,104 625,102 625,88 540,82 480,80 380,78 250,78 150,80 50,84"
+              fill="#d97757" opacity="0.2"/>
+            <!-- 活跃区域（顶部，增长） -->
+            <polygon points="50,84 150,80 250,78 380,78 480,80 540,82 625,88 625,28 540,26 480,24 380,22 250,20 150,22 50,28"
+              fill="#788c5d" opacity="0.35"/>
+            <!-- 活跃折线 -->
+            <polyline points="50,28 150,22 250,20 380,22 480,24 540,26 625,28"
+              fill="none" stroke="#788c5d" stroke-width="2" stroke-linecap="round"/>
+            <!-- X 轴标签 -->
+            <g font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5" text-anchor="middle">
+              <text x="50"  y="128">Apr 1</text>
+              <text x="195" y="128">Apr 8</text>
+              <text x="340" y="128">Apr 15</text>
+              <text x="485" y="128">Apr 22</text>
+              <text x="625" y="128">Apr 30</text>
+            </g>
+            <!-- 图例 -->
+            <rect x="58" y="12" width="10" height="6" rx="2" fill="#788c5d" opacity="0.6"/>
+            <text x="72" y="18" font-family="Poppins, sans-serif" font-size="9" fill="#141413">活跃</text>
+            <rect x="118" y="12" width="10" height="6" rx="2" fill="#d97757" opacity="0.4"/>
+            <text x="132" y="18" font-family="Poppins, sans-serif" font-size="9" fill="#141413">已废弃</text>
+            <rect x="207" y="12" width="10" height="6" rx="2" fill="#b0aea5" opacity="0.4"/>
+            <text x="221" y="18" font-family="Poppins, sans-serif" font-size="9" fill="#141413">已归档</text>
+          </svg>
+        </div>
+
+        <!-- 图表 4：上下文效率 -->
+        <div class="engram-chart-wrap">
+          <div class="engram-chart-header">
+            <div>
+              <div class="engram-chart-title">上下文效率</div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">滚动 7 会话均值：打包 token 中被 LLM 实际使用的比例</div>
+            </div>
+            <div style="display:flex; gap:var(--space-2);">
+              <span class="anth-badge" style="background:#f5ddd9; color:#5e1a12;">回退：环比 -11%</span>
+              <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px;">导出 CSV</button>
+            </div>
+          </div>
+          <svg viewBox="0 0 640 140" width="100%" role="img" aria-label="折线图：上下文效率 30 天滚动均值，末周出现回退">
+            <!-- 坐标轴 -->
+            <line x1="50" y1="10" x2="50" y2="115" stroke="#e8e6dc" stroke-width="1"/>
+            <line x1="50" y1="115" x2="625" y2="115" stroke="#e8e6dc" stroke-width="1"/>
+            <!-- Y 轴刻度 -->
+            <text x="44" y="118" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">40%</text>
+            <text x="44" y="82" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">60%</text>
+            <text x="44" y="46" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">80%</text>
+            <text x="44" y="14" text-anchor="end" font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5">95%</text>
+            <line x1="50" y1="82" x2="625" y2="82" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <line x1="50" y1="46" x2="625" y2="46" stroke="#e8e6dc" stroke-width="0.5" stroke-dasharray="4,4"/>
+            <!-- 回退区域高亮 -->
+            <rect x="485" y="10" width="140" height="105" fill="rgba(161,66,56,0.04)" rx="4"/>
+            <!-- 主效率折线 -->
+            <polyline points="50,80 100,76 150,70 200,64 250,58 300,52 350,46 400,42 450,40 485,38 520,52 560,58 600,60 625,62"
+              fill="none" stroke="#b0aea5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- 填充区域 -->
+            <polygon points="50,80 100,76 150,70 200,64 250,58 300,52 350,46 400,42 450,40 485,38 520,52 560,58 600,60 625,62 625,115 50,115"
+              fill="#b0aea5" opacity="0.08"/>
+            <!-- 回退段（危险色） -->
+            <polyline points="485,38 520,52 560,58 600,60 625,62"
+              fill="none" stroke="#a14238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- X 轴标签 -->
+            <g font-family="Poppins, sans-serif" font-size="9" fill="#b0aea5" text-anchor="middle">
+              <text x="50"  y="128">Apr 1</text>
+              <text x="195" y="128">Apr 8</text>
+              <text x="340" y="128">Apr 15</text>
+              <text x="485" y="128">Apr 22</text>
+              <text x="625" y="128">Apr 30</text>
+            </g>
+            <text x="555" y="24" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="#a14238">↓ 环比 -11%</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 右：下钻面板 -->
+      <div style="position:sticky; top:72px;">
+        <div class="engram-detail-panel">
+          <h4 style="font-family:var(--font-heading); font-size:14px; margin-bottom:var(--space-4);">下钻：工作流掌握度</h4>
+          <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary); margin-bottom:var(--space-3);">数据明细 — 近 30 天</div>
+          <table style="width:100%; border-collapse:collapse; font-family:var(--font-heading); font-size:12px;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--anth-light-gray);">
+                <th style="padding:var(--space-1) var(--space-2); text-align:left; color:var(--anth-text-secondary); font-weight:600;">工作流</th>
+                <th style="padding:var(--space-1) var(--space-2); text-align:right; color:var(--anth-text-secondary); font-weight:600;">pass_rate</th>
+                <th style="padding:var(--space-1) var(--space-2); text-align:right; color:var(--anth-text-secondary); font-weight:600;">Δ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--anth-light-gray);">
+                <td style="padding:var(--space-2) var(--space-2);">release-checklist</td>
+                <td style="padding:var(--space-2) var(--space-2); text-align:right; font-weight:600;">0.94</td>
+                <td style="padding:var(--space-2) var(--space-2); text-align:right; color:var(--anth-green);">+0.20</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--anth-light-gray);">
+                <td style="padding:var(--space-2) var(--space-2);">deploy-pipeline</td>
+                <td style="padding:var(--space-2) var(--space-2); text-align:right; font-weight:600;">0.88</td>
+                <td style="padding:var(--space-2) var(--space-2); text-align:right; color:var(--anth-green);">+0.13</td>
+              </tr>
+              <tr>
+                <td style="padding:var(--space-2) var(--space-2);">incident-response</td>
+                <td style="padding:var(--space-2) var(--space-2); text-align:right; font-weight:600;">0.76</td>
+                <td style="padding:var(--space-2) var(--space-2); text-align:right; color:var(--anth-green);">+0.08</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <hr class="anth-divider" style="margin:var(--space-4) 0;">
+
+          <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary); margin-bottom:var(--space-2);">相关事件（样本）</div>
+          <div style="display:flex; flex-direction:column; gap:var(--space-2); font-family:var(--font-heading); font-size:11px;">
+            <div style="border-left:2px solid var(--anth-green); padding-left:var(--space-2);">
+              <div style="font-weight:500;">2026-04-18 · release-checklist r8 已接受</div>
+              <div style="color:var(--anth-text-secondary);">pass_rate +0.030 · event-id: ae-2026-04-18-042</div>
+            </div>
+            <div style="border-left:2px solid var(--anth-green); padding-left:var(--space-2);">
+              <div style="font-weight:500;">2026-04-16 · release-checklist r7 已接受</div>
+              <div style="color:var(--anth-text-secondary);">pass_rate +0.030 · event-id: ae-2026-04-16-031</div>
+            </div>
+            <div style="border-left:2px solid var(--anth-danger); padding-left:var(--space-2);">
+              <div style="font-weight:500;">2026-04-15 · release-checklist r6 已拒绝</div>
+              <div style="color:var(--anth-text-secondary);">pass_rate -0.040（已自动回滚）· event-id: ae-2026-04-15-028</div>
+            </div>
+            <div style="border-left:2px solid var(--anth-green); padding-left:var(--space-2);">
+              <div style="font-weight:500;">2026-04-13 · deploy-pipeline r4 已接受</div>
+              <div style="color:var(--anth-text-secondary);">pass_rate +0.045 · event-id: ae-2026-04-13-021</div>
+            </div>
+          </div>
+
+          <button class="anth-button anth-button--ghost" style="width:100%; font-size:12px; padding:8px; margin-top:var(--space-4);">
+            导出完整下钻 CSV
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 设计原型。正式实现在 M7 里程碑。
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← 设计中心</a>
+</footer>
+
+</body>
+</html>

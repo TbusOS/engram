@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pool Manager — engram Web UI</title>
+  <link rel="stylesheet" href="../assets/fonts.css">
+  <link rel="stylesheet" href="../assets/anthropic.css">
+  <link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="graph.html">Graph</a>
+      <a href="inbox.html">Inbox</a>
+      <a href="context-preview.html">Context Preview</a>
+      <a href="wisdom.html">Wisdom</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">Design Mockup</span>
+      <a href="zh/pool-manager.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">中文</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← All pages</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="Page navigation">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Overview</div>
+      <a href="dashboard.html" class="engram-sidebar-link">Dashboard</a>
+      <a href="graph.html" class="engram-sidebar-link">Graph</a>
+      <a href="project-overview.html" class="engram-sidebar-link">Projects</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Assets</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">Memory</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">Workflows</a>
+      <a href="kb-article.html" class="engram-sidebar-link">Knowledge Base</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Tools</div>
+      <a href="pool-manager.html" class="engram-sidebar-link is-active">Pool Manager</a>
+      <a href="context-preview.html" class="engram-sidebar-link">Context Preview</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">Autolearn</a>
+      <a href="inbox.html" class="engram-sidebar-link">Inbox</a>
+      <a href="wisdom.html" class="engram-sidebar-link">Wisdom</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Page header -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-5);">
+      <h1 style="font-size:24px;">Pool Manager</h1>
+      <div style="display:flex; gap:var(--space-3);">
+        <input class="anth-input" type="search" placeholder="Filter pools…" style="width:200px; font-size:13px; padding:6px 12px;">
+        <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 16px;">Sync all</button>
+        <button class="anth-button" style="font-size:13px; padding:8px 20px;">+ Subscribe to pool</button>
+      </div>
+    </div>
+
+    <!-- Pool table -->
+    <div style="background:#ffffff; border-radius:var(--radius-md); box-shadow:var(--shadow-card); overflow:hidden; margin-bottom:var(--space-6);">
+      <table class="engram-pool-table">
+        <thead>
+          <tr>
+            <th>Pool name</th>
+            <th>Source URL</th>
+            <th>subscribed_at</th>
+            <th>propagation_mode</th>
+            <th>last_synced_rev</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div style="font-weight:600; font-family:var(--font-mono); font-size:12px;">compliance-checklists</div>
+              <div style="font-size:11px; color:var(--anth-text-secondary);">46 assets · maintained by org-security</div>
+            </td>
+            <td style="font-family:var(--font-mono); font-size:11px; color:var(--anth-text-secondary);">
+              github:acme-org/compliance-pool
+            </td>
+            <td><span class="anth-badge">org</span></td>
+            <td>
+              <select class="anth-select" style="font-size:11px; padding:4px 8px; width:110px;">
+                <option selected>auto-sync</option>
+                <option>notify</option>
+                <option>pinned</option>
+              </select>
+            </td>
+            <td style="font-family:var(--font-mono); font-size:12px;">
+              r15 &nbsp;<span class="anth-badge" style="background:rgba(120,140,93,0.15); color:var(--anth-green); font-size:9px;">latest</span>
+            </td>
+            <td><span class="engram-status engram-status--ok">synced</span></td>
+            <td>
+              <div style="display:flex; gap:var(--space-2);">
+                <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px;">Diff</button>
+                <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px; color:var(--anth-danger);">Unsub</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div style="font-weight:600; font-family:var(--font-mono); font-size:12px;">kernel-work</div>
+              <div style="font-size:11px; color:var(--anth-text-secondary);">83 assets · maintained by kernel-team</div>
+            </td>
+            <td style="font-family:var(--font-mono); font-size:11px; color:var(--anth-text-secondary);">
+              github:acme-org/kernel-pool
+            </td>
+            <td><span class="anth-badge">team</span></td>
+            <td>
+              <select class="anth-select" style="font-size:11px; padding:4px 8px; width:110px;">
+                <option>auto-sync</option>
+                <option selected>notify</option>
+                <option>pinned</option>
+              </select>
+            </td>
+            <td style="font-family:var(--font-mono); font-size:12px;">
+              r22 &nbsp;<span class="anth-badge" style="background:#fde8e0; color:#7a3010; font-size:9px;">r23 avail</span>
+            </td>
+            <td><span class="engram-status engram-status--warn">update available</span></td>
+            <td>
+              <div style="display:flex; gap:var(--space-2);">
+                <button class="anth-button" style="font-size:11px; padding:4px 10px;">Accept r23</button>
+                <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px;">Diff</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div style="font-weight:600; font-family:var(--font-mono); font-size:12px;">design-system</div>
+              <div style="font-size:11px; color:var(--anth-text-secondary);">27 assets · maintained by design-team</div>
+            </td>
+            <td style="font-family:var(--font-mono); font-size:11px; color:var(--anth-text-secondary);">
+              github:acme-org/design-pool
+            </td>
+            <td><span class="anth-badge">user</span></td>
+            <td>
+              <select class="anth-select" style="font-size:11px; padding:4px 8px; width:110px;">
+                <option>auto-sync</option>
+                <option>notify</option>
+                <option selected>pinned</option>
+              </select>
+            </td>
+            <td style="font-family:var(--font-mono); font-size:12px;">
+              r7 &nbsp;<span class="anth-badge" style="font-size:9px;">pinned</span>
+            </td>
+            <td><span class="engram-status engram-status--ok">pinned</span></td>
+            <td>
+              <div style="display:flex; gap:var(--space-2);">
+                <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px;">Change pin</button>
+                <button class="anth-button anth-button--ghost" style="font-size:11px; padding:4px 10px;">Diff</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pool dependency diagram -->
+    <div class="engram-section-head">
+      <span class="engram-section-title">Pool dependency graph</span>
+      <span class="anth-caption">Propagation chain for this project</span>
+    </div>
+    <div class="engram-chart-wrap">
+      <svg viewBox="0 0 720 200" width="100%" role="img" aria-label="Pool dependency diagram showing org-level compliance-checklists feeding into team-level kernel-work, both feeding into this project">
+        <!-- Background -->
+        <rect width="720" height="200" rx="8" fill="#faf9f5"/>
+
+        <!-- Org level label -->
+        <text x="20" y="30" font-family="Poppins, sans-serif" font-size="10" font-weight="600" fill="#b0aea5">ORG LEVEL</text>
+        <!-- Org pool -->
+        <rect x="20" y="40" width="160" height="60" rx="10" fill="#788c5d" opacity="0.85"/>
+        <text x="100" y="66" text-anchor="middle" font-family="Poppins, sans-serif" font-size="11" font-weight="600" fill="#ffffff">compliance-checklists</text>
+        <text x="100" y="82" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="rgba(255,255,255,0.8)">46 assets · auto-sync</text>
+        <text x="100" y="93" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="rgba(255,255,255,0.8)">maintained by org-security</text>
+
+        <!-- Arrow down-right to kernel-work -->
+        <path d="M 100 102 Q 100 130 200 145" fill="none" stroke="#b0aea5" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+        <!-- Arrow right to this project (compliance) -->
+        <path d="M 182 70 Q 300 70 390 90" fill="none" stroke="#b0aea5" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <defs>
+          <marker id="arr2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#b0aea5"/>
+          </marker>
+        </defs>
+
+        <!-- Team level -->
+        <text x="200" y="120" font-family="Poppins, sans-serif" font-size="10" font-weight="600" fill="#b0aea5">TEAM LEVEL</text>
+        <rect x="200" y="130" width="160" height="55" rx="10" fill="#6a9bcc" opacity="0.85"/>
+        <text x="280" y="153" text-anchor="middle" font-family="Poppins, sans-serif" font-size="11" font-weight="600" fill="#ffffff">kernel-work</text>
+        <text x="280" y="168" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="rgba(255,255,255,0.8)">83 assets · notify · r22</text>
+
+        <!-- Arrow right to this project (kernel) -->
+        <path d="M 362 157 Q 430 157 488 120" fill="none" stroke="#b0aea5" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- User level -->
+        <text x="390" y="45" font-family="Poppins, sans-serif" font-size="10" font-weight="600" fill="#b0aea5">USER LEVEL</text>
+        <rect x="390" y="55" width="145" height="50" rx="10" fill="#b0aea5" opacity="0.7"/>
+        <text x="462" y="76" text-anchor="middle" font-family="Poppins, sans-serif" font-size="11" font-weight="600" fill="#ffffff">design-system</text>
+        <text x="462" y="91" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="rgba(255,255,255,0.9)">27 assets · pinned r7</text>
+
+        <!-- Arrow right to this project (design) -->
+        <path d="M 537 80 Q 580 80 590 90" fill="none" stroke="#b0aea5" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- This project -->
+        <text x="540" y="30" font-family="Poppins, sans-serif" font-size="10" font-weight="600" fill="#b0aea5">THIS PROJECT</text>
+        <rect x="540" y="40" width="160" height="130" rx="10" fill="#d97757" opacity="0.85"/>
+        <text x="620" y="100" text-anchor="middle" font-family="Poppins, sans-serif" font-size="11" font-weight="600" fill="#ffffff">acme-checkout</text>
+        <text x="620" y="116" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="rgba(255,255,255,0.8)">-service</text>
+        <text x="620" y="134" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="rgba(255,255,255,0.8)">487 total assets</text>
+        <text x="620" y="150" text-anchor="middle" font-family="Poppins, sans-serif" font-size="9" fill="rgba(255,255,255,0.8)">3 pools subscribed</text>
+      </svg>
+    </div>
+
+    <!-- Pool diff preview (kernel-work r22→r23) -->
+    <div class="engram-detail-panel" style="margin-top:var(--space-5);">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+        <h4 style="font-size:14px; font-family:var(--font-heading); margin:0;">kernel-work — pending diff (r22 → r23)</h4>
+        <div style="display:flex; gap:var(--space-2);">
+          <button class="anth-button" style="font-size:12px; padding:6px 16px;">Accept r23</button>
+          <button class="anth-button anth-button--ghost" style="font-size:12px; padding:6px 16px;">Keep r22</button>
+        </div>
+      </div>
+      <div class="engram-diff">
+<span class="engram-diff-ctx">--- kernel_coding_style.md (r22)</span>
+<span class="engram-diff-ctx">+++ kernel_coding_style.md (r23)</span>
+<span class="engram-diff-ctx">@@ -14,6 +14,10 @@ Always use `checkpatch.pl` before submitting patches.</span>
+<span class="engram-diff-ctx"> </span>
+<span class="engram-diff-add">+## SPDX headers</span>
+<span class="engram-diff-add">+</span>
+<span class="engram-diff-add">+All new files must include an SPDX-License-Identifier header on line 1.</span>
+<span class="engram-diff-add">+Example: `// SPDX-License-Identifier: GPL-2.0-only`</span>
+<span class="engram-diff-add">+</span>
+<span class="engram-diff-ctx"> ## Commit message format</span>
+<span class="engram-diff-ctx"> </span>
+<span class="engram-diff-ctx"> Use the standard Linux kernel commit format: subsystem: short description</span></div>
+      <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary); margin-top:var(--space-3);">
+        1 file changed · 5 lines added · 0 lines removed · published 2026-04-17 by kernel-team
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 design mockup. Real implementation in M7.
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← Design hub</a>
+</footer>
+
+</body>
+</html>

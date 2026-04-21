@@ -1,0 +1,280 @@
+[English](TASKS.md) · [中文](TASKS.zh.md)
+
+# engram 任务板
+
+**版本目标**：v0.2.0（首次公开发布）及后续版本
+**状态**：进行中 — 通过 GitHub Issue 认领任务并自行分配
+**最后更新**：2026-04-20
+**规范版本**：https://github.com/TbusOS/engram/blob/main/TASKS.md
+
+---
+
+## 1. 理念与使用说明
+
+本文件是**活文档** — 随任务认领、完成、拆分而持续更新，通过 PR 维护。不要把它当成静态规范。如果某任务显示为进行中却没有对应 PR，该任务实际上并未推进。
+
+**状态值**：`todo` / `doing` / `review` / `done` / `abandoned`
+
+**归属**：Owner 列填写 GitHub 用户名；留空 = 可认领。
+
+**依赖**：写明前置 T-ID。依赖项未到 `done` 前不得开始该任务。
+
+**认领**：开一个标题为 `Claim T-XX` 的 Issue，自行分配，然后在实现 PR 里将本文件中的 Owner 和状态改为 `doing`。每个任务只有一个 Owner。
+
+**拆分**：预估工作量超过 3 天的任务，在开始前必须拆分。子任务 ID 形如 T-11a、T-11b，与父任务行并列放置。父任务行保留，Notes 列指向子任务。
+
+**讨论层级**：
+- 方向性讨论（里程碑顺序、P2 升级为 P1）→ GitHub Discussions
+- 任务级澄清（需求模糊、被阻塞）→ 该 T-ID 对应的 Issue
+- 代码审查 → PR 本身
+
+**完成标准**：单测通过 + 集成测试通过（视情况而定）+ 功能出现在 `--help` 输出中，或按照 DESIGN.md 文档可通过 MCP 工具访问。只有合并后才能将状态改为 `done`。
+
+**Abandoned（已放弃）**：如果某任务不再推进，将状态改为 `abandoned` 并在 Notes 中说明原因。保留该行，不要删除。
+
+---
+
+## 2. 里程碑概览
+
+| 里程碑 | 目标 | 退出的硬门槛 |
+|--------|------|-------------|
+| **M1** — SPEC + DESIGN 冻结 | v0.2 SPEC 和 DESIGN 经过外部审核并冻结 | 5 位以上外部读者 + 所有审核 Issue 已解决 |
+| **M2** — CLI 核心 | `engram init / status / version / validate / review / memory (CRUD)` 端到端可用 | 空项目 → init → 添加 10 条记忆 → validate 全绿 |
+| **M3** — 范围 + 池 + 迁移 | 全部 4 个层级范围 + 池订阅 + `migrate --from=v0.1` 端到端可用 | 真实 v0.1 存储无数据丢失地完成迁移 |
+| **M4** — 智能层 Phase 1-2 + 适配器 + MCP | 相关性闸门 + 一致性引擎 Phase 1-2 + 跨仓传信器 + Claude Code / Codex / Gemini CLI / Cursor / raw-api 适配器 + MCP 服务（读工具） | engram-cli 可通过 pip 安装；全部 P0 CLI 命令通过 E2E |
+| **M4.5** — 基准测试基础设施 | `benchmarks/BENCHMARKS.md` + consistency_test + scope_isolation_test + docs/HISTORY.md | 结果可从已提交脚本中复现 |
+| **M5** — 工作流 + 自学习 | 工作流资产完整 + 自学习引擎棘轮 + 阶段闸门 | 单个工作流自学习 10 轮，指标单调提升 |
+| **M6** — 知识库 + 收件箱 + 一致性引擎 Phase 3-4 | 知识库编译 + 收件箱完整 + 语义一致性 + 执行一致性阶段 | 跨仓 bug-report → 确认 → 解决 完整流程可用；知识库 `_compiled.md` 自动标记过期 |
+| **M7** — Web UI P0 | engram-web 6 个 P0 页面（总览面板、记忆详情、工作流详情、知识文章、收件箱、上下文预览） | `engram web serve` → 点击 6 个页面 → 无 500 错误；WCAG AA 检查通过 |
+| **M8** — 演化 + 团队完整 + TS SDK + 剩余 Web UI + 迁移源 | 演化引擎、池传播 notify+pinned、智慧指标面板、TypeScript SDK、剩余 5 个 Web UI 页面、6 个额外迁移源、剧本命令族 | 覆盖 DESIGN §13.2 的全部 P1 范围 |
+
+M8 完成后，工作转向 DESIGN §13.3 中的 P2 项目：多机器同步守护进程、本地小模型重排序、Obsidian 插件、IDE 深度集成、多语言嵌入向量。这些均无需修改 SPEC。列出它们是为了避免贡献者重复提出已有记录的设计问题，并非已排期里程碑。
+
+---
+
+## 3. 任务列表
+
+### M1 — SPEC + DESIGN 冻结
+
+| ID | 任务 | 状态 | Owner | 依赖 | 备注 |
+|----|------|------|-------|------|------|
+| T-01 | 编写 SPEC v0.2 全部 14 章 | done | | | 14 章已在 main 分支 |
+| T-02 | 编写 DESIGN v0.2 全部 14 章 | done | | | §0–§13 已在 main 分支 |
+| T-03 | 建立 docs/glossary.md + docs/superpowers/plans/ | done | | | |
+| T-04 | 将 v0.1 归档至 docs/archive/v0.1/ | done | | | |
+| T-05 | 建立 GitHub Pages 落地页（中英双语） | done | | | docs/index.html 已上线 |
+| T-06 | 制作 Web UI 静态效果图（11 页，中英双语） | done | | | docs/design/ 静态页面 |
+| T-07 | SPEC + DESIGN 外部审核 — 至少 5 位读者 | todo | | T-01, T-02 | 开 GitHub Discussion 征集审核者；将反馈汇总为 Issue |
+| T-08 | 解决 T-07 产生的全部审核 Issue | todo | | T-07 | 每个 Issue 关闭前需有解决说明 |
+| T-09 | 审核 Issue 全部关闭后打 v0.2.0-pre 标签 | todo | | T-08 | 触发 M2 实现工作 |
+
+---
+
+### M2 — CLI 核心
+
+| ID | 任务 | 状态 | Owner | 依赖 | 备注 |
+|----|------|------|-------|------|------|
+| T-10 | cli/ 骨架：pyproject.toml + click 集成 + 包骨架 | done | | T-09 | 入口点 `engram`；版本来自 pyproject；`pip install -e "cli[dev]"` 可用。T-09 硬门槛按路径 B 搁置（M1 外审与 M2 骨架并行） |
+| T-11 | `engram/core/paths.py` — 项目根目录探测 + ENGRAM_DIR 支持 | done | | T-10 | `find_project_root` 从 cwd 向上走找 `.memory/`；`ENGRAM_DIR` 环境变量短路；另外 `user_root`、`memory_dir`、`engram_dir` 三个工具函数。单测 100% 覆盖 |
+| T-12 | `engram/core/frontmatter.py` — YAML 解析 + 按 SPEC §4.1 校验 | done | | T-10 | 类型化 `MemoryFrontmatter` + `Confidence` dataclass(frozen+slots)+ 3 个 enum;严格校验 required / enum / scope-conditional(org/team/pool/subscribed_at)/ 子类型专属(feedback→enforcement、workflow_ptr→workflow_ref、agent→source)/ confidence 块。未知字段按 SPEC §4.1 要求保留到 `extra`(不抛异常 —— SPEC 优先于任务条目早期措辞)。39 单测,96% 覆盖率 |
+| T-13 | `engram/core/fs.py` — 原子写入 + 锁 + 符号链接 | done | | T-10 | `write_atomic(path, content)` tempfile+fsync+os.replace；`acquire_lock(path)` fcntl.flock 上下文管理器(exclusive/shared 两种模式);`atomic_symlink(target, link)` 同目录 tmp symlink + rename 替换。仅 POSIX(macOS+Linux)。19 单测含线程串行化测试,93% 覆盖 |
+| T-14 | `engram/core/graph_db.py` — 按 DESIGN §3.2 建 SQLite schema + WAL 模式 + 迁移 | done | | T-10 | `open_graph_db(path)` 上下文管理器应用 PRAGMA journal_mode=WAL / synchronous=NORMAL / foreign_keys=ON。DESIGN §3.2 全部 7 张表(assets / references_ / subscriptions / inbox_messages / consistency_proposals / usage_events / schema_version)+ 5 个 index 通过 SCHEMA_VERSION 键控的前向迁移框架建立。AssetRow dataclass + insert_asset / get_asset / list_asset_ids 辅助函数(其他表留给各自消费任务)。19 单测 98% 覆盖。说明:原任务行说"assets / references / scopes / journal"措辞不准,DESIGN §3.2 为权威,实际不存在 scopes / journal 表(journal 是 §3.4 磁盘 JSONL) |
+| T-15 | `engram/core/journal.py` — 追加式 JSONL 辅助函数 | done | | T-10 | `append_event(path, event)` 带 fcntl.flock(50×20 并发写入 1000 事件无丢失无损坏);`read_events(path)` 生成器跳过空行、拒非对象事件、解析错误带行号。16 单测,100% 覆盖 |
+| T-16 | `engram/cli.py` — click 主调度器 + 全局标志 | done | | T-10 | 根 group 接 `--dir PATH` / `--format {text,json}` / `--quiet -q` / `--debug`。类型化 `GlobalConfig`(frozen dataclass)挂 `ctx.obj`。`resolve_project_root()` 按 DESIGN §9.3 顺序(--dir > ENGRAM_DIR > cwd 向上走)。日志级别从 flag 派生(debug>quiet>info)。21 单测,98% 覆盖 |
+| T-17 | `engram init` — 交互式 + 非交互式两种模式 | done | | T-11, T-13 | `engram init` + 纯函数 `init_project()` 建 `.memory/{local,pools,workflows,kb}/` + `.engram/version=0.2` + 符合 SPEC §7.2 结构的 `MEMORY.md` 骨架 + `pools.toml` 占位。`--name` 覆盖目录名;`--no-adapter` 预留 no-op(T-55 补完);`--force` 改写骨架但保留用户在 local/workflows/kb 下的内容。19 单测含 E2E,命令 100% 覆盖。seeds 目录内容待定 —— 仓库里 seeds/ 仍是占位 |
+| T-18 | `engram version` + `engram config get/set` | done | | T-16 | `version` 输出 CLI semver + store schema + Python + 平台(text/json)。`config get/set/list` 读写 `~/.engram/config.toml`(tomli + tomli-w);点分 key 映射嵌套 TOML 表;值自动推断(true / 42 / 3.14 / str);写入走 write_atomic 原子;缺失 key 抛 ConfigKeyError。40 单测 97% 新代码覆盖 |
+| T-19 | `engram memory add / list / read / update / archive / search` | done | | T-11, T-12, T-13, T-14 | 6 个子命令全部可用。add:flag 驱动,通过 frontmatter 往返强制 SPEC §4.1 子类型字段;--body 接受 `-` 读 stdin;--force 覆盖。list:text 表格 + json。read:文件 text + json frontmatter/body。update:--description / --body / --enforcement / --lifecycle / --tags,自动刷新 `updated` 日期。archive:移动文件到 `~/.engram/archive/YYYY/MM/` 并翻 lifecycle_state。search:纯 Python BM25 打 name+description+body,--limit,text + json。**M2 决定**:graph.db 在 `<project>/.engram/graph.db`(DESIGN §3.2 写的是 `~/.engram/graph.db` 但有跨项目唯一性 schema 缺口,M3 重审)。45 单测,memory.py 94% 覆盖 |
+| T-20 | `engram validate` — 执行全部 SPEC §12 规则；JSON + 文本输出；CI 友好退出码 | done | | T-12, T-14 | M2 子集:STR(§12.1)、FM(§12.2)、MEM(§12.3)、IDX(§12.6)、REF(§12.9)。SCO/ENF/POOL/INBOX/WF/KB/CONS 各自消费任务补齐。text + JSON 按 §12.13 输出;退出码 0 干净 / 1 警告 / 2 错误(原任务行把 1 和 2 写反,SPEC §12.13 为准)。35 单测,validator 93% 覆盖 |
+| T-21 | `engram review` — 综合健康状况摘要 | done | | T-14, T-20 | 包 run_validate + graph.db 资产统计。类型化 `Review` dataclass(total_assets / by_subtype / by_lifecycle / by_severity / by_category / issues)。text:Assets + Validation issues 按严重度/分类分组。json:嵌套 {assets, validation}。**始终 exit 0**(信息性,不当 CI 门)。11 单测,100% 覆盖 |
+| T-22 | `engram status` — 项目 + 范围摘要 | done | | T-11, T-14 | 读 `.engram/version` + `.memory/pools.toml` + `.engram/graph.db`。类型化 `Status` dataclass(project_root / initialized / store_version / total_assets / by_subtype / by_lifecycle / pool_subscriptions)。未初始化(提示 `engram init`);pools.toml malformed 容错。text + json;始终 exit 0。10 单测,94% 覆盖 |
+| T-23 | 全部核心模块单测（pytest + 80% 覆盖率） | done | | T-11, T-12, T-13, T-14, T-15 | 在 T-11~T-15 每个任务里 TDD 同步完成:paths 100% / frontmatter 96% / fs 93% / graph_db 98% / journal 100%。T-23 作为里程碑 checkpoint 翻 done |
+| T-24 | E2E 测试：空项目 → init → 添加 10 条记忆 → review/validate 全绿 | done | | T-17, T-19, T-20, T-21 | `tests/e2e/test_m2_smoke.py` 跑完整 M2 流程:init → add×10(5 子类型:user/feedback/project/reference/agent)→ list → search → validate(errors==0)→ review(10 资产,5×2 subtype)→ status + 第二条 smoke 验 update + archive 往返。另 subprocess 级 `engram --version` smoke。"全绿"定义为 `errors==0`;agent 上的 W-MEM-002 警告是预期的(confidence flag 留到 M2 polish 或 M5) |
+
+---
+
+### M3 — 范围 + 池 + 迁移
+
+| ID | 任务 | 状态 | Owner | 依赖 | 备注 |
+|----|------|------|-------|------|------|
+| T-30 | `engram/pool/` 模块 — 按 SPEC §8/§9 实现订阅/取消订阅/列表 | done | | T-13, T-14 | `commands/pool.py` 含 subscribe/unsubscribe/list。按 SPEC §9.2 写 `[subscribe.<name>]` 到 pools.toml(修掉了 T-17 init 用的错误 `[[subscription]]` schema,T-22 status 读取同步更新)。通过 `atomic_symlink` 建 `.memory/pools/<name>` 软链。严格校验:pool 不在 `~/.engram/pools/<name>/` 则报错。--at(org/team/user/project)、--mode(auto-sync/notify/pinned)、--revision(pinned 必填)、--force。15 单测,整库 306 条通过 |
+| T-31 | `engram/pool/propagation.py` — 仅实现自动同步模式 | done | | T-30 | commands/pool.py 里做符号链接目标解析:auto-sync/notify → `rev/current`(无 rev/ 时回退到 pool 根);pinned → `rev/<revision>/`(必须存在)。`engram pool sync [name | --all]` 刷 `last_synced_rev` + 追加 `propagation_completed` 事件到 `~/.engram/journal/propagation.jsonl`(SPEC §9.4)。pinned 订阅跳过。subscribe 现在自动从当前 rev 记 last_synced_rev。13 新单测,整库 319 通过 |
+| T-32 | `engram/pool/git_sync.py` — 基于 git 的池同步 | done | | T-30 | `engram pool pull [<name> | --all]` 通过 subprocess 跑 `git pull --ff-only`;用 `git diff --name-status` 比对 before/after HEAD,报告 added/modified/removed 计数。pool 代码重构为 `engram/pool/{subscriptions,propagation,git_sync,commands}.py` 多文件结构(DESIGN §4.2)。9 新单测(用真实 git 仓库,git 不在时跳过),整库 328 通过 |
+| T-33 | `engram/team/` + `engram/org/` — join / sync / publish / status | done | | T-14, T-30 | 抽出 `engram/core/git.py`(run_git / head_sha / diff_name_status / pull_ff / clone / commit_all / push / status_porcelain)—— pool 同步也用。`engram/scope/{git_ops,factory}.py` 抽共享 team/org 逻辑;`engram/team/__init__.py` + `engram/org/__init__.py` 选 kind 并导出 click group。命令:join `<name> <url>` / sync `[<name> | --all]` / publish `<name> --message` / status `<name>` / list。32 个参数化测试(真实 git),整库 360 通过 |
+| T-34 | `engram/migrate/v0_1.py` — SPEC §13.4 合约；dry-run + 正式迁移 + 回滚 | done | | T-12, T-13 | `engram/migrate/{__init__, commands, v0_1}.py` 多文件(DESIGN §4.2)。`engram migrate --from=v0.1` 支持 --dry-run / --rollback。写任何文件前先建 `.memory.pre-v0.2.backup/`;flat `*.md` 挪进 `local/`;注入 `scope: project`;feedback 加 `enforcement: default`;agent 加零态 `confidence`(SPEC §13.4 写 `{}` 但解析器要子字段,按 §13.7 "additive default" 原则用零块)。未知字段保留;MEMORY.md 重建并按 type 归类到 Identity / Always-on rules / Topics;迁移事件写入 `~/.engram/journal/migration.jsonl`;幂等重入。26 单测 + CLI smoke,整库 386 通过,94% 覆盖 |
+| T-35 | E2E：用真实 20 条记忆样本测试 v0.1 存储迁移 | todo | | T-34 | 样本 fixture 放在 `tests/fixtures/v0.1_store/`；断言零数据丢失 |
+| T-36 | 更新 `engram init` 以支持 `--subscribe=<pool>` 和 `--org` / `--team` | todo | | T-17, T-30, T-33 | 写入 `pools.toml` 条目；创建范围符号链接 |
+| T-37 | `pools.toml` schema 校验（在 `engram validate` 中） | todo | | T-20, T-30 | 校验 `subscribed_at` 值；检查池路径存在 |
+| T-38 | `engram memory search` 中的范围感知相关性排序 | todo | | T-19, T-30, T-33 | BM25 结果中应用强制级权重（强制级 > 默认级 > 建议级） |
+| T-39 | 按 SPEC §8.4 决策树测试范围冲突解决 | todo | | T-30, T-33, T-38 | 15+ 个冲突场景；每个场景断言获胜资产及原因 |
+
+---
+
+### M4 — 智能层 Phase 1-2 + 适配器 + MCP
+
+| ID | 任务 | 状态 | Owner | 依赖 | 备注 |
+|----|------|------|-------|------|------|
+| T-40 | `engram/relevance/gate.py` — DESIGN §5.1 七阶段管道 | todo | | T-14 | 阶段：预过滤 → 范围过滤 → BM25 → 向量 → 时间加权 → 强制级权重 → 预算打包 |
+| T-41 | `engram/relevance/embedder.py` — 本地默认 bge-reranker-v2-m3 + 云端提供商配置 | todo | | T-40 | 首次使用时惰性加载模型；模型缺失时降级为仅 BM25 |
+| T-42 | `engram/relevance/bm25.py` + 停用词表 | todo | | T-40 | Okapi-BM25；按 DESIGN §17 定义的 32 词停用词表 |
+| T-43 | `engram/relevance/temporal.py` — "N 周前"解析 + 时间邻近加权 | todo | | T-40 | 查询日期附近最多降低 40% 距离 |
+| T-44 | 相关性闸门中的范围 + 强制级权重 + 时效衰减 | todo | | T-41, T-42, T-43 | DESIGN §9 中的 `confidence_score` 驱动时效衰减 |
+| T-45 | 相关性缓存 — LRU，按 DESIGN §3.3 | todo | | T-40 | 缓存键：(query_hash, scope_hash, budget)；TTL = 5 分钟 |
+| T-46 | `engram/consistency/engine.py` — 四阶段调度器 | todo | | T-14 | Phase 1+2 在此实现；Phase 3+4 调度但在 M4 阶段返回存根 |
+| T-47 | `engram/consistency/phase1_static.py` — 写入时静态 SPEC §12 错误检测 | todo | | T-12, T-46 | 7 个冲突类别；返回结构化 ConflictReport 列表 |
+| T-48 | `engram/consistency/phase2_semantic.py` — DBSCAN 聚类 + 6 条聚类规则 | todo | | T-41, T-46 | 按嵌入向量聚类；检测事实冲突和同题分歧 |
+| T-49 | `engram/consistency/resolve.py` — 6 种处置方式实现 | todo | | T-47, T-48 | 处置：update / supersede / merge / archive / dismiss / escalate；均不自动执行 |
+| T-50 | `engram/inbox/messenger.py` — SPEC §10 + 去重 + 频率限制 | todo | | T-14, T-15 | 按 code-ref 去重；每仓每天最多 10 条；每个事件写入日志 |
+| T-51 | `engram/mcp/server.py` — 无状态 MCP 服务（stdio + SSE 传输） | todo | | T-14, T-40 | 实现 MCP 协议；无会话状态；每个客户端一个进程 |
+| T-52 | `engram/mcp/tools.py` — 全部读取 + 收件箱 MCP 工具的 pydantic schema | todo | | T-51 | 工具：`engram_memory_read`、`engram_memory_search`、`engram_context_pack`、`engram_inbox_list`、`engram_inbox_send` |
+| T-53 | `adapters/claude-code/` + hooks：`engram_stop.sh` + `engram_precompact.sh` | todo | | T-40 | hook 延迟 <500ms（DESIGN §20）；CLAUDE.md 中使用标记边界注入 |
+| T-54 | `adapters/codex/` + `adapters/gemini-cli/` + `adapters/cursor/` + `adapters/raw-api/` | todo | | T-53 | 每个适配器：一个模板文件 + 安装说明；Cursor 使用 `.cursor/rules/` |
+| T-55 | `engram adapter <tool>` CLI — 生成 + 使用标记边界更新 | todo | | T-53, T-54 | 仅在 engram 标记之间重新生成；标记之外的用户内容不受影响 |
+| T-56 | `engram context pack` — DESIGN §6.3 输出格式 | todo | | T-40 | `--task`、`--budget`、`--format=prompt|json|markdown`；遵循范围层级 |
+| T-57 | E2E：全部 P0 CLI 等价测试 | todo | | T-19, T-20, T-22, T-30, T-50, T-51, T-55 | 针对 fixture 存储运行全部 P0 命令；断言退出码 + 输出格式 |
+
+---
+
+### M4.5 — 基准测试基础设施
+
+| ID | 任务 | 状态 | Owner | 依赖 | 备注 |
+|----|------|------|-------|------|------|
+| T-58 | `benchmarks/BENCHMARKS.md` — 模板（MemPalace 规范：变更前建立基线，追踪增量） | todo | | T-57 | 包含可复现说明；CI 仅在发布标签上运行 |
+| T-59 | `benchmarks/consistency_test/` — 50 个合成样本 × 7 个冲突类别 | todo | | T-47, T-48 | 每类 7–8 个样本；每个样本是一对资产 + 预期 ConflictReport |
+| T-60 | `benchmarks/scope_isolation_test/` — 30 个范围场景 | todo | | T-38, T-39 | 覆盖强制级/默认级/建议级交互 + 池 subscribed_at 层级 |
+| T-61 | `docs/HISTORY.md` — 修正日志起始条目（每次基准测试运行一条记录） | todo | | T-58 | 格式：日期、指标名称、变更前、变更后、原因 |
+| T-62 | CI hook：基准测试仅在发布标签时运行（不在每次提交时运行） | todo | | T-58, T-59, T-60 | GitHub Actions job 由 `v*` 标签触发；结果追加至 HISTORY.md |
+
+---
+
+### M5 — 工作流 + 自学习
+
+| ID | 任务 | 状态 | Owner | 依赖 | 备注 |
+|----|------|------|-------|------|------|
+| T-70 | `engram/workflow/` 模块 + CLI 子命令：add / run / revise / promote / rollback / list / test | todo | | T-13, T-14 | 按 SPEC §6 的工作流目录结构；`add` 创建骨架 |
+| T-71 | `engram/workflow/runner.py` — spine 执行（python / bash / toml）+ 沙箱 | todo | | T-70 | toml spine 是声明式步骤；python + bash 在子进程运行；捕获 stdout/stderr |
+| T-72 | `engram/workflow/fixtures.py` — fixture 测试框架 | todo | | T-70, T-71 | 加载 `fixtures/`；运行 spine；对比实际输出与预期输出 |
+| T-73 | `engram/workflow/rev.py` — rev / current 符号链接管理，基于 git | todo | | T-70, T-71 | 每个版本是一次 git 提交；`current` 符号链接指向活跃版本 |
+| T-74 | `engram/autolearn/engine.py` — Darwin 棘轮循环 | todo | | T-71, T-72, T-73 | 棘轮：每轮是一次提交；指标回退 → 自动撤回；提升 → 保留 |
+| T-75 | `engram/autolearn/proposer.py` — 独立 LLM 子代理负责变更提案 | todo | | T-74 | 以子进程调用；接收工作流 + fixture 结果；仅提出 diff |
+| T-76 | `engram/autolearn/judge.py` — 独立 LLM 评估器 | todo | | T-74, T-75 | 与提案者上下文独立；不自我评估；按双维度评分标准打分 |
+| T-77 | 双维度评分标准：静态 60 分（SPEC 合规 + fixture + 可解析 + 无密钥）+ 执行 40 分（fixture 通过 + 指标 Δ > 0） | todo | | T-75, T-76 | 评分标准以 `engram/autolearn/rubric.toml` 文件形式版本化管理 |
+| T-78 | 阶段闸门：连续 K=5 轮自学习后暂停；将差异摘要写入 `engram review` | todo | | T-74, T-76 | K 可配置；下一阶段开始前需人工确认 |
+| T-79 | `engram workflow autolearn <name>` CLI | todo | | T-74, T-75, T-76, T-77, T-78 | 标志：`--rounds=N`、`--dry-run`、`--phase-gate=K` |
+| T-80 | E2E：release-checklist 工作流自学习 10 轮，指标单调提升 | todo | | T-79 | fixture 工作流在 `tests/fixtures/workflows/release-checklist/`；指标不得回退 |
+| T-81 | `workflows/<name>/journal/evolution.tsv` 写入器 | todo | | T-74, T-77 | 列：round、score_static、score_perf、total、change_summary、kept |
+
+---
+
+### M6 — 知识库 + 收件箱完整 + 一致性引擎 Phase 3-4
+
+| ID | 任务 | 状态 | Owner | 依赖 | 备注 |
+|----|------|------|-------|------|------|
+| T-90 | `engram/kb/` 模块 + CLI 子命令：new-article / compile / list / read | todo | | T-13, T-14 | 按 SPEC §7 的知识库目录结构；`new-article` 创建章节骨架 |
+| T-91 | `engram/kb/compiler.py` — 生成 `_compiled.md` + `_compile_state.toml` | todo | | T-90 | 调用 LLM 提供商（可配置）；写入摘要；记录章节哈希值 |
+| T-92 | 知识库章节监视器 → 在 `engram review` 中检测过期摘要 | todo | | T-90, T-91 | 对比存储的章节哈希与当前值；在 review 输出中标记过期条目 |
+| T-93 | `engram/consistency/phase3_llm.py` — LLM 辅助审核（可选，需在配置中开启） | todo | | T-46, T-47, T-48 | 默认关闭；与提供商无关；提示 LLM 审核冲突提案 |
+| T-94 | `engram/consistency/phase4_execution.py` — 工作流的 fixture 验证 | todo | | T-71, T-72, T-93 | 运行工作流 fixture；fixture 失败时标记工作流衰变冲突 |
+| T-95 | 池传播的通知式 + 钉版模式（M3 自动同步之外） | todo | | T-30, T-31 | `notify`：日志条目 + `engram review` 标记；`pinned`：在 pools.toml 中锁定到版本 ID |
+| T-96 | 收件箱反向通知：发送方在下次会话启动时看到解决状态 | todo | | T-50 | 向收件箱日志添加 `resolved_at` + `resolution_note`；在启动摘要中展示 |
+| T-97 | 完整的 `engram_inbox_*` MCP 写工具（send / acknowledge / resolve / reject） | todo | | T-52, T-50 | 将 M4 的只读 MCP 扩展为包含写操作 |
+| T-98 | 使用结果日志 → 置信分批量更新流水线 | todo | | T-14, T-15 | 从日志读取结果事件；按 DESIGN §9 重新计算每条资产的 `confidence_score` |
+| T-99 | E2E：跨仓收件箱完整流程（send → acknowledge → resolve → 反向通知） | todo | | T-50, T-96 | 在 `tests/fixtures/` 中建立两个 fixture 仓库；断言四个状态全部达到 |
+
+---
+
+### M7 — Web UI P0
+
+| ID | 任务 | 状态 | Owner | 依赖 | 备注 |
+|----|------|------|-------|------|------|
+| T-110 | `web/backend/` FastAPI 骨架 + `engram web serve / open` CLI 集成 | todo | | T-14 | Python 3.11+；uvicorn；`open` 时自动打开浏览器 |
+| T-111 | `web/backend/app/sse.py` — 实时更新的 Server-Sent Events | todo | | T-110 | 每个连接的客户端一条 SSE 流；从监视器发送资产变更事件 |
+| T-112 | `web/backend/app/watcher.py` — inotify（Linux）/ FSEvents（macOS）文件系统监视器 | todo | | T-110 | 向 SSE 发送事件；200ms 去抖；忽略 `.git/` 和 `__pycache__/` |
+| T-113 | `web/backend/app/auth.py` — none / basic / token 鉴权模式（配置驱动） | todo | | T-110 | 默认 = none（仅本地）；basic 和 token 通过 `config.toml` 配置；无云端鉴权 |
+| T-114 | `web/frontend/` SvelteKit 骨架 | todo | | T-110 | SvelteKit + Vite；开发时由 FastAPI 静态挂载服务；构建输出至 `web/frontend/build/` |
+| T-115 | i18n 文件：`en.json` + `zh.json` | todo | | T-114 | 所有 UI 字符串从第一天起就外部化；`.svelte` 文件中不硬编码英文字符串 |
+| T-116 | 总览面板页面（P0） | todo | | T-114, T-115, T-111 | 资产数量、智慧指标迷你图、待处理项（validate 错误 + 过期知识库 + 未读收件箱） |
+| T-117 | 记忆详情页面 | todo | | T-116 | frontmatter + body 只读视图；入/出引用；来自日志的归属时间线 |
+| T-118 | 工作流详情页面（仅查看 — 从 CLI 运行） | todo | | T-116 | 文档 + spine 并排显示；版本列表及评分；最后一轮自学习摘要 |
+| T-119 | 知识文章页面（仅读取） | todo | | T-116 | 源章节 + `_compiled.md` 并排显示；摘要过期时显示过期徽章 |
+| T-120 | 收件箱页面 | todo | | T-116, T-111 | 按状态列出消息（未读 / 已确认 / 已解决）；发送表单 |
+| T-121 | 上下文预览页面（DESIGN §7.1 中关键的调试页面） | todo | | T-116, T-40 | 任务输入 → 模拟上下文打包 → 显示每条加载的资产及排名和原因 |
+| T-122 | 所有 6 个 P0 页面的 Playwright 冒烟测试 | todo | | T-116, T-117, T-118, T-119, T-120, T-121 | 无 500 错误；无断链；通过 axe-playwright 的 WCAG AA 检查 |
+| T-123 | `engram web serve / open` CLI 集成 | todo | | T-110, T-114 | `serve` 启动后端；`open` 打开浏览器；`--port` 标志；优雅关闭 |
+
+---
+
+### M8 — 演化 + 团队完整 + TS SDK + 剩余 Web UI + 迁移源
+
+| ID | 任务 | 状态 | Owner | 依赖 | 备注 |
+|----|------|------|-------|------|------|
+| T-130 | `engram/evolve/engine.py` — ReMem 行动-思考-精炼循环（受 evo-memory 启发） | todo | | T-14, T-48 | 默认每月执行一次；仅提案，绝不自动执行；写入 review 队列 |
+| T-131 | 4 种演化精炼类型：merge / split / promote-to-KB / rewrite | todo | | T-130 | 每种类型有提案 schema 和 `engram review` 中的差异预览 |
+| T-132 | 智慧指标聚合流水线 | todo | | T-15, T-77, T-98 | 读取日志；计算 4 条曲线；写入 `wisdom_snapshot.json` |
+| T-133 | `engram/wisdom/curves.py` — 按 DESIGN §5.6 计算 4 条曲线 | todo | | T-132 | 曲线：工作流掌握度、任务复现效率、记忆精选率、上下文效率 |
+| T-134 | Web UI 知识图谱页面（D3 力导向布局 — 资产 + 引用 + 订阅） | todo | | T-116 | 节点：记忆 / 工作流 / 知识库；边：引用 + 池订阅；点击 → 详情页面 |
+| T-135 | Web UI 池管理页面 | todo | | T-116, T-95 | 池 × 订阅者表格；传播 UI；按订阅者显示传播模式 |
+| T-136 | Web UI 项目总览页面 | todo | | T-116, T-132 | 本机所有 engram 项目；智慧指标对比表格 |
+| T-137 | Web UI 智慧指标页面 | todo | | T-116, T-132, T-133 | 4 条曲线图表及回退标注；`engram wisdom report` 以文本形式镜像此页 |
+| T-138 | Web UI 自学习控制台页面 | todo | | T-116, T-81 | 实时滚动 `evolution.tsv`；启动/暂停控制；历史运行及评分记录 |
+| T-139 | TypeScript SDK — `@engram/sdk` npm 包 | todo | | T-51, T-52 | 镜像 Python SDK 基础功能；MCP 客户端包装；从 pydantic schema 生成类型 |
+| T-140 | 6 个额外迁移源：chatgpt / mem0 / obsidian / letta / mempalace / markdown | todo | | T-34 | 每个源是 `engram/migrate/` 中的独立模块；每个源拆为一个子任务也可以 |
+| T-141 | `engram playbook` 命令族：install / publish / list / uninstall | todo | | T-70, T-90 | 剧本 = 工作流 + 知识库文章 + 种子记忆；通过 GitHub URL 分发 |
+
+---
+
+## 4. 并行化建议
+
+M2 的核心模块大多是顺序的，因为每个模块都依赖前一个（paths → fs → graph_db → frontmatter）。T-14（graph_db）和 T-15（journal）完成后，后续任务开始分支。
+
+按阶段的并行机会：
+
+- **M2 期间**：T-10 到 T-15 是顺序的基础设施；T-16 到 T-22 在 T-10 完成后可以交叉进行。
+- **M3 和 M4 可并行**：M2 合并后，M3 范围任务（T-30–T-39）和 M4 适配器任务（T-53–T-56）涉及不同模块，可以并行推进。相关性闸门（T-40–T-45）和一致性引擎（T-46–T-49）彼此独立，也与适配器工作独立。
+- **M5 / M6 / M7 是独立功能**：M4 打标签后，三个里程碑可以并行进行。工作流（M5）、知识库（M6 T-90–T-92）和 Web UI 后端骨架（M7 T-110–T-113）没有共享代码路径。
+- **M4.5 基准测试**与 M5–M6 并行运行。它依赖 M4 的一致性引擎（T-47、T-48）和范围引擎（T-38、T-39），但不依赖 M5 或 M6 的任何内容。
+- **M8 Web UI 页面**（T-134–T-138）可与 M8 迁移源（T-140）和 TypeScript SDK（T-139）并行开始 — 三者彼此独立。
+- **需注意的跨里程碑依赖**：T-98（置信分更新流水线）是 T-132（智慧指标聚合）的前置。T-132 不得在 T-98 完成之前开始。
+
+---
+
+## 5. 新手友好任务
+
+好的第一个 Issue — 范围明确，不需要深入了解架构：
+
+- **T-07** — 参与 SPEC + DESIGN 的外部审核。读两份文档，对不清楚的地方开 Issue。无需写代码。
+- **T-61** — 编写 `docs/HISTORY.md` 起始条目。按格式写一条修正日志：日期、指标名称、变更前、变更后、原因。纯 markdown 工作。
+- **T-53 / T-54（任选一个适配器）** — 每个适配器是一个模板文件。选一个你已经在用的工具（Cursor、Codex、raw-api）。范围明确，自成一体，无共享状态。
+- **T-115** — i18n 翻译改进。向 `en.json` / `zh.json` 补充缺失字符串。术语必须与 `docs/glossary.md` 完全一致。
+- **T-59 或 T-60（添加一个 fixture）** — 添加一个合成基准测试样本。T-59 = 一对资产 + 预期 ConflictReport。T-60 = 一个范围冲突场景。每个只需几个文件。
+- **T-140（选一个迁移源）** — 每个迁移源是独立模块。obsidian 和 markdown 是最容易的起点；不需要 API 访问。
+
+如果你初次接触代码库，建议先读 `SPEC.md §4`（记忆格式）和 `DESIGN.md §3`（存储层），再选任务。`docs/glossary.md` 是权威术语表 — 使用它，不要自创同义词。
+
+---
+
+## 6. 争议/延后项
+
+这些是 SPEC + DESIGN 审核期间出现的设计问题，已被有意推迟。它们不是任务。如果你想重新讨论某个问题，请开 GitHub Discussion，而不是 Issue。
+
+- **跨机器同步**：v0.2 建议通过 rsync 或 git 跨机器同步 `~/.engram/user/`。第一方 `engram sync` 守护进程（可能基于 CRDT）是 P2 项目。v0.2 有意将同步方案简化，以避免将 engram 建成云服务。
+- **LLM 侧一致性强制执行**：一致性引擎目前是事后处理（扫描 → 提案 → 人工处置）。在运行时拦截 LLM 输出以阻止违反 `enforcement=mandatory` 规则的行为是 P2 项目，需要 v0.2 中尚不存在的代理层，这也是一个复杂的信任和正确性问题。
+- **联邦式池注册表**：池通过 GitHub URL 安装（`engram playbook install github:<owner>/<repo>`）。可发现的社区注册表是 P2 项目。本地优先的设计使集中式注册表成为一个严肃的信任和治理问题，项目目前尚未准备好解决。
+- **移动端 Web 支持**：Web UI 在 v0.2 中仅面向桌面浏览器。移动端只读浏览可能偶然可用，但不会获得专门的设计适配。没有原生应用计划（参见 DESIGN §13.4 非目标）。
+- **记忆并发编辑的 CRDT**：v0.2 使用乐观并发（原子重命名），并将真实冲突上报给一致性引擎由人工处理。完整的 OT 或 CRDT 在 P2；两个人同时编辑同一条记忆资产的场景极少，不足以证明复杂度合理。
+- **多语言嵌入向量**：默认嵌入向量模型（bge-reranker-v2-m3）主要在英文上训练。非英文检索质量尚未测试。模型可通过配置替换；第一方非英文支持是 P2，待硬件性能评估和质量测量后推进。
+
+---
+
+## 7. 任务板维护规则
+
+- 所有涉及某条任务的 PR 必须在本文件中更新该任务的状态。PR 描述应引用对应 T-ID。
+- 新任务使用下一个可用的 T-XX 编号。不要复用已废弃任务的编号。
+- 已完成的任务保留行，将状态改为 `done`。不要删除行。
+- 拆分任务：将子任务 ID 内联附加（T-11a、T-11b）。父任务行的 Notes 列指向子任务。
+- 已废弃的任务：将状态改为 `abandoned`，在 Notes 中写明简短原因。保留该行。
+- 里程碑顺序调整需要 PR，同时修改本文件和 DESIGN §13（如适用）。里程碑重排是方向性决策 — 先在 GitHub Discussions 讨论，再提 PR。
+- 每次触及本文件的 PR 都要更新页眉中的"最后更新"日期。
+
+---
+
+任务板由 engram 社区维护。提 PR 来添加或更新任务。方向性讨论（里程碑顺序、P2 升级为 P1）请使用 GitHub Discussions。

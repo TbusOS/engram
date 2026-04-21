@@ -1,0 +1,666 @@
+/* === Anthropic Design System — Core CSS ===
+ * Last verified: 2026-04-19
+ * Docs: ../references/design-tokens.md
+ */
+
+/* ---------- Section A: Tokens ---------- */
+:root {
+  /* Colors */
+  --anth-bg: #faf9f5;
+  --anth-bg-subtle: #f0ede3;
+  --anth-text: #141413;
+  --anth-text-secondary: #6b6a5f;
+  --anth-orange: #d97757;
+  --anth-orange-hover: #c56544;
+  --anth-blue: #6a9bcc;
+  --anth-green: #788c5d;
+  --anth-mid-gray: #b0aea5;
+  --anth-light-gray: #e8e6dc;
+  --anth-danger: #a14238;
+
+  /* Fonts */
+  --font-heading: "Poppins", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Lora", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+  /* Spacing (4px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 80px;
+  --space-10: 120px;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 2px 12px rgba(20, 20, 19, 0.05);
+  --shadow-pop: 0 10px 40px rgba(20, 20, 19, 0.08);
+
+  /* Motion */
+  --ease-anth: cubic-bezier(0.25, 1, 0.5, 1);
+  --duration-sm: 240ms;
+  --duration-md: 400ms;
+  --duration-lg: 700ms;
+}
+
+/* ---------- Section B: Reset ---------- */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--anth-text);
+  background: var(--anth-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Section C: Typography ---------- */
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: var(--font-heading);
+  margin: 0;
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 56px;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: 40px;
+  line-height: 1.15;
+}
+
+h3 {
+  font-size: 24px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+h4 {
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+p {
+  margin: 0 0 var(--space-4);
+}
+
+.anth-caption {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--anth-text-secondary);
+}
+
+/* ---------- Section D: Link & Button (Anthropic uses filled pills as primary CTA) ---------- */
+.anth-button {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: var(--radius-pill);
+  background: var(--anth-orange);
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+  transition: background var(--duration-sm) var(--ease-anth);
+}
+
+.anth-button:hover {
+  background: var(--anth-orange-hover);
+}
+
+.anth-button--dark {
+  background: var(--anth-text);
+  color: var(--anth-bg);
+}
+
+.anth-button--ghost {
+  background: transparent;
+  color: var(--anth-text);
+  border: 1px solid var(--anth-text);
+}
+
+.anth-link {
+  color: var(--anth-orange);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  transition: color var(--duration-sm);
+}
+
+.anth-link:hover {
+  color: var(--anth-orange-hover);
+}
+
+.anth-link::after {
+  content: " \2192";
+}
+
+.anth-link--no-arrow::after {
+  content: none;
+}
+
+/* ---------- Section E: Layout ---------- */
+.anth-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.anth-container--narrow {
+  max-width: 720px;
+}
+
+.anth-container--wide {
+  max-width: 1200px;
+}
+
+.anth-section {
+  padding-block: var(--space-8);
+}
+
+.anth-section--subtle {
+  background: var(--anth-bg-subtle);
+}
+
+.anth-card {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+}
+
+.anth-hero {
+  text-align: center;
+  padding-block: var(--space-10);
+}
+
+/* ---------- Section F: Stat ---------- */
+.anth-stat {
+  text-align: center;
+}
+
+.anth-stat-number {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--anth-text);
+}
+
+.anth-stat-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--anth-text-secondary);
+  margin-top: var(--space-3);
+}
+
+/* ---------- Section G: Nav ---------- */
+.anth-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 64px;
+  background: var(--anth-bg);
+  border-bottom: 1px solid var(--anth-light-gray);
+}
+
+.anth-nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.anth-nav a {
+  color: var(--anth-text);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  margin-right: var(--space-5);
+}
+
+/* ---------- Section H: Footer ---------- */
+.anth-footer {
+  background: var(--anth-bg-subtle);
+  padding-block: var(--space-7);
+  font-size: 13px;
+  color: var(--anth-text-secondary);
+}
+
+.anth-footer-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-6);
+}
+
+.anth-footer-group h5 {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--anth-text);
+  margin-bottom: var(--space-3);
+}
+
+.anth-footer-group a {
+  display: block;
+  color: var(--anth-text-secondary);
+  text-decoration: none;
+  margin-bottom: var(--space-2);
+}
+
+.anth-footer-legal {
+  max-width: 1200px;
+  margin: var(--space-6) auto 0;
+  padding: var(--space-5) 24px 0;
+  border-top: 1px solid var(--anth-light-gray);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.anth-social {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* ---------- Section I: Badge / Quote / Divider / Banner ---------- */
+.anth-badge {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--anth-light-gray);
+  color: var(--anth-text);
+}
+
+.anth-quote {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  padding-left: var(--space-5);
+  border-left: 3px solid var(--anth-orange);
+  max-width: 680px;
+  margin: var(--space-6) 0;
+}
+
+.anth-quote-cite {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  font-size: 14px;
+  font-style: normal;
+  font-family: var(--font-heading);
+}
+
+.anth-quote-cite img {
+  height: 20px;
+  width: auto;
+}
+
+.anth-divider {
+  border: 0;
+  height: 1px;
+  background: var(--anth-light-gray);
+  margin: var(--space-8) 0;
+}
+
+.anth-banner {
+  padding: var(--space-3) var(--space-5);
+  background: var(--anth-bg-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: 14px;
+}
+
+/* ---------- Section J: Form controls ---------- */
+.anth-input,
+.anth-select,
+.anth-textarea {
+  width: 100%;
+  background: var(--anth-bg);
+  border: 1px solid var(--anth-light-gray);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--anth-text);
+}
+
+.anth-input:focus,
+.anth-select:focus,
+.anth-textarea:focus {
+  outline: 2px solid var(--anth-orange);
+  outline-offset: 0;
+  border-color: transparent;
+}
+
+.anth-radio,
+.anth-checkbox {
+  accent-color: var(--anth-orange);
+  width: 18px;
+  height: 18px;
+}
+
+.anth-label {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--anth-text);
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+/* ---------- Section K: Tabs / Carousel / Video / Details ---------- */
+.anth-tabs {
+  display: flex;
+  gap: var(--space-5);
+  border-bottom: 1px solid var(--anth-light-gray);
+}
+
+.anth-tab {
+  background: transparent;
+  border: 0;
+  padding: var(--space-3) 0;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--anth-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color var(--duration-sm), border-bottom-color var(--duration-sm);
+}
+
+.anth-tab.is-active {
+  color: var(--anth-text);
+  border-bottom-color: var(--anth-orange);
+}
+
+.anth-carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.anth-carousel-viewport {
+  display: flex;
+  transition: transform var(--duration-md) var(--ease-anth);
+}
+
+.anth-carousel-counter {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--anth-text-secondary);
+}
+
+.anth-video {
+  width: 100%;
+  border-radius: var(--radius-md);
+}
+
+.anth-details {
+  background: var(--anth-bg-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin: var(--space-3) 0;
+}
+
+.anth-details summary {
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-weight: 500;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+}
+
+.anth-details summary::after {
+  content: '\25B8';
+  transition: transform var(--duration-sm);
+}
+
+.anth-details[open] summary::after {
+  transform: rotate(90deg);
+}
+
+/* ---------- Section L: Admonition / Code / Logo wall / Breadcrumbs / Reveal / Table ---------- */
+.anth-admonition {
+  background: var(--anth-bg-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin: var(--space-5) 0;
+}
+
+.anth-admonition h5 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  margin: 0 0 var(--space-2);
+  color: var(--anth-blue);
+}
+
+.anth-admonition--warning h5 {
+  color: var(--anth-orange);
+}
+
+.anth-admonition--success h5 {
+  color: var(--anth-green);
+}
+
+.anth-admonition--danger h5 {
+  color: var(--anth-danger);
+}
+
+.anth-code,
+pre.anth-code {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  background: var(--anth-bg-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  overflow-x: auto;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.93em;
+  background: var(--anth-bg-subtle);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--anth-bg);
+  border: 1px solid var(--anth-light-gray);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+mark {
+  background: rgba(217, 119, 87, 0.2);
+}
+
+.anth-logo-wall {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-6);
+  align-items: center;
+}
+
+.anth-logo-wall img {
+  max-height: 32px;
+  width: auto;
+  filter: grayscale(1) opacity(0.6);
+  transition: filter var(--duration-sm);
+}
+
+.anth-logo-wall img:hover {
+  filter: none;
+}
+
+.anth-breadcrumbs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--anth-text-secondary);
+  font-family: var(--font-heading);
+}
+
+.anth-breadcrumbs li::after {
+  content: '\203A';
+  margin-left: var(--space-2);
+  color: var(--anth-mid-gray);
+}
+
+.anth-breadcrumbs li:last-child::after {
+  content: none;
+}
+
+.anth-breadcrumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.anth-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.anth-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.anth-table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: var(--anth-bg-subtle);
+  font-family: var(--font-heading);
+  font-weight: 500;
+}
+
+.anth-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--anth-light-gray);
+}
+
+.anth-table tr:hover td {
+  background: var(--anth-bg-subtle);
+}
+
+.anth-table .check {
+  color: var(--anth-green);
+}
+
+.anth-table .cross {
+  color: var(--anth-mid-gray);
+}
+
+.anth-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity var(--duration-lg) var(--ease-anth),
+    transform var(--duration-lg) var(--ease-anth);
+}
+
+.anth-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- Section M: Responsive + a11y ---------- */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 36px;
+  }
+  h2 {
+    font-size: 28px;
+  }
+  .anth-footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .anth-logo-wall {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .anth-section {
+    padding-block: var(--space-7);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  h1 {
+    font-size: 48px;
+  }
+  .anth-footer-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.anth-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--anth-orange);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

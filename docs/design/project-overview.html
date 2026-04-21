@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Overview — engram Web UI</title>
+  <link rel="stylesheet" href="../assets/fonts.css">
+  <link rel="stylesheet" href="../assets/anthropic.css">
+  <link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="graph.html">Graph</a>
+      <a href="inbox.html">Inbox</a>
+      <a href="context-preview.html">Context Preview</a>
+      <a href="wisdom.html">Wisdom</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">Design Mockup</span>
+      <a href="zh/project-overview.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">中文</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← All pages</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="Page navigation">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Overview</div>
+      <a href="dashboard.html" class="engram-sidebar-link">Dashboard</a>
+      <a href="graph.html" class="engram-sidebar-link">Graph</a>
+      <a href="project-overview.html" class="engram-sidebar-link is-active">Projects</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Assets</div>
+      <a href="memory-detail.html" class="engram-sidebar-link">Memory</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">Workflows</a>
+      <a href="kb-article.html" class="engram-sidebar-link">Knowledge Base</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Tools</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">Pool Manager</a>
+      <a href="context-preview.html" class="engram-sidebar-link">Context Preview</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">Autolearn</a>
+      <a href="inbox.html" class="engram-sidebar-link">Inbox</a>
+      <a href="wisdom.html" class="engram-sidebar-link">Wisdom</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Page header -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-6);">
+      <div>
+        <h1 style="font-size:24px; margin-bottom:var(--space-1);">Projects</h1>
+        <p style="font-family:var(--font-heading); font-size:13px; color:var(--anth-text-secondary);">5 engram-enabled projects on this machine</p>
+      </div>
+      <div style="display:flex; gap:var(--space-3);">
+        <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 16px;">Bulk sync all pools</button>
+      </div>
+    </div>
+
+    <!-- Selected project expanded view -->
+    <div class="engram-detail-panel" style="margin-bottom:var(--space-6); border:2px solid var(--anth-orange);">
+      <div style="display:flex; align-items:flex-start; gap:var(--space-5);">
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-4);">
+            <div class="engram-health engram-health--green" style="width:10px; height:10px;"></div>
+            <h2 style="font-size:20px; font-family:var(--font-mono); margin:0;">acme-checkout-service</h2>
+            <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">Active project</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:var(--space-4); margin-bottom:var(--space-4);">
+            <div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">ASSETS</div>
+              <div style="font-family:var(--font-heading); font-size:24px; font-weight:700;">487</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">OPEN PROPOSALS</div>
+              <div style="font-family:var(--font-heading); font-size:24px; font-weight:700; color:var(--anth-orange);">2</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">INBOX UNREAD</div>
+              <div style="font-family:var(--font-heading); font-size:24px; font-weight:700;">7</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">POOLS</div>
+              <div style="font-family:var(--font-heading); font-size:24px; font-weight:700;">3</div>
+            </div>
+          </div>
+          <div style="font-family:var(--font-heading); font-size:12px; color:var(--anth-text-secondary);">
+            Path: <code>/Users/dev/projects/acme-checkout-service</code> &nbsp;·&nbsp; Last activity: 2 min ago &nbsp;·&nbsp; Wisdom trend: +8% this month
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:var(--space-2); min-width:160px;">
+          <a href="dashboard.html" class="anth-button" style="font-size:13px; padding:8px 16px; text-align:center;">Open project →</a>
+          <button class="anth-button anth-button--ghost" style="font-size:12px; padding:6px 16px;">Open in terminal</button>
+          <button class="anth-button anth-button--ghost" style="font-size:12px; padding:6px 16px;">Sync pools</button>
+        </div>
+      </div>
+      <!-- Wisdom sparkline for selected project -->
+      <div style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--anth-light-gray);">
+        <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary); margin-bottom:var(--space-2);">WISDOM TREND — 30 DAYS</div>
+        <svg viewBox="0 0 600 40" width="100%" role="img" aria-label="Wisdom trends for selected project">
+          <polyline points="0,32 60,28 120,26 180,22 240,20 300,16 360,14 420,10 480,8 540,4 600,2"
+            fill="none" stroke="#d97757" stroke-width="2" stroke-linecap="round"/>
+          <polyline points="0,35 60,32 120,30 180,27 240,26 300,24 360,22 420,19 480,17 540,15 600,12"
+            fill="none" stroke="#6a9bcc" stroke-width="2" stroke-linecap="round" stroke-dasharray="4,3"/>
+        </svg>
+        <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary); margin-top:var(--space-1);">
+          — Workflow Mastery &nbsp;&nbsp;&nbsp;-- Task Efficiency
+        </div>
+      </div>
+    </div>
+
+    <!-- Project grid -->
+    <div class="engram-section-head">
+      <span class="engram-section-title">All projects</span>
+      <span class="anth-caption">Click to select · double-click to switch active</span>
+    </div>
+    <div class="engram-project-grid">
+
+      <!-- acme-checkout (selected/active) -->
+      <div class="engram-project-card is-selected">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--green"></div>
+          <div class="engram-project-name" style="flex:1;">acme-checkout-service</div>
+          <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff; font-size:9px;">Active</span>
+        </div>
+        <div class="engram-project-meta">Last activity 2 min ago</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>487 assets</span>
+          <span style="color:var(--anth-orange);">2 proposals</span>
+          <span>3 pools</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="Wisdom sparkline">
+          <polyline points="0,22 30,18 60,16 90,12 120,10 150,7 180,4"
+            fill="none" stroke="#d97757" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- acme-billing -->
+      <div class="engram-project-card">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--green"></div>
+          <div class="engram-project-name" style="flex:1;">acme-billing</div>
+        </div>
+        <div class="engram-project-meta">Last activity 4 hr ago</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>312 assets</span>
+          <span>0 proposals</span>
+          <span>2 pools</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="Wisdom sparkline acme-billing">
+          <polyline points="0,24 30,22 60,20 90,18 120,16 150,14 180,12"
+            fill="none" stroke="#6a9bcc" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- platform-infra -->
+      <div class="engram-project-card">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--yellow"></div>
+          <div class="engram-project-name" style="flex:1;">platform-infra</div>
+        </div>
+        <div class="engram-project-meta">Last activity 2 days ago</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>178 assets</span>
+          <span style="color:var(--anth-orange);">1 proposal</span>
+          <span>1 pool</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="Wisdom sparkline platform-infra">
+          <polyline points="0,18 30,20 60,22 90,18 120,20 150,19 180,17"
+            fill="none" stroke="#c9a227" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- example-cli-tool -->
+      <div class="engram-project-card">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--green"></div>
+          <div class="engram-project-name" style="flex:1;">example-cli-tool</div>
+        </div>
+        <div class="engram-project-meta">Last activity 1 day ago</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>94 assets</span>
+          <span>0 proposals</span>
+          <span>0 pools</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="Wisdom sparkline example-cli-tool">
+          <polyline points="0,20 30,18 60,16 90,14 120,13 150,11 180,9"
+            fill="none" stroke="#788c5d" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- acme-search-api -->
+      <div class="engram-project-card">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+          <div class="engram-health engram-health--red"></div>
+          <div class="engram-project-name" style="flex:1;">acme-search-api</div>
+        </div>
+        <div class="engram-project-meta">Last activity 3 weeks ago</div>
+        <div style="display:flex; gap:var(--space-4); font-family:var(--font-heading); font-size:12px; margin-bottom:var(--space-3);">
+          <span>156 assets</span>
+          <span style="color:var(--anth-danger);">4 proposals</span>
+          <span>1 pool</span>
+        </div>
+        <svg viewBox="0 0 180 28" width="100%" role="img" aria-label="Wisdom sparkline acme-search-api">
+          <polyline points="0,10 30,12 60,14 90,16 120,18 150,20 180,24"
+            fill="none" stroke="#a14238" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- Switch project hint -->
+    <aside class="anth-admonition" style="margin-top:var(--space-4);">
+      <h5>Switching projects</h5>
+      <p style="margin:0;">Double-clicking a project card switches the active project for all future CLI commands. This updates <code>~/.engram/projects.toml</code> and closes any open SSE connections from the current project.</p>
+    </aside>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 design mockup. Real implementation in M7.
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← Design hub</a>
+</footer>
+
+</body>
+</html>

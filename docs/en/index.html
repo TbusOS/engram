@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>engram — Your memory should outlive the model</title>
+  <meta name="description" content="engram is a local, portable, LLM-agnostic memory system that grows smarter with use. Plain markdown. No vendor lock-in. Three asset classes. Five-layer architecture." />
+  <meta name="keywords" content="engram, LLM memory, AI memory system, markdown memory, open source, MCP server, Claude memory, cross-repo" />
+  <meta property="og:title" content="engram — Your memory should outlive the model" />
+  <meta property="og:description" content="Local, portable, LLM-agnostic memory. Plain markdown you own. Gets smarter the longer you use it." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tbusOS.github.io/engram/en/" />
+  <link rel="stylesheet" href="../assets/fonts.css" />
+  <link rel="stylesheet" href="../assets/anthropic.css" />
+  <link rel="stylesheet" href="../assets/app.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     A. HEADER NAV
+════════════════════════════════════════════ -->
+<nav class="anth-nav">
+  <div class="anth-nav-inner">
+    <a href="../" class="engram-nav-brand" aria-label="engram home">
+      <svg viewBox="0 0 28 28" width="24" height="24" aria-hidden="true">
+        <circle cx="14" cy="14" r="12" fill="#d97757" opacity="0.9"/>
+        <circle cx="14" cy="14" r="6"  fill="#faf9f5"/>
+      </svg>
+      engram
+    </a>
+    <div class="engram-nav-links">
+      <a href="https://github.com/TbusOS/engram" class="anth-link anth-link--no-arrow">GitHub</a>
+      <a href="https://github.com/TbusOS/engram/blob/main/SPEC.md" class="anth-link anth-link--no-arrow">SPEC</a>
+      <a href="../design/" class="anth-link anth-link--no-arrow">UI Preview</a>
+      <a href="https://github.com/TbusOS/engram/discussions" class="anth-link anth-link--no-arrow">Discussions</a>
+      <a href="../zh/" class="engram-lang-toggle">中文</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     B. ANNOUNCEMENT BANNER
+════════════════════════════════════════════ -->
+<div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
+  <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · M3 in progress</span>
+  <span>M3: pool + team + org + migrate-from-v0.1 all working (T-30–T-34). 386 tests, 94% coverage. init --subscribe + scope-aware ranking next.</span>
+  <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">Join the discussion</a>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     C. HERO
+════════════════════════════════════════════ -->
+<section class="anth-hero">
+  <div class="anth-container anth-container--wide">
+    <span class="anth-badge">Open Source Memory System</span>
+    <h1 style="margin-top:var(--space-4); max-width:780px; margin-left:auto; margin-right:auto;">
+      Your memory should outlive the model
+    </h1>
+    <p style="font-size:21px; max-width:620px; margin:var(--space-5) auto; font-family:var(--font-body); color:var(--anth-text-secondary); line-height:1.6;">
+      engram is a local, portable, LLM-agnostic memory system that grows smarter with use. Plain markdown on your disk. Any model, any tool — you own it forever.
+    </p>
+    <div class="engram-hero-ctas">
+      <a class="anth-button" href="https://github.com/TbusOS/engram">View on GitHub</a>
+      <a class="anth-button anth-button--ghost" href="https://github.com/TbusOS/engram/blob/main/SPEC.md">Read the SPEC</a>
+    </div>
+
+    <!-- Hero SVG: 5-layer architecture node-graph -->
+    <figure style="margin:var(--space-8) 0 0; padding:0;">
+      <svg viewBox="0 0 1200 360" width="100%" style="display:block; border-radius:var(--radius-lg); background:#f0ede3;" role="img" aria-label="engram five-layer architecture overview: Data, Control, Intelligence, Access, Observation layers stacked horizontally with connecting nodes">
+        <!-- bg grain dots decoration -->
+        <circle cx="60"  cy="50"  r="3" fill="#b0aea5" opacity="0.3"/>
+        <circle cx="120" cy="80"  r="2" fill="#b0aea5" opacity="0.3"/>
+        <circle cx="1140" cy="300" r="3" fill="#b0aea5" opacity="0.3"/>
+        <circle cx="1080" cy="270" r="2" fill="#b0aea5" opacity="0.25"/>
+        <circle cx="600" cy="20"  r="2" fill="#b0aea5" opacity="0.2"/>
+
+        <!-- Layer bands - bottom to top: Data(1), Control(2), Intelligence(3), Access(4), Observation(5) -->
+        <!-- Layer 1 Data - blue -->
+        <rect x="80" y="290" width="1040" height="46" rx="10" fill="#6a9bcc" opacity="0.18"/>
+        <text x="100" y="318" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#6a9bcc">Layer 1 — Data</text>
+        <text x="270" y="318" font-family="Poppins,Arial,sans-serif" font-size="12" fill="#6b6a5f">.memory/ directory · ~/.engram/ · plain markdown, SPEC-defined</text>
+
+        <!-- Layer 2 Control - blue -->
+        <rect x="80" y="236" width="1040" height="46" rx="10" fill="#6a9bcc" opacity="0.12"/>
+        <text x="100" y="264" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#6a9bcc">Layer 2 — Control</text>
+        <text x="280" y="264" font-family="Poppins,Arial,sans-serif" font-size="12" fill="#6b6a5f">engram CLI · memory / workflow / kb / pool / consistency / context / mcp / web</text>
+
+        <!-- Layer 3 Intelligence - orange (the magic) -->
+        <rect x="80" y="166" width="1040" height="62" rx="10" fill="#d97757" opacity="0.14"/>
+        <rect x="80" y="166" width="4"    height="62" rx="2" fill="#d97757"/>
+        <text x="100" y="193" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#d97757">Layer 3 — Intelligence</text>
+        <text x="100" y="212" font-family="Poppins,Arial,sans-serif" font-size="12" fill="#6b6a5f">Relevance Gate · Consistency Engine · Autolearn · Evolve · Inter-Repo Messenger · Wisdom Metrics</text>
+        <text x="1090" y="193" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#d97757" text-anchor="end">optional, gated</text>
+
+        <!-- Layer 4 Access - green-neutral -->
+        <rect x="80" y="112" width="1040" height="46" rx="10" fill="#788c5d" opacity="0.12"/>
+        <text x="100" y="140" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#788c5d">Layer 4 — Access</text>
+        <text x="275" y="140" font-family="Poppins,Arial,sans-serif" font-size="12" fill="#6b6a5f">Adapters · MCP Server · Prompt Pack · Python SDK · TypeScript SDK</text>
+
+        <!-- Layer 5 Observation - neutral -->
+        <rect x="80" y="58" width="1040" height="46" rx="10" fill="#788c5d" opacity="0.08"/>
+        <text x="100" y="86" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#788c5d">Layer 5 — Observation</text>
+        <text x="310" y="86" font-family="Poppins,Arial,sans-serif" font-size="12" fill="#6b6a5f">engram-web · Dashboard / Graph / Context Preview / Inbox / Autolearn Console</text>
+
+        <!-- vertical connector arrows between layers -->
+        <line x1="600" y1="104" x2="600" y2="112" stroke="#d97757" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <line x1="600" y1="158" x2="600" y2="166" stroke="#d97757" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <line x1="600" y1="228" x2="600" y2="236" stroke="#6a9bcc" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <line x1="600" y1="282" x2="600" y2="290" stroke="#6a9bcc" stroke-width="1.5" stroke-dasharray="3 2"/>
+
+        <!-- "independently replaceable" label -->
+        <text x="1120" y="200" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#b0aea5" text-anchor="end">each layer independently replaceable</text>
+      </svg>
+      <figcaption class="anth-caption" style="text-align:center; margin-top:var(--space-3);">Five-layer architecture — remove any layer above Layer 1 and the store keeps working.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     D. PROBLEM STATEMENT
+════════════════════════════════════════════ -->
+<section class="anth-section anth-section--subtle">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <h2>Most LLM tools try to own your memory</h2>
+      <p>Switch models, lose context. Switch tools, re-teach from scratch. engram is the opposite design.</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-5);">
+      <div class="anth-card">
+        <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--anth-light-gray);display:grid;place-items:center;margin-bottom:var(--space-4);">
+          <svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true">
+            <rect x="4" y="6" width="20" height="16" rx="3" fill="none" stroke="#6b6a5f" stroke-width="1.6"/>
+            <line x1="4" y1="11" x2="24" y2="11" stroke="#6b6a5f" stroke-width="1.2"/>
+            <line x1="9" y1="15" x2="19" y2="15" stroke="#b0aea5" stroke-width="1.2"/>
+            <line x1="9" y1="18" x2="16" y2="18" stroke="#b0aea5" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <span class="anth-badge">claude-mem</span>
+        <h3 style="margin-top:var(--space-3); font-size:18px;">SQLite · Claude-only</h3>
+        <p>Memory locked inside a proprietary SQLite database. Switch to another model — context gone.</p>
+      </div>
+      <div class="anth-card">
+        <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--anth-light-gray);display:grid;place-items:center;margin-bottom:var(--space-4);">
+          <svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true">
+            <circle cx="14" cy="14" r="10" fill="none" stroke="#6b6a5f" stroke-width="1.6"/>
+            <line x1="14" y1="4"  x2="14" y2="24" stroke="#b0aea5" stroke-width="1.2"/>
+            <path d="M6 10 Q14 14 22 10" fill="none" stroke="#b0aea5" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <span class="anth-badge">ChatGPT / mem0</span>
+        <h3 style="margin-top:var(--space-3); font-size:18px;">Hosted · Vendor-locked</h3>
+        <p>Memories stored in the vendor's cloud. No export, no git diff, no portability across tools.</p>
+      </div>
+      <div class="anth-card" style="border:2px solid var(--anth-orange);">
+        <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--anth-orange);display:grid;place-items:center;margin-bottom:var(--space-4);">
+          <svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true">
+            <rect x="5"  y="7"  width="18" height="14" rx="2" fill="none" stroke="#ffffff" stroke-width="1.7"/>
+            <line x1="9"  y1="12" x2="19" y2="12" stroke="#ffffff" stroke-width="1.4"/>
+            <line x1="9"  y1="16" x2="15" y2="16" stroke="#ffffff" stroke-width="1.4"/>
+          </svg>
+        </div>
+        <span class="anth-badge" style="background:var(--anth-orange);color:#ffffff;">engram</span>
+        <h3 style="margin-top:var(--space-3); font-size:18px;">Plain markdown · You own it</h3>
+        <p>Memory lives as human-readable <code>.md</code> files on your disk. Any LLM, any editor, git-friendly — forever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     E. FIVE-LAYER ARCHITECTURE (detail)
+════════════════════════════════════════════ -->
+<section class="anth-section">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Architecture</span>
+      <h2 style="margin-top:var(--space-3);">Five independent layers</h2>
+      <p>Each layer is replaceable in isolation. Remove any layer above Layer 1 and the system keeps working correctly.</p>
+    </div>
+
+    <!-- Detailed layer stack SVG -->
+    <div class="engram-layer-stack">
+      <svg viewBox="0 0 1100 500" width="100%" style="display:block; min-width:700px;" role="img" aria-label="Detailed five-layer architecture diagram with component labels">
+        <!-- bg -->
+        <rect width="1100" height="500" fill="#faf9f5" rx="16"/>
+        <!-- grain dots -->
+        <circle cx="30"  cy="30"  r="3" fill="#b0aea5" opacity="0.2"/>
+        <circle cx="1070" cy="470" r="3" fill="#b0aea5" opacity="0.2"/>
+        <circle cx="550" cy="480" r="2" fill="#b0aea5" opacity="0.15"/>
+
+        <!-- === Layer 5: Observation === -->
+        <rect x="40" y="24"  width="900" height="70" rx="12" fill="#788c5d" opacity="0.1"/>
+        <rect x="40" y="24"  width="4"   height="70" rx="2"  fill="#788c5d"/>
+        <text x="56"  y="52" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#788c5d">L5  Observation</text>
+        <text x="56"  y="71" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f">engram-web (FastAPI + Svelte) — Dashboard · Graph · Context Preview · Inbox · Autolearn Console</text>
+        <!-- label badge -->
+        <rect x="960" y="32" width="82" height="20" rx="10" fill="#788c5d" opacity="0.15"/>
+        <text x="1001" y="46" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#788c5d" text-anchor="middle">optional</text>
+
+        <!-- connector -->
+        <line x1="200" y1="94" x2="200" y2="114" stroke="#e8e6dc" stroke-width="2" stroke-dasharray="4 3"/>
+
+        <!-- === Layer 4: Access === -->
+        <rect x="40" y="114" width="900" height="70" rx="12" fill="#788c5d" opacity="0.08"/>
+        <rect x="40" y="114" width="4"   height="70" rx="2"  fill="#788c5d" opacity="0.7"/>
+        <text x="56" y="142" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#788c5d">L4  Access</text>
+        <text x="56" y="161" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f">Adapters (CLAUDE.md / AGENTS.md / GEMINI.md) · MCP Server · Prompt Pack · Python SDK · TypeScript SDK</text>
+        <rect x="960" y="122" width="82" height="20" rx="10" fill="#788c5d" opacity="0.12"/>
+        <text x="1001" y="136" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#788c5d" text-anchor="middle">LLM-facing</text>
+
+        <line x1="200" y1="184" x2="200" y2="204" stroke="#e8e6dc" stroke-width="2" stroke-dasharray="4 3"/>
+
+        <!-- === Layer 3: Intelligence — HERO BAND === -->
+        <rect x="40" y="204" width="900" height="100" rx="12" fill="#d97757" opacity="0.1"/>
+        <rect x="40" y="204" width="5"   height="100" rx="2"  fill="#d97757"/>
+        <text x="57" y="232" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="700" fill="#d97757">L3  Intelligence</text>
+        <text x="57" y="251" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f">The optional layer that makes engram get smarter over time</text>
+
+        <!-- 6 component pills -->
+        <rect x="57"  y="262" width="128" height="24" rx="12" fill="#d97757" opacity="0.15"/>
+        <text x="121" y="278" font-family="Poppins,Arial,sans-serif" font-size="10" font-weight="500" fill="#d97757" text-anchor="middle">Relevance Gate</text>
+
+        <rect x="196" y="262" width="138" height="24" rx="12" fill="#d97757" opacity="0.15"/>
+        <text x="265" y="278" font-family="Poppins,Arial,sans-serif" font-size="10" font-weight="500" fill="#d97757" text-anchor="middle">Consistency Engine</text>
+
+        <rect x="345" y="262" width="120" height="24" rx="12" fill="#d97757" opacity="0.15"/>
+        <text x="405" y="278" font-family="Poppins,Arial,sans-serif" font-size="10" font-weight="500" fill="#d97757" text-anchor="middle">Autolearn Engine</text>
+
+        <rect x="476" y="262" width="102" height="24" rx="12" fill="#d97757" opacity="0.15"/>
+        <text x="527" y="278" font-family="Poppins,Arial,sans-serif" font-size="10" font-weight="500" fill="#d97757" text-anchor="middle">Evolve Engine</text>
+
+        <rect x="589" y="262" width="140" height="24" rx="12" fill="#d97757" opacity="0.15"/>
+        <text x="659" y="278" font-family="Poppins,Arial,sans-serif" font-size="10" font-weight="500" fill="#d97757" text-anchor="middle">Inter-Repo Messenger</text>
+
+        <rect x="740" y="262" width="114" height="24" rx="12" fill="#d97757" opacity="0.15"/>
+        <text x="797" y="278" font-family="Poppins,Arial,sans-serif" font-size="10" font-weight="500" fill="#d97757" text-anchor="middle">Wisdom Metrics</text>
+
+        <rect x="960" y="214" width="82" height="20" rx="10" fill="#d97757" opacity="0.15"/>
+        <text x="1001" y="228" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#d97757" text-anchor="middle">the magic ✦</text>
+
+        <line x1="200" y1="304" x2="200" y2="324" stroke="#e8e6dc" stroke-width="2" stroke-dasharray="4 3"/>
+
+        <!-- === Layer 2: Control === -->
+        <rect x="40" y="324" width="900" height="70" rx="12" fill="#6a9bcc" opacity="0.1"/>
+        <rect x="40" y="324" width="4"   height="70" rx="2"  fill="#6a9bcc"/>
+        <text x="56" y="352" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#6a9bcc">L2  Control</text>
+        <text x="56" y="371" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f">engram CLI — memory · workflow · kb · pool · team · org · inbox · consistency · context · mcp · web · migrate</text>
+        <rect x="960" y="332" width="82" height="20" rx="10" fill="#6a9bcc" opacity="0.15"/>
+        <text x="1001" y="346" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6a9bcc" text-anchor="middle">LLM-optional</text>
+
+        <line x1="200" y1="394" x2="200" y2="414" stroke="#e8e6dc" stroke-width="2" stroke-dasharray="4 3"/>
+
+        <!-- === Layer 1: Data === -->
+        <rect x="40" y="414" width="900" height="66" rx="12" fill="#6a9bcc" opacity="0.18"/>
+        <rect x="40" y="414" width="4"   height="66" rx="2"  fill="#6a9bcc"/>
+        <text x="56" y="442" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#6a9bcc">L1  Data</text>
+        <text x="56" y="461" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f">.memory/ · ~/.engram/ — plain markdown, SPEC-defined, any LLM can read without a plugin</text>
+        <rect x="960" y="422" width="82" height="20" rx="10" fill="#6a9bcc" opacity="0.2"/>
+        <text x="1001" y="436" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6a9bcc" text-anchor="middle">permanent bet</text>
+
+        <!-- side legend -->
+        <text x="990" y="295" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#b0aea5" text-anchor="middle">independently</text>
+        <text x="990" y="308" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#b0aea5" text-anchor="middle">replaceable</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     F. THREE ASSET CLASSES
+════════════════════════════════════════════ -->
+<section class="anth-section anth-section--subtle">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Asset Classes</span>
+      <h2 style="margin-top:var(--space-3);">Three kinds of knowledge</h2>
+      <p>Classes are distinguished by <em>function</em> — what the asset is — not by size. No hard line limits.</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-6);">
+
+      <!-- Memory card -->
+      <div class="anth-card">
+        <figure style="margin:0 0 var(--space-4);">
+          <svg viewBox="0 0 80 80" width="80" height="80" role="img" aria-label="Memory asset icon">
+            <rect x="8" y="8" width="64" height="64" rx="16" fill="#d97757" opacity="0.12"/>
+            <rect x="20" y="26" width="40" height="5"  rx="2.5" fill="#d97757" opacity="0.8"/>
+            <rect x="20" y="35" width="30" height="4"  rx="2"   fill="#d97757" opacity="0.5"/>
+            <rect x="20" y="43" width="36" height="4"  rx="2"   fill="#d97757" opacity="0.35"/>
+            <circle cx="62" cy="20" r="8" fill="#d97757"/>
+            <text x="62" y="24" font-family="Poppins,Arial,sans-serif" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">M</text>
+          </svg>
+        </figure>
+        <span class="anth-badge">Memory</span>
+        <h3 style="margin-top:var(--space-3);">Atomic assertion</h3>
+        <p>One fact, rule, preference, or pointer that can be independently superseded. The baseline for LLM context priming.</p>
+        <p class="anth-caption" style="margin-top:var(--space-3);">Structure: single <code>.md</code> + YAML frontmatter</p>
+        <p class="anth-caption">Role: loaded into system prompt via Relevance Gate</p>
+        <p class="anth-caption" style="color:var(--anth-orange);">No size cap — adaptive signals replace fixed thresholds</p>
+      </div>
+
+      <!-- Workflow card -->
+      <div class="anth-card">
+        <figure style="margin:0 0 var(--space-4);">
+          <svg viewBox="0 0 80 80" width="80" height="80" role="img" aria-label="Workflow asset icon">
+            <rect x="8" y="8" width="64" height="64" rx="16" fill="#6a9bcc" opacity="0.12"/>
+            <rect x="18" y="24" width="44" height="8" rx="4" fill="#6a9bcc" opacity="0.7"/>
+            <line x1="40" y1="32" x2="40" y2="40" stroke="#6a9bcc" stroke-width="2" opacity="0.5"/>
+            <rect x="18" y="40" width="44" height="8" rx="4" fill="#6a9bcc" opacity="0.5"/>
+            <line x1="40" y1="48" x2="40" y2="56" stroke="#6a9bcc" stroke-width="2" opacity="0.4"/>
+            <rect x="18" y="56" width="44" height="8" rx="4" fill="#6a9bcc" opacity="0.35"/>
+            <circle cx="62" cy="20" r="8" fill="#6a9bcc"/>
+            <text x="62" y="24" font-family="Poppins,Arial,sans-serif" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">W</text>
+          </svg>
+        </figure>
+        <span class="anth-badge">Workflow</span>
+        <h3 style="margin-top:var(--space-3);">Executable procedure</h3>
+        <p>Has a runnable spine, fixture test cases, and a metrics tracker. Not just a description — it must actually execute.</p>
+        <p class="anth-caption" style="margin-top:var(--space-3);">Structure: <code>workflow.md</code> + <code>spine.*</code> + <code>fixtures/</code> + <code>metrics.yaml</code></p>
+        <p class="anth-caption">Role: loaded on task match; Autolearn Engine evolves it</p>
+        <p class="anth-caption" style="color:var(--anth-blue);">Autolearn tracks outcomes and proposes improvements</p>
+      </div>
+
+      <!-- KB card -->
+      <div class="anth-card">
+        <figure style="margin:0 0 var(--space-4);">
+          <svg viewBox="0 0 80 80" width="80" height="80" role="img" aria-label="Knowledge Base asset icon">
+            <rect x="8" y="8" width="64" height="64" rx="16" fill="#788c5d" opacity="0.12"/>
+            <rect x="16" y="20" width="48" height="5" rx="2.5" fill="#788c5d" opacity="0.8"/>
+            <rect x="16" y="29" width="48" height="3" rx="1.5" fill="#788c5d" opacity="0.4"/>
+            <rect x="16" y="35" width="40" height="3" rx="1.5" fill="#788c5d" opacity="0.35"/>
+            <rect x="16" y="41" width="44" height="3" rx="1.5" fill="#788c5d" opacity="0.3"/>
+            <rect x="16" y="49" width="48" height="5" rx="2.5" fill="#788c5d" opacity="0.6"/>
+            <rect x="16" y="58" width="36" height="3" rx="1.5" fill="#788c5d" opacity="0.3"/>
+            <circle cx="62" cy="20" r="8" fill="#788c5d"/>
+            <text x="62" y="24" font-family="Poppins,Arial,sans-serif" font-size="8" font-weight="700" fill="#ffffff" text-anchor="middle">KB</text>
+          </svg>
+        </figure>
+        <span class="anth-badge">Knowledge Base</span>
+        <h3 style="margin-top:var(--space-3);">Domain reference</h3>
+        <p>Multi-chapter document a human would read deliberately. LLM compiles a <code>_compiled.md</code> digest for efficient context loading.</p>
+        <p class="anth-caption" style="margin-top:var(--space-3);">Structure: <code>README.md</code> + chapters + <code>assets/</code> + <code>_compiled.md</code></p>
+        <p class="anth-caption">Role: digest enters budget first; full chapters fetched on demand</p>
+        <p class="anth-caption" style="color:var(--anth-green);">Human writes; LLM compiles digest</p>
+      </div>
+
+    </div>
+    <p style="text-align:center; margin-top:var(--space-6); font-family:var(--font-heading); font-size:14px; color:var(--anth-text-secondary);">
+      Three adaptive signals replace hard size caps: dynamic budget allocation · percentile length signal · split/promote/demote proposals from the Evolve Engine
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     G. TWO-AXIS SCOPE MODEL
+════════════════════════════════════════════ -->
+<section class="anth-section">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Scope Model</span>
+      <h2 style="margin-top:var(--space-3);">Two axes, not one line</h2>
+      <p>Real teams share knowledge in more than one way. engram separates membership hierarchy from topic subscription into two independent axes.</p>
+    </div>
+
+    <!-- Two-axis SVG -->
+    <figure style="margin:0;">
+      <svg viewBox="0 0 1100 420" width="100%" style="display:block; min-width:660px;" role="img" aria-label="Two-axis scope model diagram showing hierarchy axis (org, team, user, project) and subscription pool axis">
+        <rect width="1100" height="420" fill="#faf9f5" rx="16"/>
+
+        <!-- AXIS 1: HIERARCHY (left panel) -->
+        <text x="240" y="36" font-family="Poppins,Arial,sans-serif" font-size="14" font-weight="600" fill="#141413" text-anchor="middle">Hierarchy Axis — membership &amp; inheritance</text>
+        <text x="240" y="54" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f" text-anchor="middle">you belong → you inherit automatically</text>
+
+        <!-- org -->
+        <rect x="120" y="70" width="240" height="46" rx="10" fill="#6a9bcc" opacity="0.18"/>
+        <text x="240" y="92" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#6a9bcc" text-anchor="middle">org</text>
+        <text x="240" y="108" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">~/.engram/org/&lt;name&gt;/  ·  highest authority</text>
+        <!-- arrow down -->
+        <line x1="240" y1="116" x2="240" y2="132" stroke="#e8e6dc" stroke-width="2"/>
+        <polygon points="235,132 245,132 240,140" fill="#e8e6dc"/>
+
+        <!-- team -->
+        <rect x="130" y="146" width="220" height="46" rx="10" fill="#6a9bcc" opacity="0.12"/>
+        <text x="240" y="168" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#6a9bcc" text-anchor="middle">team</text>
+        <text x="240" y="184" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">~/.engram/team/&lt;name&gt;/  ·  0 or N teams</text>
+        <line x1="240" y1="192" x2="240" y2="208" stroke="#e8e6dc" stroke-width="2"/>
+        <polygon points="235,208 245,208 240,216" fill="#e8e6dc"/>
+
+        <!-- user -->
+        <rect x="140" y="222" width="200" height="46" rx="10" fill="#6a9bcc" opacity="0.08"/>
+        <text x="240" y="244" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#6a9bcc" text-anchor="middle">user</text>
+        <text x="240" y="260" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">~/.engram/user/  ·  cross-project baseline</text>
+        <line x1="240" y1="268" x2="240" y2="284" stroke="#e8e6dc" stroke-width="2"/>
+        <polygon points="235,284 245,284 240,292" fill="#e8e6dc"/>
+
+        <!-- project -->
+        <rect x="150" y="298" width="180" height="46" rx="10" fill="#6a9bcc" opacity="0.05"/>
+        <text x="240" y="320" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#6a9bcc" text-anchor="middle">project</text>
+        <text x="240" y="336" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">.memory/local/  ·  most specific</text>
+
+        <!-- AXIS 2: POOL (right panel) -->
+        <line x1="480" y1="40" x2="480" y2="390" stroke="#e8e6dc" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+        <text x="790" y="36" font-family="Poppins,Arial,sans-serif" font-size="14" font-weight="600" fill="#141413" text-anchor="middle">Subscription Axis — topic pools</text>
+        <text x="790" y="54" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f" text-anchor="middle">you opt in → pool behaves at subscribed_at level</text>
+
+        <!-- pool box -->
+        <rect x="620" y="160" width="240" height="80" rx="12" fill="#d97757" opacity="0.1"/>
+        <rect x="620" y="160" width="4"   height="80" rx="2" fill="#d97757"/>
+        <text x="740" y="192" font-family="Poppins,Arial,sans-serif" font-size="14" font-weight="600" fill="#d97757" text-anchor="middle">pool: kernel-work</text>
+        <text x="740" y="212" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">~/.engram/pools/kernel-work/</text>
+        <text x="740" y="228" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">subscribed_at: team</text>
+
+        <!-- scenarios -->
+        <text x="870" y="90"  font-family="Poppins,Arial,sans-serif" font-size="11" font-weight="600" fill="#141413">Scenario examples:</text>
+
+        <circle cx="884" cy="118" r="5" fill="#d97757" opacity="0.6"/>
+        <text x="896" y="122" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f">org subscribes compliance → affects all projects</text>
+
+        <circle cx="884" cy="142" r="5" fill="#6a9bcc" opacity="0.6"/>
+        <text x="896" y="146" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f">team subscribes design-system → team's projects</text>
+
+        <circle cx="884" cy="166" r="5" fill="#788c5d" opacity="0.6"/>
+        <text x="896" y="170" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f">project subscribes playbook → just that project</text>
+
+        <!-- enforcement levels -->
+        <text x="870" y="210" font-family="Poppins,Arial,sans-serif" font-size="11" font-weight="600" fill="#141413">Enforcement levels:</text>
+
+        <rect x="884" y="220" width="14" height="14" rx="2" fill="#a14238" opacity="0.8"/>
+        <text x="904" y="232" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#141413">mandatory — engram validate errors if overridden</text>
+
+        <rect x="884" y="244" width="14" height="14" rx="2" fill="#d97757" opacity="0.7"/>
+        <text x="904" y="256" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#141413">default — can override, must declare overrides: id</text>
+
+        <rect x="884" y="268" width="14" height="14" rx="2" fill="#6a9bcc" opacity="0.5"/>
+        <text x="904" y="280" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#141413">hint — freely overridable</text>
+
+        <!-- conflict resolution rule -->
+        <rect x="870" y="300" width="210" height="70" rx="10" fill="#f0ede3"/>
+        <text x="975" y="320" font-family="Poppins,Arial,sans-serif" font-size="10" font-weight="600" fill="#141413" text-anchor="middle">Conflict resolution (one decision tree)</text>
+        <text x="975" y="336" font-family="Poppins,Arial,sans-serif" font-size="9"  fill="#6b6a5f" text-anchor="middle">mandatory &gt; default &gt; hint</text>
+        <text x="975" y="350" font-family="Poppins,Arial,sans-serif" font-size="9"  fill="#6b6a5f" text-anchor="middle">project &gt; user &gt; team &gt; org (within level)</text>
+        <text x="975" y="364" font-family="Poppins,Arial,sans-serif" font-size="9"  fill="#6b6a5f" text-anchor="middle">pool participates at its subscribed_at level</text>
+
+        <!-- dashed arrow from pool to team level indicator -->
+        <line x1="620" y1="200" x2="510" y2="200" stroke="#d97757" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <polygon points="518,196 510,200 518,204" fill="#d97757"/>
+        <text x="550" y="194" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#d97757" text-anchor="middle">subscribed_at</text>
+      </svg>
+      <figcaption class="anth-caption" style="text-align:center; margin-top:var(--space-3);">Pool content participates in conflict resolution at the hierarchy level where it was subscribed — not at a fixed "pool level".</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     H. CONSISTENCY ENGINE — 7 CONFLICT CLASSES
+════════════════════════════════════════════ -->
+<section class="anth-section anth-section--subtle">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Consistency Engine</span>
+      <h2 style="margin-top:var(--space-3);">Seven conflict classes</h2>
+      <p>The Consistency Engine runs a four-phase scan and surfaces proposals. It <strong>never</strong> auto-executes changes.</p>
+    </div>
+
+    <div class="engram-conflict-grid">
+      <!-- 1. factual-conflict -->
+      <div class="engram-conflict-tile">
+        <svg viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="factual-conflict icon: two arrows pointing at each other">
+          <rect width="64" height="64" rx="12" fill="#d97757" opacity="0.1"/>
+          <line x1="14" y1="32" x2="26" y2="32" stroke="#d97757" stroke-width="2.5" stroke-linecap="round"/>
+          <polygon points="26,27 34,32 26,37" fill="#d97757"/>
+          <line x1="50" y1="32" x2="38" y2="32" stroke="#6a9bcc" stroke-width="2.5" stroke-linecap="round"/>
+          <polygon points="38,27 30,32 38,37" fill="#6a9bcc"/>
+        </svg>
+        <p class="engram-conflict-tile-name">factual-conflict</p>
+      </div>
+
+      <!-- 2. rule-conflict -->
+      <div class="engram-conflict-tile">
+        <svg viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="rule-conflict icon: two overlapping rules with clash mark">
+          <rect width="64" height="64" rx="12" fill="#d97757" opacity="0.1"/>
+          <rect x="10" y="20" width="28" height="12" rx="4" fill="#d97757" opacity="0.5"/>
+          <rect x="26" y="30" width="28" height="12" rx="4" fill="#6a9bcc" opacity="0.5"/>
+          <text x="32" y="30" font-family="Poppins,Arial,sans-serif" font-size="14" font-weight="700" fill="#a14238" text-anchor="middle">✕</text>
+        </svg>
+        <p class="engram-conflict-tile-name">rule-conflict</p>
+      </div>
+
+      <!-- 3. reference-rot -->
+      <div class="engram-conflict-tile">
+        <svg viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="reference-rot icon: broken chain link">
+          <rect width="64" height="64" rx="12" fill="#d97757" opacity="0.1"/>
+          <circle cx="22" cy="32" r="9" fill="none" stroke="#6a9bcc" stroke-width="2.5" opacity="0.7"/>
+          <circle cx="42" cy="32" r="9" fill="none" stroke="#b0aea5" stroke-width="2.5" stroke-dasharray="4 2"/>
+          <line x1="30" y1="28" x2="34" y2="28" stroke="#a14238" stroke-width="2" stroke-linecap="round"/>
+          <line x1="30" y1="36" x2="34" y2="36" stroke="#a14238" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p class="engram-conflict-tile-name">reference-rot</p>
+      </div>
+
+      <!-- 4. workflow-decay -->
+      <div class="engram-conflict-tile">
+        <svg viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="workflow-decay icon: downward trending line">
+          <rect width="64" height="64" rx="12" fill="#d97757" opacity="0.1"/>
+          <polyline points="12,20 26,28 40,38 52,48" fill="none" stroke="#6a9bcc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="20" r="3" fill="#6a9bcc"/>
+          <circle cx="52" cy="48" r="3" fill="#a14238"/>
+        </svg>
+        <p class="engram-conflict-tile-name">workflow-decay</p>
+      </div>
+
+      <!-- 5. time-expired -->
+      <div class="engram-conflict-tile">
+        <svg viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="time-expired icon: faded clock">
+          <rect width="64" height="64" rx="12" fill="#d97757" opacity="0.1"/>
+          <circle cx="32" cy="32" r="16" fill="none" stroke="#b0aea5" stroke-width="2" opacity="0.6"/>
+          <line x1="32" y1="20" x2="32" y2="32" stroke="#b0aea5" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+          <line x1="32" y1="32" x2="42" y2="38" stroke="#b0aea5" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+          <text x="32" y="55" font-family="Poppins,Arial,sans-serif" font-size="8" fill="#b0aea5" text-anchor="middle" opacity="0.8">EXPIRED</text>
+        </svg>
+        <p class="engram-conflict-tile-name">time-expired</p>
+      </div>
+
+      <!-- 6. silent-override -->
+      <div class="engram-conflict-tile">
+        <svg viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="silent-override icon: shadow behind a memo card">
+          <rect width="64" height="64" rx="12" fill="#d97757" opacity="0.1"/>
+          <rect x="16" y="20" width="32" height="24" rx="5" fill="#e8e6dc"/>
+          <rect x="20" y="24" width="32" height="24" rx="5" fill="#faf9f5" stroke="#d97757" stroke-width="1.5"/>
+          <line x1="26" y1="32" x2="46" y2="32" stroke="#d97757" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="26" y1="37" x2="40" y2="37" stroke="#b0aea5" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <p class="engram-conflict-tile-name">silent-override</p>
+      </div>
+
+      <!-- 7. topic-divergence -->
+      <div class="engram-conflict-tile">
+        <svg viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="topic-divergence icon: one line splitting into two">
+          <rect width="64" height="64" rx="12" fill="#d97757" opacity="0.1"/>
+          <line x1="32" y1="14" x2="32" y2="30" stroke="#6b6a5f" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="32" y1="30" x2="18" y2="50" stroke="#6a9bcc" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="32" y1="30" x2="46" y2="50" stroke="#788c5d" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="18" cy="50" r="3.5" fill="#6a9bcc"/>
+          <circle cx="46" cy="50" r="3.5" fill="#788c5d"/>
+        </svg>
+        <p class="engram-conflict-tile-name">topic-divergence</p>
+      </div>
+
+      <!-- "never mutates" card -->
+      <div class="engram-conflict-tile" style="background:var(--anth-bg-subtle); border:2px solid var(--anth-orange);">
+        <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+          <rect width="64" height="64" rx="12" fill="#d97757" opacity="0.08"/>
+          <circle cx="32" cy="28" r="12" fill="none" stroke="#d97757" stroke-width="2.5"/>
+          <line x1="28" y1="24" x2="28" y2="32" stroke="#d97757" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="28" cy="35" r="1.5" fill="#d97757"/>
+          <line x1="42" y1="20" x2="52" y2="48" stroke="#788c5d" stroke-width="2" stroke-linecap="round"/>
+          <text x="32" y="54" font-family="Poppins,Arial,sans-serif" font-size="8" fill="#d97757" text-anchor="middle">PROPOSALS ONLY</text>
+        </svg>
+        <p class="engram-conflict-tile-name" style="color:var(--anth-orange); font-weight:600;">never mutates</p>
+      </div>
+    </div>
+
+    <p style="text-align:center; max-width:680px; margin:var(--space-5) auto 0; font-size:15px; color:var(--anth-text-secondary);">
+      Engine proposes, never mutates. Deletions always flow through <code>archive/</code> with a minimum 6-month retention floor before physical removal.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     I. CROSS-REPO INBOX FLOW
+════════════════════════════════════════════ -->
+<section class="anth-section">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Cross-Repo Collaboration</span>
+      <h2 style="margin-top:var(--space-3);">Inter-Repo Messenger</h2>
+      <p>Your agents often work on multiple related repos in parallel. When agent A spots a bug in repo B, it can send a structured inbox message — without interrupting B's session.</p>
+    </div>
+
+    <!-- Inbox flow SVG -->
+    <figure style="margin:0;">
+      <svg viewBox="0 0 1100 200" width="100%" style="display:block; min-width:600px;" role="img" aria-label="Cross-repo inbox flow: Repo A LLM sends inbox message, Repo B sees it on next session, acknowledges and resolves, reverse notification sent back">
+        <rect width="1100" height="200" fill="#faf9f5" rx="14"/>
+
+        <!-- Repo A box -->
+        <rect x="24" y="60" width="150" height="80" rx="12" fill="#6a9bcc" opacity="0.14"/>
+        <text x="99" y="90" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#6a9bcc" text-anchor="middle">Repo A</text>
+        <text x="99" y="108" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">LLM finds bug</text>
+        <text x="99" y="122" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">in Repo B's SDK</text>
+
+        <!-- arrow 1 -->
+        <line x1="174" y1="100" x2="250" y2="100" stroke="#d97757" stroke-width="2" stroke-linecap="round"/>
+        <polygon points="244,95 254,100 244,105" fill="#d97757"/>
+        <text x="212" y="90" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#d97757" text-anchor="middle">engram inbox send</text>
+        <text x="212" y="116" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#b0aea5" text-anchor="middle">--to=repo-b</text>
+
+        <!-- inbox dir box -->
+        <rect x="254" y="60" width="180" height="80" rx="12" fill="#f0ede3"/>
+        <text x="344" y="90" font-family="Poppins,Arial,sans-serif" font-size="12" font-weight="600" fill="#141413" text-anchor="middle">~/.engram/inbox/</text>
+        <text x="344" y="108" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">repo-b/</text>
+        <text x="344" y="122" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#b0aea5" text-anchor="middle">journaled · deduplicated</text>
+
+        <!-- arrow 2 -->
+        <line x1="434" y1="100" x2="510" y2="100" stroke="#d97757" stroke-width="2" stroke-linecap="round"/>
+        <polygon points="504,95 514,100 504,105" fill="#d97757"/>
+        <text x="472" y="90" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#6b6a5f" text-anchor="middle">next session</text>
+
+        <!-- Repo B box -->
+        <rect x="514" y="60" width="150" height="80" rx="12" fill="#788c5d" opacity="0.14"/>
+        <text x="589" y="90" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#788c5d" text-anchor="middle">Repo B</text>
+        <text x="589" y="108" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">sees message</text>
+        <text x="589" y="122" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">alongside memory</text>
+
+        <!-- arrow 3 -->
+        <line x1="664" y1="100" x2="740" y2="100" stroke="#788c5d" stroke-width="2" stroke-linecap="round"/>
+        <polygon points="734,95 744,100 734,105" fill="#788c5d"/>
+        <text x="702" y="90" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#6b6a5f" text-anchor="middle">fix · acknowledge</text>
+
+        <!-- resolve box -->
+        <rect x="744" y="60" width="150" height="80" rx="12" fill="#788c5d" opacity="0.1"/>
+        <text x="819" y="90" font-family="Poppins,Arial,sans-serif" font-size="12" font-weight="600" fill="#788c5d" text-anchor="middle">Resolved</text>
+        <text x="819" y="108" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">state: resolved</text>
+        <text x="819" y="122" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#b0aea5" text-anchor="middle">reverse notification sent</text>
+
+        <!-- arrow 4 - return notification -->
+        <line x1="894" y1="100" x2="970" y2="100" stroke="#6a9bcc" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 3"/>
+        <polygon points="964,95 974,100 964,105" fill="#6a9bcc"/>
+        <text x="932" y="90" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#6a9bcc" text-anchor="middle">notified on A's</text>
+        <text x="932" y="104" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#6a9bcc" text-anchor="middle">next startup</text>
+
+        <!-- Repo A receives -->
+        <rect x="974" y="60" width="102" height="80" rx="12" fill="#6a9bcc" opacity="0.1"/>
+        <text x="1025" y="96" font-family="Poppins,Arial,sans-serif" font-size="12" font-weight="600" fill="#6a9bcc" text-anchor="middle">Repo A</text>
+        <text x="1025" y="112" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#6b6a5f" text-anchor="middle">notified ✓</text>
+
+        <!-- legend -->
+        <text x="24" y="170" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#b0aea5">All messages: journaled · deduplicated by code-ref · rate-limited to prevent noise</text>
+      </svg>
+      <figcaption class="anth-caption" style="text-align:center; margin-top:var(--space-3);">The Inter-Repo Messenger is point-to-point. Topic pools handle broadcast sharing; the inbox handles targeted signals.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     J. DIFFERENTIATORS TABLE
+════════════════════════════════════════════ -->
+<section class="anth-section anth-section--subtle">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Comparison</span>
+      <h2 style="margin-top:var(--space-3);">Capability comparison</h2>
+      <p>The combination no other system attempts: data-asset portability + active quality maintenance + quantifiable self-improvement.</p>
+    </div>
+    <div class="engram-matrix-table">
+      <table class="anth-table">
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>engram v0.2</th>
+            <th>claude-mem</th>
+            <th>basic-memory</th>
+            <th>Karpathy Wiki</th>
+            <th>mem0</th>
+            <th>MemGPT / Letta</th>
+            <th>ChatGPT Mem</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Plain markdown storage</td><td><span class="check">✓ open</span></td><td><span class="cross">SQLite</span></td><td><span class="check">✓</span></td><td><span class="check">✓ gist</span></td><td><span class="cross">hosted</span></td><td><span class="cross">hosted</span></td><td><span class="cross">hosted</span></td></tr>
+          <tr><td>Tool-agnostic (any LLM)</td><td><span class="check">✓</span></td><td><span class="cross">Claude only</span></td><td>partial</td><td>partial</td><td>partial API</td><td>partial API</td><td><span class="cross">ChatGPT only</span></td></tr>
+          <tr><td>Two-axis scope (hierarchy + pool)</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+          <tr><td>Explicit enforcement levels</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+          <tr><td>Consistency detection (7 classes)</td><td><span class="check">✓</span></td><td>partial</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+          <tr><td>Executable workflows</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td>partial</td><td><span class="cross">✗</span></td></tr>
+          <tr><td>Knowledge Base class</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="check">✓ manual</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+          <tr><td>First-class Web UI</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td>partial hosted</td><td>partial hosted</td><td>partial hosted</td></tr>
+          <tr><td>MCP server</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+          <tr><td>Cross-repo inbox</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+          <tr><td>Quantified self-improvement</td><td><span class="check">✓ Wisdom Metrics</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+          <tr><td>Open source</td><td><span class="check">✓ MIT</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td>partial</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     K. WISDOM METRICS — 4 SPARKLINE CHARTS
+════════════════════════════════════════════ -->
+<section class="anth-section">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Wisdom Metrics</span>
+      <h2 style="margin-top:var(--space-3);">Smarter over time — measurably</h2>
+      <p>Four quantitative curves prove the store self-improves. "It feels more useful" becomes a number that can regress or improve.</p>
+    </div>
+
+    <div class="engram-sparkline-grid">
+      <!-- Workflow Mastery -->
+      <div class="engram-sparkline-card">
+        <svg viewBox="0 0 200 100" width="100%" role="img" aria-label="Workflow Mastery sparkline chart showing upward trend">
+          <line x1="10" y1="90" x2="190" y2="90" stroke="#e8e6dc" stroke-width="0.5"/>
+          <line x1="10" y1="10" x2="10"  y2="90" stroke="#e8e6dc" stroke-width="0.5"/>
+          <polyline points="10,80 40,72 70,60 100,50 130,38 160,28 190,18"
+                    fill="none" stroke="#6a9bcc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="10,80 40,72 70,60 100,50 130,38 160,28 190,18"
+                    fill="rgba(106,155,204,0.08)" stroke="none"/>
+          <circle cx="190" cy="18" r="4" fill="#6a9bcc"/>
+          <text x="100" y="8" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#6b6a5f" text-anchor="middle">workflow success rate over time</text>
+        </svg>
+        <p class="engram-sparkline-label">Workflow Mastery</p>
+      </div>
+
+      <!-- Task Recurrence Efficiency -->
+      <div class="engram-sparkline-card">
+        <svg viewBox="0 0 200 100" width="100%" role="img" aria-label="Task Recurrence Efficiency sparkline showing decreasing time-to-complete">
+          <line x1="10" y1="90" x2="190" y2="90" stroke="#e8e6dc" stroke-width="0.5"/>
+          <line x1="10" y1="10" x2="10"  y2="90" stroke="#e8e6dc" stroke-width="0.5"/>
+          <polyline points="10,22 40,30 70,42 100,50 130,58 160,66 190,72"
+                    fill="none" stroke="#788c5d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="190" cy="72" r="4" fill="#788c5d"/>
+          <text x="100" y="8" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#6b6a5f" text-anchor="middle">time-to-complete on recurring tasks ↓</text>
+        </svg>
+        <p class="engram-sparkline-label">Task Recurrence Efficiency</p>
+      </div>
+
+      <!-- Memory Curation Ratio -->
+      <div class="engram-sparkline-card">
+        <svg viewBox="0 0 200 100" width="100%" role="img" aria-label="Memory Curation Ratio sparkline showing stable high ratio">
+          <line x1="10" y1="90" x2="190" y2="90" stroke="#e8e6dc" stroke-width="0.5"/>
+          <line x1="10" y1="10" x2="10"  y2="90" stroke="#e8e6dc" stroke-width="0.5"/>
+          <polyline points="10,60 40,55 70,52 100,48 130,45 160,44 190,42"
+                    fill="none" stroke="#d97757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="190" cy="42" r="4" fill="#d97757"/>
+          <text x="100" y="8" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#6b6a5f" text-anchor="middle">active / validated / non-redundant ratio ↑</text>
+        </svg>
+        <p class="engram-sparkline-label">Memory Curation Ratio</p>
+      </div>
+
+      <!-- Context Efficiency -->
+      <div class="engram-sparkline-card">
+        <svg viewBox="0 0 200 100" width="100%" role="img" aria-label="Context Efficiency sparkline showing improving tokens used per task">
+          <line x1="10" y1="90" x2="190" y2="90" stroke="#e8e6dc" stroke-width="0.5"/>
+          <line x1="10" y1="10" x2="10"  y2="90" stroke="#e8e6dc" stroke-width="0.5"/>
+          <polyline points="10,30 40,35 70,42 100,50 130,52 160,54 190,55"
+                    fill="none" stroke="#b0aea5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="10,30 40,35 70,42 100,50 130,52 160,54 190,55"
+                    fill="rgba(176,174,165,0.08)" stroke="none"/>
+          <circle cx="190" cy="55" r="4" fill="#b0aea5"/>
+          <text x="100" y="8" font-family="Poppins,Arial,sans-serif" font-size="9" fill="#6b6a5f" text-anchor="middle">tokens used / actual task value ↓</text>
+        </svg>
+        <p class="engram-sparkline-label">Context Efficiency</p>
+      </div>
+    </div>
+
+    <p style="text-align:center; max-width:680px; margin:var(--space-5) auto 0; color:var(--anth-text-secondary);">
+      Track via <code>engram wisdom report</code> — each curve computed from recorded outcomes, not heuristics.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     L. PHILOSOPHY — 5 PRINCIPLES
+════════════════════════════════════════════ -->
+<section class="anth-section anth-section--subtle">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Philosophy</span>
+      <h2 style="margin-top:var(--space-3);">Five non-negotiable principles</h2>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-5);">
+      <div class="anth-card">
+        <div class="engram-philosophy-num">01</div>
+        <h3>Memory is a data asset, not a product feature</h3>
+        <p>The store belongs to its owner, not the tool that writes it. Any text editor. Any LLM. Any version control system.</p>
+      </div>
+      <div class="anth-card">
+        <div class="engram-philosophy-num">02</div>
+        <h3>Portability beats cleverness</h3>
+        <p>Boring markdown wins decade-scale bets. The format is the permanent commitment; the intelligence layer is the optional investment.</p>
+      </div>
+      <div class="anth-card">
+        <div class="engram-philosophy-num">03</div>
+        <h3>Quality over capacity</h3>
+        <p>No cap on how much you store. Strict bar on quality. The Consistency Engine keeps the store coherent as it grows.</p>
+      </div>
+      <div class="anth-card">
+        <div class="engram-philosophy-num">04</div>
+        <h3>Never auto-delete</h3>
+        <p>Deletions flow through <code>archive/</code> with a minimum 6-month retention floor. Every retirement requires an explicit decision.</p>
+      </div>
+      <div class="anth-card">
+        <div class="engram-philosophy-num">05</div>
+        <h3>Evidence-driven evolution</h3>
+        <p>Memory confidence is computed from recorded outcomes, not vibes. The system retires bad memories because it has <em>data</em> that they're bad.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     M. QUICK START
+════════════════════════════════════════════ -->
+<section class="anth-section">
+  <div class="anth-container anth-container--narrow">
+    <div style="text-align:center; margin-bottom:var(--space-7);">
+      <span class="anth-badge">Quick Start</span>
+      <h2 style="margin-top:var(--space-3);">Get started in 3 lines</h2>
+      <p>v0.2 CLI is under active construction. M2 scaffold landed 2026-04-20 — clone, <code>pip install -e "cli[dev]"</code>, then <code>engram --version</code>. Subcommands roll out through M2–M4. SPEC + DESIGN are open for review in parallel.</p>
+    </div>
+
+    <h3 style="font-size:18px; margin-bottom:var(--space-3);">Small team</h3>
+    <pre class="anth-code"><code>pip install engram-cli
+engram init --subscribe=kernel-work --adapter=claude-code,codex
+engram web serve    # open http://127.0.0.1:8787</code></pre>
+
+    <h3 style="font-size:18px; margin:var(--space-6) 0 var(--space-3);">Large organization</h3>
+    <pre class="anth-code"><code>engram init --org=acme --team=platform \
+  --subscribe=compliance-checklists,kernel-work,design-system \
+  --adapter=claude-code,codex,gemini</code></pre>
+
+    <h3 style="font-size:18px; margin:var(--space-6) 0 var(--space-3);">Use with any LLM</h3>
+    <pre class="anth-code"><code>claude                    # reads CLAUDE.md → reads .memory/
+codex                     # reads AGENTS.md → reads .memory/
+engram mcp serve          # for Claude Desktop, Zed, any MCP client
+engram context pack --task="fix auth flow" --budget=4k | ollama run qwen:7b</code></pre>
+
+    <h3 style="font-size:18px; margin:var(--space-6) 0 var(--space-3);">Ongoing maintenance</h3>
+    <pre class="anth-code"><code>engram review              # aggregate health check
+engram consistency scan    # detect conflicts, suggest resolutions
+engram wisdom report       # see the four self-improvement curves</code></pre>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     N. ROADMAP
+════════════════════════════════════════════ -->
+<section class="anth-section anth-section--subtle">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Roadmap</span>
+      <h2 style="margin-top:var(--space-3);">Eight milestones</h2>
+    </div>
+    <div class="engram-roadmap">
+      <div class="engram-roadmap-step">
+        <div class="engram-roadmap-dot engram-roadmap-dot--current">M1</div>
+        <p class="engram-roadmap-title">SPEC Freeze</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">External design review underway</p>
+      </div>
+      <div class="engram-roadmap-step">
+        <div class="engram-roadmap-dot">M2</div>
+        <p class="engram-roadmap-title">Core CLI</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">done — 15 tasks, 291 tests, 95% coverage</p>
+      </div>
+      <div class="engram-roadmap-step">
+        <div class="engram-roadmap-dot engram-roadmap-dot--current">M3</div>
+        <p class="engram-roadmap-title">Scope + Pool</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">T-30–T-34 pool + team + org + migrate working (386 tests) — scope-aware ranking next</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">full 2-axis scope, enforcement</p>
+      </div>
+      <div class="engram-roadmap-step">
+        <div class="engram-roadmap-dot">M4</div>
+        <p class="engram-roadmap-title">Intelligence MVP</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">Relevance Gate + Consistency Phase 1–2</p>
+      </div>
+      <div class="engram-roadmap-step">
+        <div class="engram-roadmap-dot">M5</div>
+        <p class="engram-roadmap-title">Workflow + Autolearn</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">spine execution, outcome tracking</p>
+      </div>
+      <div class="engram-roadmap-step">
+        <div class="engram-roadmap-dot">M6</div>
+        <p class="engram-roadmap-title">KB + Inbox</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">Knowledge Base class, inter-repo messaging</p>
+      </div>
+      <div class="engram-roadmap-step">
+        <div class="engram-roadmap-dot">M7</div>
+        <p class="engram-roadmap-title">Web UI</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">FastAPI + Svelte dashboard</p>
+      </div>
+      <div class="engram-roadmap-step">
+        <div class="engram-roadmap-dot">M8</div>
+        <p class="engram-roadmap-title">Full Evolve + SDK</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">TypeScript SDK, migrate suite, GA</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     O. INSPIRATIONS
+════════════════════════════════════════════ -->
+<section class="anth-section">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Inspiration</span>
+      <h2 style="margin-top:var(--space-3);">Standing on shoulders</h2>
+      <p>Each prior project shaped one specific piece of engram.</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-4);">
+      <div class="anth-card">
+        <h3 style="font-size:16px;"><a class="anth-link" href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">Karpathy LLM Wiki</a></h3>
+        <p style="font-size:14px;">LLM-compiled knowledge compounds in value over time. Inspired the Knowledge Base class and the compilation step.</p>
+      </div>
+      <div class="anth-card">
+        <h3 style="font-size:16px;"><a class="anth-link" href="https://github.com/karpathy/autoresearch">autoresearch</a></h3>
+        <p style="font-size:14px;">Eight-discipline agentic self-critique loop. Shaped the Autolearn Engine's evolution cadence for Workflow assets.</p>
+      </div>
+      <div class="anth-card">
+        <h3 style="font-size:16px;">Agent Factory</h3>
+        <p style="font-size:14px;">Experience as executable code, not text. The founding insight behind the Workflow asset class with its runnable spine.</p>
+      </div>
+      <div class="anth-card">
+        <h3 style="font-size:16px;">evo-memory (DeepMind)</h3>
+        <p style="font-size:14px;">Search → Synthesize → Evolve lifecycle. ReMem action-think-refine loop drives the Evolve Engine's memory proposals.</p>
+      </div>
+      <div class="anth-card">
+        <h3 style="font-size:16px;"><a class="anth-link" href="https://arxiv.org/abs/2305.10250">MemoryBank</a></h3>
+        <p style="font-size:14px;">Ebbinghaus curve for LLM memory. Adapted to evidence-driven confidence scoring rather than time-based decay.</p>
+      </div>
+      <div class="anth-card">
+        <h3 style="font-size:16px;"><a class="anth-link" href="https://github.com/cpacker/MemGPT">MemGPT / Letta</a></h3>
+        <p style="font-size:14px;">Memory as OS virtual memory. Inspired the Layer 1 tiered data structure — without the managed-service requirement.</p>
+      </div>
+      <div class="anth-card">
+        <h3 style="font-size:16px;">Claude Code Memory</h3>
+        <p style="font-size:14px;">The direct precursor engram generalizes. Proved the value of LLM-adjacent markdown memory in practice.</p>
+      </div>
+      <div class="anth-card">
+        <h3 style="font-size:16px;">MemPalace</h3>
+        <p style="font-size:14px;">Retrieval algorithm research informing the Relevance Gate's candidate ranking pipeline.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     P. CTA + FOOTER
+════════════════════════════════════════════ -->
+<section class="anth-section" style="text-align:center; background:var(--anth-bg-subtle);">
+  <div class="anth-container">
+    <h2>Join the design review</h2>
+    <p style="max-width:560px; margin:var(--space-4) auto var(--space-6); color:var(--anth-text-secondary);">
+      The SPEC and DESIGN are open. For open-ended talk on the scope model, asset-class boundaries, Consistency Engine taxonomy, or your use case — join Discussions.
+      For concrete bug reports and feature requests, file an Issue.
+    </p>
+    <div class="engram-hero-ctas">
+      <a class="anth-button" href="https://github.com/TbusOS/engram/discussions">Join Discussions</a>
+      <a class="anth-button anth-button--ghost" href="https://github.com/TbusOS/engram">Star on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     P'. Issues bottom strip (separated from Discussions)
+════════════════════════════════════════════ -->
+<section style="padding:var(--space-7) 0; border-top:1px solid var(--anth-light-gray); text-align:center; background:var(--anth-bg);">
+  <div class="anth-container">
+    <h3 style="font-size:20px; font-weight:500; margin-bottom:var(--space-3);">Found a bug, or want a specific feature?</h3>
+    <p style="color:var(--anth-text-secondary); max-width:520px; margin:0 auto var(--space-5);">
+      Issues tracks concrete tasks — each one has a clear actionable outcome. For open-ended discussion, head to Discussions.
+    </p>
+    <a class="anth-button anth-button--ghost" href="https://github.com/TbusOS/engram/issues">File an Issue</a>
+  </div>
+</section>
+
+<footer class="anth-footer">
+  <div class="anth-footer-grid">
+    <div class="anth-footer-group">
+      <h5>Project</h5>
+      <a href="https://github.com/TbusOS/engram" class="anth-link--no-arrow">GitHub</a>
+      <a href="https://github.com/TbusOS/engram/blob/main/SPEC.md" class="anth-link--no-arrow">SPEC</a>
+      <a href="https://github.com/TbusOS/engram/blob/main/DESIGN.md" class="anth-link--no-arrow">DESIGN</a>
+      <a href="https://github.com/TbusOS/engram/blob/main/docs/glossary.md" class="anth-link--no-arrow">Glossary</a>
+    </div>
+    <div class="anth-footer-group">
+      <h5>Community</h5>
+      <a href="../design/" class="anth-link--no-arrow">UI Preview</a>
+      <a href="https://github.com/TbusOS/engram/discussions" class="anth-link--no-arrow">Discussions</a>
+      <a href="https://github.com/TbusOS/engram/issues" class="anth-link--no-arrow">Issues</a>
+      <a href="https://github.com/TbusOS/engram/blob/main/CONTRIBUTING.md" class="anth-link--no-arrow">Contributing</a>
+    </div>
+    <div class="anth-footer-group">
+      <h5>Docs</h5>
+      <a href="https://github.com/TbusOS/engram/blob/main/README.md" class="anth-link--no-arrow">README</a>
+      <a href="https://github.com/TbusOS/engram/blob/main/docs/superpowers/plans/2026-04-18-engram-v0.2-rewrite.md" class="anth-link--no-arrow">Roadmap</a>
+    </div>
+    <div class="anth-footer-group">
+      <h5>Legal</h5>
+      <a href="https://github.com/TbusOS/engram/blob/main/LICENSE" class="anth-link--no-arrow">MIT License</a>
+    </div>
+    <div class="anth-footer-group">
+      <h5>Language</h5>
+      <a href="../zh/" class="anth-link--no-arrow">中文版</a>
+      <a href="../" class="anth-link--no-arrow">Language chooser</a>
+    </div>
+  </div>
+  <div class="anth-footer-legal">
+    <p>© 2026 engram contributors · MIT License · Built with engram memory</p>
+    <div class="anth-social">
+      <a href="https://github.com/TbusOS/engram" aria-label="GitHub" class="anth-link--no-arrow">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal for cards
+  var reveals = document.querySelectorAll('.anth-card, .engram-sparkline-card, .engram-conflict-tile');
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    reveals.forEach(function(el) { el.classList.add('anth-reveal'); obs.observe(el); });
+  }
+</script>
+</body>
+</html>

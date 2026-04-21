@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory Detail — engram Web UI</title>
+  <link rel="stylesheet" href="../assets/fonts.css">
+  <link rel="stylesheet" href="../assets/anthropic.css">
+  <link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+
+<div class="engram-app-shell">
+
+  <header class="engram-topbar engram-nav-mock">
+    <a href="index.html" class="engram-nav-brand-mock">engram</a>
+    <div class="engram-nav-links-mock">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="graph.html">Graph</a>
+      <a href="inbox.html">Inbox</a>
+      <a href="context-preview.html">Context Preview</a>
+      <a href="wisdom.html">Wisdom</a>
+    </div>
+    <div class="engram-nav-right">
+      <span class="anth-badge">Design Mockup</span>
+      <a href="zh/memory-detail.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">中文</a>
+      <a href="index.html" class="anth-link anth-link--no-arrow" style="font-size:13px;">← All pages</a>
+    </div>
+  </header>
+
+  <aside class="engram-sidebar" aria-label="Page navigation">
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Overview</div>
+      <a href="dashboard.html" class="engram-sidebar-link">Dashboard</a>
+      <a href="graph.html" class="engram-sidebar-link">Graph</a>
+      <a href="project-overview.html" class="engram-sidebar-link">Projects</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Assets</div>
+      <a href="memory-detail.html" class="engram-sidebar-link is-active">Memory</a>
+      <a href="workflow-detail.html" class="engram-sidebar-link">Workflows</a>
+      <a href="kb-article.html" class="engram-sidebar-link">Knowledge Base</a>
+    </div>
+    <div class="engram-sidebar-section">
+      <div class="engram-sidebar-label">Tools</div>
+      <a href="pool-manager.html" class="engram-sidebar-link">Pool Manager</a>
+      <a href="context-preview.html" class="engram-sidebar-link">Context Preview</a>
+      <a href="autolearn-console.html" class="engram-sidebar-link">Autolearn</a>
+      <a href="inbox.html" class="engram-sidebar-link">Inbox</a>
+      <a href="wisdom.html" class="engram-sidebar-link">Wisdom</a>
+    </div>
+  </aside>
+
+  <main class="engram-main">
+
+    <!-- Breadcrumb -->
+    <div class="engram-breadcrumb">
+      <a href="dashboard.html">Dashboard</a>
+      <span class="engram-breadcrumb-sep">›</span>
+      <a href="graph.html">Memory</a>
+      <span class="engram-breadcrumb-sep">›</span>
+      <span style="color:var(--anth-text); font-weight:500;">feedback_push_confirm</span>
+    </div>
+
+    <!-- Title + lifecycle badge -->
+    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-6);">
+      <h1 style="font-size:22px; font-family:var(--font-mono); letter-spacing:-0.01em;">feedback_push_confirm</h1>
+      <span class="engram-status engram-status--ok">active</span>
+      <span class="anth-badge">user</span>
+      <span class="anth-badge">scope: project</span>
+    </div>
+
+    <!-- Main split -->
+    <div class="engram-split engram-split--2-1" style="align-items:start;">
+
+      <!-- Left: editor -->
+      <div>
+        <!-- Frontmatter form -->
+        <div class="engram-detail-panel" style="margin-bottom:var(--space-4);">
+          <h3 style="font-size:15px; font-family:var(--font-heading); margin-bottom:var(--space-4);">Frontmatter</h3>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4);">
+            <label>
+              <span class="anth-label">ID</span>
+              <input class="anth-input" type="text" value="feedback_push_confirm" style="font-family:var(--font-mono); font-size:13px;">
+            </label>
+            <label>
+              <span class="anth-label">Subtype</span>
+              <select class="anth-select" style="font-size:13px;">
+                <option selected>user</option>
+                <option>feedback</option>
+                <option>project</option>
+                <option>reference</option>
+                <option>agent</option>
+                <option>workflow_ptr</option>
+              </select>
+            </label>
+            <label>
+              <span class="anth-label">Scope</span>
+              <select class="anth-select" style="font-size:13px;">
+                <option selected>project</option>
+                <option>user</option>
+                <option>team</option>
+                <option>org</option>
+              </select>
+            </label>
+            <label>
+              <span class="anth-label">Lifecycle</span>
+              <select class="anth-select" style="font-size:13px;">
+                <option>draft</option>
+                <option selected>active</option>
+                <option>stable</option>
+                <option>deprecated</option>
+                <option>archived</option>
+              </select>
+            </label>
+            <label>
+              <span class="anth-label">Enforcement</span>
+              <select class="anth-select" style="font-size:13px;">
+                <option>mandatory</option>
+                <option selected>default</option>
+                <option>hint</option>
+              </select>
+            </label>
+            <label>
+              <span class="anth-label">Confidence score</span>
+              <input class="anth-input" type="number" value="0.87" step="0.01" min="0" max="1" style="font-size:13px;">
+            </label>
+            <label style="grid-column:1/-1;">
+              <span class="anth-label">Tags</span>
+              <input class="anth-input" type="text" value="git, push, confirmation, workflow" style="font-size:13px;">
+            </label>
+            <label style="grid-column:1/-1;">
+              <span class="anth-label">Expires</span>
+              <input class="anth-input" type="date" value="2027-01-01" style="font-size:13px;">
+            </label>
+          </div>
+        </div>
+
+        <!-- Body editor -->
+        <div class="engram-detail-panel">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+            <h3 style="font-size:15px; font-family:var(--font-heading); margin:0;">Body (Markdown)</h3>
+            <div class="anth-tabs" role="tablist" style="margin:0;">
+              <button class="anth-tab is-active" role="tab">Edit</button>
+              <button class="anth-tab" role="tab">Preview</button>
+            </div>
+          </div>
+          <div class="engram-editor" style="min-height:280px;">---
+id: feedback_push_confirm
+subtype: user
+scope: project
+lifecycle: active
+enforcement: default
+confidence_score: 0.87
+tags: [git, push, confirmation, workflow]
+expires: 2027-01-01
+---
+
+# Push Confirmation Preference
+
+Always ask for explicit confirmation before running `git push` or
+any command that writes to a remote. This preference applies to all
+branches including feature branches.
+
+## Exceptions
+
+- Dry-run pushes (`--dry-run`) do not require confirmation.
+- Pushes to local-only remotes are exempt.
+
+## Context
+
+User has experienced accidental force-pushes to shared branches on
+multiple occasions. This rule prevents that class of mistake.
+
+validated_count: 12
+contradicted_count: 0
+last_validated: 2026-04-15
+usage_count: 34</div>
+        </div>
+
+        <!-- Action bar -->
+        <div class="engram-action-bar" style="margin-top:var(--space-4); padding:var(--space-4); background:#ffffff; border-radius:var(--radius-md); box-shadow:var(--shadow-card);">
+          <button class="anth-button" style="font-size:13px; padding:8px 20px;">Save changes</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 20px;">Archive</button>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 20px;">Export</button>
+          <span style="flex:1;"></span>
+          <button class="anth-button anth-button--ghost" style="font-size:13px; padding:8px 20px; color:var(--anth-danger); border-color:rgba(161,66,56,0.3);">Delete (soft)</button>
+        </div>
+      </div>
+
+      <!-- Right: meta panel -->
+      <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+
+        <!-- Confidence gauge -->
+        <div class="engram-detail-panel">
+          <h4 style="font-size:13px; font-family:var(--font-heading); margin-bottom:var(--space-3);">Confidence</h4>
+          <div class="engram-gauge-wrap">
+            <div class="engram-gauge-bar"><div class="engram-gauge-fill" style="width:87%;"></div></div>
+            <div class="engram-gauge-num">0.87</div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-2); margin-top:var(--space-3);">
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">validated</div>
+              <div style="font-family:var(--font-heading); font-size:16px; font-weight:600; color:var(--anth-green);">12</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">contradicted</div>
+              <div style="font-family:var(--font-heading); font-size:16px; font-weight:600; color:var(--anth-danger);">0</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">usage count</div>
+              <div style="font-family:var(--font-heading); font-size:16px; font-weight:600;">34</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-heading); font-size:10px; color:var(--anth-text-secondary);">last validated</div>
+              <div style="font-family:var(--font-heading); font-size:12px; font-weight:600;">2026-04-15</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inbound references -->
+        <div class="engram-detail-panel">
+          <h4 style="font-size:13px; font-family:var(--font-heading); margin-bottom:var(--space-3);">Inbound references (2)</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--space-2);">
+            <div style="padding:var(--space-2) var(--space-3); background:var(--anth-bg-subtle); border-radius:var(--radius-sm);">
+              <div style="font-family:var(--font-mono); font-size:12px; font-weight:500;">deploy_pipeline_r7</div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">workflow_ptr · scope: project</div>
+            </div>
+            <div style="padding:var(--space-2) var(--space-3); background:var(--anth-bg-subtle); border-radius:var(--radius-sm);">
+              <div style="font-family:var(--font-mono); font-size:12px; font-weight:500;">sprint_context_2026q2</div>
+              <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary);">project · scope: project</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent usage events -->
+        <div class="engram-detail-panel">
+          <h4 style="font-size:13px; font-family:var(--font-heading); margin-bottom:var(--space-3);">Recent usage (last 5)</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--space-2);">
+            <div style="font-family:var(--font-heading); font-size:11px; border-bottom:1px solid var(--anth-light-gray); padding-bottom:var(--space-2);">
+              <div style="font-weight:500;">context-pack included</div>
+              <div style="color:var(--anth-text-secondary);">2026-04-18 14:32 · task: review PR #412</div>
+            </div>
+            <div style="font-family:var(--font-heading); font-size:11px; border-bottom:1px solid var(--anth-light-gray); padding-bottom:var(--space-2);">
+              <div style="font-weight:500;">context-pack included</div>
+              <div style="color:var(--anth-text-secondary);">2026-04-18 09:11 · task: deploy v2.4.1</div>
+            </div>
+            <div style="font-family:var(--font-heading); font-size:11px; border-bottom:1px solid var(--anth-light-gray); padding-bottom:var(--space-2);">
+              <div style="font-weight:500;">validated (outcome: success)</div>
+              <div style="color:var(--anth-text-secondary);">2026-04-15 16:44 · user confirmed push</div>
+            </div>
+            <div style="font-family:var(--font-heading); font-size:11px; border-bottom:1px solid var(--anth-light-gray); padding-bottom:var(--space-2);">
+              <div style="font-weight:500;">context-pack included</div>
+              <div style="color:var(--anth-text-secondary);">2026-04-14 11:05 · task: fix hotfix/billing</div>
+            </div>
+            <div style="font-family:var(--font-heading); font-size:11px;">
+              <div style="font-weight:500;">context-pack included</div>
+              <div style="color:var(--anth-text-secondary);">2026-04-13 17:22 · task: update release notes</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- File info -->
+        <div class="engram-detail-panel">
+          <h4 style="font-size:13px; font-family:var(--font-heading); margin-bottom:var(--space-3);">File location</h4>
+          <div style="font-family:var(--font-mono); font-size:11px; color:var(--anth-text-secondary); word-break:break-all;">
+            .memory/local/feedback/feedback_push_confirm.md
+          </div>
+          <div style="font-family:var(--font-heading); font-size:11px; color:var(--anth-text-secondary); margin-top:var(--space-2);">
+            Modified 2026-04-18 14:30 UTC
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="engram-footer-mock">
+  engram Web UI v0.2 design mockup. Real implementation in M7.
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--anth-orange);">← Design hub</a>
+</footer>
+
+</body>
+</html>
