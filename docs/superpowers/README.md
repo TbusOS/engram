@@ -17,6 +17,7 @@ Pattern borrowed from `~/linux-kernel/ai-doc/docs/superpowers/`.
 | Topic | Spec | Plan | Status |
 |---|---|---|---|
 | Productization + quality plan | [specs/2026-04-22-productization-plan.md](specs/2026-04-22-productization-plan.md) | — | draft 2026-04-22 |
+| Self-dogfood dashboard | [specs/2026-04-22-self-dogfood-dashboard.md](specs/2026-04-22-self-dogfood-dashboard.md) | — | **frozen design, deferred to M7** |
 
 ## Filename convention
 
