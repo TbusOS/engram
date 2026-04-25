@@ -243,6 +243,7 @@ do not run a planned command and assume it works — check the table.
 | `engram consistency apply` | Apply a consistency proposal (default dry-run; `--consent` required to touch disk). | T-49 |
 | `engram inbox send / list / acknowledge / resolve / reject` | Cross-repo Inter-Repo Messenger (SPEC §10). | T-50 |
 | `engram mcp serve` | Stateless MCP server over stdio JSON-RPC (works with Claude Code / Claude Desktop / Cursor / Zed / Codex / Opencode / VS Code). | T-51, T-52 |
+| `engram mcp install --target=<client>` | One-line MCP config install for 9 clients (claude-desktop / claude-code / cursor / zed / codex / opencode / vscode-{continue,cline,copilot}). `write` mode merges JSON; `paste` mode prints snippet. | **T-163** |
 | `engram adapter list / install / refresh` | Generate or refresh `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/engram.mdc` / `ENGRAM_PROMPT.md` with marker-bounded blocks. | T-53 ~ T-55 |
 | `engram doctor` | One-shot store health check: layout / graph.db drift / index reachability / pool sync / mandatory budget. Every issue ends with `→ run: <fix command>`. | **T-162** |
 
@@ -252,7 +253,6 @@ See [`docs/superpowers/specs/2026-04-25-越用越好用-12周主线.md`](docs/su
 
 | Command | Purpose | Tracking |
 |---|---|---|
-| `engram mcp install --target=<client>` | One-line install of MCP server config into Claude Code / Cursor / Zed / Codex / Opencode / VS Code (Continue / Cline / Copilot). | T-163 |
 | `engram pool accept <name>` / `engram pool diff <name>` | notify-mode pool review: accept the latest revision after diff, instead of auto-applying. | T-183 |
 | `engram graph rebuild --recompute-confidence` | Rebuild graph.db from `~/.engram/journal/usage.jsonl` event log. | T-185 |
 | `engram migrate --from=v0.2` | In-place migration to v0.2.1 SPEC-AMEND (adds `primary_topic`, `directive`, derived `confidence` cache, `accepted_revision`). | T-186 |
