@@ -138,6 +138,7 @@ def _register_subcommands() -> None:
     from engram.commands.adapter import adapter_cmd
     from engram.commands.config import config_group
     from engram.commands.context import context_cmd
+    from engram.commands.doctor import doctor_cmd
     from engram.commands.inbox import inbox_cmd
     from engram.commands.init import init_cmd
     from engram.commands.mcp import mcp_cmd
@@ -166,6 +167,7 @@ def _register_subcommands() -> None:
     cli.add_command(mcp_cmd)
     cli.add_command(adapter_cmd)
     cli.add_command(inbox_cmd)
+    cli.add_command(doctor_cmd)
 
 
 _register_subcommands()

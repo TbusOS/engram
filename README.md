@@ -244,6 +244,7 @@ do not run a planned command and assume it works — check the table.
 | `engram inbox send / list / acknowledge / resolve / reject` | Cross-repo Inter-Repo Messenger (SPEC §10). | T-50 |
 | `engram mcp serve` | Stateless MCP server over stdio JSON-RPC (works with Claude Code / Claude Desktop / Cursor / Zed / Codex / Opencode / VS Code). | T-51, T-52 |
 | `engram adapter list / install / refresh` | Generate or refresh `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/engram.mdc` / `ENGRAM_PROMPT.md` with marker-bounded blocks. | T-53 ~ T-55 |
+| `engram doctor` | One-shot store health check: layout / graph.db drift / index reachability / pool sync / mandatory budget. Every issue ends with `→ run: <fix command>`. | **T-162** |
 
 ### Planned (M4.6 – M8)
 
@@ -251,7 +252,6 @@ See [`docs/superpowers/specs/2026-04-25-越用越好用-12周主线.md`](docs/su
 
 | Command | Purpose | Tracking |
 |---|---|---|
-| `engram doctor` | One-shot health check + executable repair hints (MEMORY.md reachability, graph.db consistency, pool sync state, mandatory budget, confidence anomalies). | T-162 |
 | `engram mcp install --target=<client>` | One-line install of MCP server config into Claude Code / Cursor / Zed / Codex / Opencode / VS Code (Continue / Cline / Copilot). | T-163 |
 | `engram pool accept <name>` / `engram pool diff <name>` | notify-mode pool review: accept the latest revision after diff, instead of auto-applying. | T-183 |
 | `engram graph rebuild --recompute-confidence` | Rebuild graph.db from `~/.engram/journal/usage.jsonl` event log. | T-185 |

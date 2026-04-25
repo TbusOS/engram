@@ -157,7 +157,7 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 |----|------|--------|-------|------------|-------|
 | T-160 | `engram memory quick "<body>"` one-line command (issue #2) | todo | | T-19 | name/description auto-derived from body (first line ≤80 chars / first 150 chars); `--type` defaults to `project`; `--scope` defaults to `project`; collisions get `-1/-2/...` suffix; auto-derived assets must validate clean |
 | T-161 | `engram init --adopt` default for existing `.memory/` (issue #1) | todo | | T-17 | Detects SPEC-compliant `.memory/`; skips MEMORY.md write; scans `local/`/`workflows/`/`kb/` for valid frontmatter and registers to graph.db; invalid files become warnings, not errors |
-| T-162 | `engram doctor` health check + executable repair hints | todo | | T-20, T-21 | Single command: MEMORY.md reachability + graph.db consistency + pool sync state + mandatory budget + confidence anomalies; every issue line ends with `→ run: <command>` to fix it |
+| T-162 | `engram doctor` health check + executable repair hints | done | | T-20, T-21 | `engram/doctor/` multi-file (types + 5 checks: layout / graph_db / index / pools / mandatory_budget) + `engram/commands/doctor.py` CLI. Every issue carries `code` (DOC-LAYOUT-* / DOC-GRAPH-* / DOC-INDEX-* / DOC-POOL-* / DOC-MAND-*) + severity + message + `fix_command` (runnable shell). Confidence anomalies deferred until T-170 usage bus lands. 12 unit tests, 668 total passing |
 | T-163 | `engram mcp install --target=<client>` writes MCP config | todo | | T-51 | Targets: claude-code / claude-desktop / cursor / zed / codex / opencode / vscode-continue / vscode-cline / vscode-copilot. Idempotent; `--dry-run` prints planned config write |
 
 #### Week 2 — usage event bus (整个学习神经系统的脊柱)
