@@ -246,6 +246,7 @@ do not run a planned command and assume it works — check the table.
 | `engram mcp install --target=<client>` | One-line MCP config install for 9 clients (claude-desktop / claude-code / cursor / zed / codex / opencode / vscode-{continue,cline,copilot}). `write` mode merges JSON; `paste` mode prints snippet. | **T-163** |
 | `engram adapter list / install / refresh` | Generate or refresh `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/engram.mdc` / `ENGRAM_PROMPT.md` with marker-bounded blocks. | T-53 ~ T-55 |
 | `engram doctor` | One-shot store health check: layout / graph.db drift / index reachability / pool sync / mandatory budget. Every issue ends with `→ run: <fix command>`. | **T-162** |
+| `engram wisdom report` | 6 wisdom curves (C1 retrieval hit rate / C2 task recurrence / C3 write friction / C4 mandatory false-positive / C5 redundancy / C6 confidence calibration) rendered as Unicode-block sparklines from `~/.engram/journal/usage.jsonl`. | **T-188** |
 
 ### Planned (M4.6 – M8)
 
@@ -256,7 +257,6 @@ See [`docs/superpowers/specs/2026-04-25-越用越好用-12周主线.md`](docs/su
 | `engram pool accept <name>` / `engram pool diff <name>` | notify-mode pool review: accept the latest revision after diff, instead of auto-applying. | T-183 |
 | `engram graph rebuild --recompute-confidence` | Rebuild graph.db from `~/.engram/journal/usage.jsonl` event log. | T-185 |
 | `engram migrate --from=v0.2` | In-place migration to v0.2.1 SPEC-AMEND (adds `primary_topic`, `directive`, derived `confidence` cache, `accepted_revision`). | T-186 |
-| `engram wisdom report` | 6 wisdom-curve report (C1 retrieval hit rate, C2 task recurrence, C3 write friction, C4 mandatory false-positive, C5 redundancy, C6 confidence calibration). ASCII version pre-M7. | T-188 |
 | `engram workflow add / run / revise / promote / rollback / list / test` | Workflow asset full lifecycle. | T-70 ~ T-79 |
 | `engram workflow autolearn <name>` | Darwin-ratchet autolearn loop with phase gate. | T-79 |
 | `engram workflow evolve <name> --variants=N` | Fork-and-evaluate variants, top-1 → `rev/proposed`. | T-191 |

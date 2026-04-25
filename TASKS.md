@@ -193,7 +193,7 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 |----|------|--------|-------|------------|-------|
 | T-150r | Replace Stage 3 fusion with RRF (G-01) | todo | | T-40 | Reciprocal Rank Fusion of BM25 rank + vector rank; replaces hardcoded `fused_dist = dist * (1 - 0.30 * overlap)` |
 | T-151r | Stage 7.5 cross-encoder rerank (G-02) | todo | | T-40, T-150r | bge-reranker-v2-m3 over top-20; configurable model; CPU + GPU paths |
-| T-188 | `engram wisdom report` ASCII curves (6 metrics) | todo | | T-170, T-187 | Pre-M7 stand-in for the web UI; renders C1-C6 as ASCII sparklines + week-over-week deltas; pipes into terminal |
+| T-188 | `engram wisdom report` ASCII curves (6 metrics) | done | | T-170 | `engram/wisdom/` multi-file (DESIGN §4.2): types (Curve / Sample / WisdomReport) + curves.py (6 per-curve compute_* reading from usage.jsonl) + ascii_render.py (Unicode-block sparkline ▁▂▃▄▅▆▇█). All 6 curves implement empty-data graceful degradation (`insufficient` flag + actionable hint). text + json output formats. C5 / C2 still proxy-form pending T-189 / cross-task clustering. 11 unit tests, 722 total |
 
 #### Week 8 — Consistency 4-phase + auto-merge proposals (提升 C5)
 
