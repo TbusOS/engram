@@ -167,14 +167,21 @@ Five principles, non-negotiable:
 4. **Never auto-delete.** Deletions go through `archive/` with ≥ 6-month retention. Mistakes are recoverable.
 5. **Evidence-driven evolution.** Memory confidence is computed from recorded outcomes, not vibes. The system retires bad memories because it has *data* that they're bad.
 
-## Quick start (v0.2 — CLI under construction, milestones M2–M4)
+## Quick start (v0.2 — M2 / M3 / M4 implemented; M4.6 sprint underway)
 
 ```bash
-# Install (planned — currently in v0.2 design phase)
-pip install engram-cli
+# Install
+pip install engram-cli   # editable install: cd cli && pip install -e ".[dev]"
+
+# Just want to record one thing? Zero-config one-liner:
+engram memory quick "kinit before ssh to build.acme.internal"
 
 # In any project directory — small team, minimal setup
 engram init --subscribe=kernel-work --adapter=claude-code,codex
+
+# Cloned a teammate's engram-managed repo? Just init — adopt is the default.
+git clone <repo-with-existing-memory> && cd repo
+engram init                    # adopts existing .memory/, never overwrites MEMORY.md
 
 # Large organization — full hierarchy
 engram init --org=acme --team=platform \
@@ -204,6 +211,60 @@ engram wisdom report     # see the four self-improvement curves
 ```
 
 **Command details?** See [`SPEC.md`](SPEC.md) and [`DESIGN.md`](DESIGN.md) once they're written for v0.2 (in progress — track [the plan](docs/superpowers/plans/2026-04-18-engram-v0.2-rewrite.md)).
+
+## Commands
+
+The complete list of CLI subcommands, with their current implementation
+status. **Implemented** commands are usable today; **Planned** commands
+appear in `engram --help` only after their tracking task lands. New users:
+do not run a planned command and assume it works — check the table.
+
+### Implemented (M2 – M4 complete)
+
+| Command | Purpose | Tracking |
+|---|---|---|
+| `engram init` | Initialize project `.memory/` + `.engram/`. Defaults to **adopt** mode when `.memory/` already exists (registers existing assets without overwriting `MEMORY.md`). | T-17, **T-161** |
+| `engram init --adopt` | Explicit adopt: register an existing `.memory/` into graph.db; never touches markdown. Use after `git clone` of a teammate's engram-managed repo. | **T-161** |
+| `engram init --force` | Regenerate the skeleton (overwrites `MEMORY.md` / `pools.toml`). Legacy escape hatch. | T-17 |
+| `engram memory add` | Create a memory asset from full flags (`--type --name --description --body` + optional fields). | T-19 |
+| `engram memory quick "<body>"` | One-line capture: name + description auto-derived from body, type defaults to `project`. Made for LLM agents and quick human notes. | **T-160** |
+| `engram memory list / read / update / archive / search` | Full CRUD + BM25 search over project-scope memories. | T-19, T-38 |
+| `engram validate` | Frontmatter / enforcement / reference / pool integrity check (exit codes per SPEC §12.13). | T-20, T-37 |
+| `engram review` | Aggregated health report: percentile length signal, low-confidence assets, expired items. | T-21 |
+| `engram status` | Project scope + pool subscription + graph.db summary. | T-22 |
+| `engram pool subscribe / unsubscribe / list / sync / pull` | Pool subscription + git sync (auto-sync mode). | T-30 ~ T-32 |
+| `engram team join / sync / publish / status / list` | Team-scope git repo management. | T-33 |
+| `engram org join / sync / publish / status / list` | Org-scope git repo management. | T-33 |
+| `engram migrate --from=v0.1` | v0.1 → v0.2 store migration with backup + rollback + journal. | T-34, T-35 |
+| `engram config get / set / list` | CLI configuration (TOML, atomic writes). | T-18 |
+| `engram version` | Print engram-cli version. | T-18 |
+| `engram context pack --task=<text>` | Drive the Relevance Gate from the CLI; output prompt / json / markdown. Pipe directly to local LLMs. | T-56 |
+| `engram consistency scan` | 4-phase Consistency Engine (Phase 1 + 2 active; Phase 3 + 4 stub). | T-46 (T-47 / T-48 in M4.6) |
+| `engram consistency apply` | Apply a consistency proposal (default dry-run; `--consent` required to touch disk). | T-49 |
+| `engram inbox send / list / acknowledge / resolve / reject` | Cross-repo Inter-Repo Messenger (SPEC §10). | T-50 |
+| `engram mcp serve` | Stateless MCP server over stdio JSON-RPC (works with Claude Code / Claude Desktop / Cursor / Zed / Codex / Opencode / VS Code). | T-51, T-52 |
+| `engram adapter list / install / refresh` | Generate or refresh `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/engram.mdc` / `ENGRAM_PROMPT.md` with marker-bounded blocks. | T-53 ~ T-55 |
+
+### Planned (M4.6 – M8)
+
+See [`docs/superpowers/specs/2026-04-25-越用越好用-12周主线.md`](docs/superpowers/specs/2026-04-25-越用越好用-12周主线.md) for the full M4.6 12-week plan.
+
+| Command | Purpose | Tracking |
+|---|---|---|
+| `engram doctor` | One-shot health check + executable repair hints (MEMORY.md reachability, graph.db consistency, pool sync state, mandatory budget, confidence anomalies). | T-162 |
+| `engram mcp install --target=<client>` | One-line install of MCP server config into Claude Code / Cursor / Zed / Codex / Opencode / VS Code (Continue / Cline / Copilot). | T-163 |
+| `engram pool accept <name>` / `engram pool diff <name>` | notify-mode pool review: accept the latest revision after diff, instead of auto-applying. | T-183 |
+| `engram graph rebuild --recompute-confidence` | Rebuild graph.db from `~/.engram/journal/usage.jsonl` event log. | T-185 |
+| `engram migrate --from=v0.2` | In-place migration to v0.2.1 SPEC-AMEND (adds `primary_topic`, `directive`, derived `confidence` cache, `accepted_revision`). | T-186 |
+| `engram wisdom report` | 6 wisdom-curve report (C1 retrieval hit rate, C2 task recurrence, C3 write friction, C4 mandatory false-positive, C5 redundancy, C6 confidence calibration). ASCII version pre-M7. | T-188 |
+| `engram workflow add / run / revise / promote / rollback / list / test` | Workflow asset full lifecycle. | T-70 ~ T-79 |
+| `engram workflow autolearn <name>` | Darwin-ratchet autolearn loop with phase gate. | T-79 |
+| `engram workflow evolve <name> --variants=N` | Fork-and-evaluate variants, top-1 → `rev/proposed`. | T-191 |
+| `engram autolearn run --duration=Nh` | Bounded background daemon: continuous evolve + consistency + wisdom recompute within a time window. | T-193 |
+| `engram kb new-article / compile / list / read` | Knowledge Base authoring + LLM-compiled `_compiled.md`. | T-90 ~ T-92 |
+| `engram playbook install / publish / list / uninstall` | Installable Workflow + KB + seed Memory bundles via GitHub URL. | T-141 |
+| `engram web serve / open` | Browser dashboard on `http://127.0.0.1:8787` (P0 pages: Dashboard / Memory / Workflow / KB / Inbox / Context Preview). | T-110 ~ T-123 |
+| `engram migrate --from={chatgpt,mem0,obsidian,letta,mempalace,markdown}` | External system import. | T-140 |
 
 ## Migrating from other systems
 
