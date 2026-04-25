@@ -20,6 +20,7 @@ from __future__ import annotations
 from engram.usage.appender import append_usage_event
 from engram.usage.reader import iter_events
 from engram.usage.recompute import ConfidenceCache, derive_confidence_cache
+from engram.usage.task_hash import derive_task_hash
 from engram.usage.types import (
     ActorType,
     EventType,
@@ -36,6 +37,7 @@ __all__ = [
     "UsageEvent",
     "append_usage_event",
     "derive_confidence_cache",
+    "derive_task_hash",
     "iter_events",
     "usage_jsonl_path",
 ]

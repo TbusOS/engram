@@ -165,9 +165,9 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 | ID | Task | Status | Owner | Depends on | Notes |
 |----|------|--------|-------|------------|-------|
 | T-170 | `engram/usage/` module — append-only `~/.engram/journal/usage.jsonl` | done | | T-15 | `engram/usage/` multi-file (DESIGN §4.2): types (UsageEvent + 3 enums + 8 EvidenceKind values) / trust_weights (DEFAULT_TRUST_WEIGHTS authoritative table per issue #9 + EVIDENCE_VERSION) / appender (typed wrapper around journal.append_event) / reader (filter by asset_uri/task_hash/event_type/actor_type/evidence_kind) / recompute (derive_confidence_cache with co_assets attribution: weight / N per asset). 14 unit tests, 701 total |
-| T-171 | Wire all write paths into usage bus | todo | | T-170 | `context.py` records `loaded` events with `co_assets`; `consistency/resolve.py` records dismiss-with-reason; `validate.py` records mandatory-overridden events |
-| T-172 | trust_weight authoritative table → SPEC §11.4 | todo | | T-170 | 8 evidence_kinds × default trust_weight (explicit_user_confirmation=+1.0, ...); each kind has SPEC test fixture |
-| T-173 | Auto-derive task_hash from git context | todo | | T-170 | Reads HEAD SHA + branch + GH issue from commit message; falls back to timestamp-window bucket. CLI / MCP do not require user-supplied task_hash |
+| T-171 | Wire all write paths into usage bus | partial | | T-170 | `context.py` ✓ emits `loaded_only` per included asset with `co_assets` populated; `consistency/resolve.py` ✓ DISMISS emits `false_positive_dismissed`; `validate.py` ⏳ deferred to T-184 (mandatory directive) so emission happens at meaningful task boundaries instead of on every validate run. 3 wire-in integration tests, 711 total |
+| T-172 | trust_weight authoritative table → SPEC §11.4 | done | | T-170 | Draft amend `docs/superpowers/specs/2026-04-25-spec-amend-v0.2.1-usage-evidence.md` covers schema + 8 trust_weight defaults + co_assets attribution + DESIGN §5.1 confidence_multiplier + migration path. Final SPEC.md / DESIGN.md edit lands in T-185 v0.2.1 PR |
+| T-173 | Auto-derive task_hash from git context | done | | T-170 | `engram/usage/task_hash.py::derive_task_hash` 4-level priority: explicit > ENGRAM_TASK_HASH env > git HEAD+branch SHA-256 prefix > 15-min time-window bucket (`tw-<hex>`). CLI / MCP / context.py never require user-supplied task_hash. 7 unit tests |
 
 #### Week 3-4 — v0.2.1 SPEC-AMEND PR bundle (6 issues, one migration)
 

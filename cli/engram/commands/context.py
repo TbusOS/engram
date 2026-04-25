@@ -215,6 +215,11 @@ def pack_cmd(
     )
     result = run_relevance_gate(req)
 
+    # Emit one usage event per loaded asset before rendering. Failures here
+    # MUST NOT break the user's pack — usage bus is observability, not a
+    # blocking dependency. Event types/kinds per SPEC-AMEND v0.2.1 (T-172).
+    _emit_loaded_events(result, task, root)
+
     # Global --format overrides the per-command --format when user asked
     # for global JSON (stay consistent with other subcommands).
     if cfg.output_format == "json":
@@ -226,3 +231,44 @@ def pack_cmd(
         click.echo(_render_markdown(result, task, budget))
     else:  # prompt
         click.echo(_render_prompt(result, task))
+
+
+def _emit_loaded_events(result: "RelevanceResult", task: str, root: "Path") -> None:
+    """Append one ``loaded_only`` usage event per included asset.
+
+    ``co_assets`` lists every other asset loaded for the same task so
+    downstream confidence derivation can attribute LLM-self-report
+    successes proportionally (preventing 1-of-N inflation).
+    """
+    # Local import — keep cold start cheap and avoid pulling usage bus
+    # into modules that do not need it.
+    from engram.usage import (  # noqa: PLC0415
+        ActorType,
+        EventType,
+        EvidenceKind,
+        UsageEvent,
+        append_usage_event,
+        derive_task_hash,
+    )
+
+    included_ids = [c.asset.id for c in result.included]
+    if not included_ids:
+        return
+
+    task_hash = derive_task_hash(cwd=root, explicit=None)
+    for asset_id in included_ids:
+        co = tuple(other for other in included_ids if other != asset_id)
+        try:
+            append_usage_event(
+                UsageEvent(
+                    asset_uri=asset_id,
+                    task_hash=task_hash,
+                    event_type=EventType.LOADED,
+                    actor_type=ActorType.LLM,
+                    evidence_kind=EvidenceKind.LOADED_ONLY,
+                    co_assets=co,
+                )
+            )
+        except Exception:  # noqa: BLE001
+            # Observability never breaks the user's pack output.
+            pass

@@ -165,6 +165,15 @@ def _apply_dismiss(
             detail=f"dry-run: would record dismissal of {resolution.target}",
         )
     _journal("dismiss", resolution, store_root, applied=True)
+    # Dismissing a Consistency proposal = "user looked at this asset and
+    # decided it was correct after all" → false_positive_dismissed signal
+    # per SPEC §11.4 amend (T-172).
+    _emit_consistency_event(
+        store_root,
+        resolution.target,
+        evidence_kind_name="false_positive_dismissed",
+        event_type_name="validated",
+    )
     return ApplyResult(
         kind=resolution.kind,
         target=resolution.target,
@@ -172,6 +181,42 @@ def _apply_dismiss(
         changes=(),
         detail="dismissed — no file change, decision logged",
     )
+
+
+def _emit_consistency_event(
+    store_root: Path,
+    asset_id: str,
+    *,
+    evidence_kind_name: str,
+    event_type_name: str,
+) -> None:
+    """Append one usage event tagged by the Consistency Engine.
+
+    Local import to avoid widening the module's import surface, and
+    swallow exceptions — observability MUST NOT break the user's
+    consistency apply call.
+    """
+    try:
+        from engram.usage import (  # noqa: PLC0415
+            ActorType,
+            EventType,
+            EvidenceKind,
+            UsageEvent,
+            append_usage_event,
+            derive_task_hash,
+        )
+
+        append_usage_event(
+            UsageEvent(
+                asset_uri=asset_id,
+                task_hash=derive_task_hash(cwd=store_root),
+                event_type=EventType(event_type_name),
+                actor_type=ActorType.CONSISTENCY_ENGINE,
+                evidence_kind=EvidenceKind(evidence_kind_name),
+            )
+        )
+    except Exception:  # noqa: BLE001
+        pass
 
 
 # ------------------------------------------------------------------
