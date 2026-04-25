@@ -21,6 +21,7 @@ any content** the user has added under ``local/``, ``workflows/``, ``kb/``.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import click
@@ -30,7 +31,7 @@ from engram.core.fs import write_atomic
 from engram.pool.actions import subscribe_to_pool
 from engram.scope.git_ops import scope_root
 
-__all__ = ["STORE_VERSION", "init_cmd", "init_project"]
+__all__ = ["AdoptResult", "STORE_VERSION", "adopt_project", "init_cmd", "init_project"]
 
 STORE_VERSION = "0.2"
 
@@ -114,6 +115,128 @@ def init_project(root: Path, *, name: str | None = None, force: bool = False) ->
     }
 
 
+@dataclass
+class AdoptResult:
+    """Outcome of an ``adopt_project`` run.
+
+    ``registered`` counts assets newly inserted into graph.db; ``skipped``
+    counts files that were either invalid frontmatter or already present
+    in graph.db. ``warnings`` carries human-readable diagnostics for each
+    skipped file (path + reason).
+    """
+
+    registered: int = 0
+    skipped: int = 0
+    warnings: list[str] = field(default_factory=list)
+
+
+_ADOPT_SUBDIRS: tuple[str, ...] = ("local", "workflows", "kb")
+
+
+def adopt_project(root: Path) -> AdoptResult:
+    """Register an existing ``.memory/`` tree without overwriting any markdown.
+
+    The contract that closes issue #1: when a teammate's ``.memory/`` already
+    exists (typical after a fresh ``git clone``), this function:
+
+    1. asserts ``.memory/`` exists and looks SPEC-compliant (raises otherwise)
+    2. ensures ``.engram/version`` exists (creates with ``STORE_VERSION`` if missing)
+    3. walks ``local/`` / ``workflows/`` / ``kb/`` for ``*.md`` files
+    4. parses each frontmatter; valid ones are inserted into ``graph.db``
+       (already-present rows are left alone — adopt is idempotent)
+    5. invalid files become warnings, never errors
+
+    The function NEVER touches ``MEMORY.md``, ``pools.toml``, or any asset
+    body. ``--force`` is a separate code path retained for the rare cases
+    when the operator really wants to regenerate the skeleton.
+    """
+    # Lazy imports — keep cold-start cheap; these modules pull yaml + sqlite.
+    from engram.commands.memory import (  # noqa: PLC0415
+        compute_id,
+        graph_db_path,
+        memory_file_path,
+        sha256_hex,
+    )
+    from engram.core.frontmatter import FrontmatterError, parse_file  # noqa: PLC0415
+    from engram.core.graph_db import (  # noqa: PLC0415
+        AssetRow,
+        get_asset,
+        insert_asset,
+        open_graph_db,
+    )
+    from engram.core.paths import engram_dir, memory_dir  # noqa: PLC0415
+
+    memory = root / ".memory"
+    if not memory.is_dir():
+        raise click.ClickException(
+            f"{memory}/ is not a SPEC-compliant engram store; "
+            "run `engram init` (without --adopt) to create one"
+        )
+
+    engram = engram_dir(root)
+    engram.mkdir(parents=True, exist_ok=True)
+    version_file = engram / "version"
+    if not version_file.exists():
+        write_atomic(version_file, f"{STORE_VERSION}\n")
+
+    result = AdoptResult()
+    mem_root = memory_dir(root)
+    with open_graph_db(graph_db_path(root)) as conn:
+        for sub in _ADOPT_SUBDIRS:
+            sub_dir = memory / sub
+            if not sub_dir.is_dir():
+                continue
+            for md_file in sorted(sub_dir.rglob("*.md")):
+                try:
+                    fm, _body = parse_file(md_file)
+                except FrontmatterError as exc:
+                    rel = md_file.relative_to(mem_root)
+                    result.skipped += 1
+                    result.warnings.append(f"{rel}: {exc}")
+                    continue
+
+                # Use the file's actual on-disk slug (not derived from name)
+                # to keep `engram memory read <id>` stable across adopt
+                # runs even if the name changes later.
+                slug = md_file.stem
+                # subtype prefix is stripped from the slug for the id form
+                # subtype + slug split: feedback_confirm_before_push →
+                # subtype="feedback", tail="confirm_before_push". When the
+                # filename does not match this pattern (e.g. user-renamed),
+                # we fall back to the frontmatter type and the full stem.
+                subtype = fm.type.value
+                if slug.startswith(f"{subtype}_"):
+                    tail = slug[len(subtype) + 1 :]
+                else:
+                    tail = slug
+                asset_id = compute_id(sub, subtype, tail)
+                if get_asset(conn, asset_id) is not None:
+                    result.skipped += 1
+                    continue
+
+                rel_path = md_file.relative_to(mem_root)
+                content = md_file.read_text(encoding="utf-8")
+                row = AssetRow(
+                    id=asset_id,
+                    scope=fm.scope.value,
+                    scope_name=None,
+                    subtype=subtype,
+                    kind="memory",
+                    path=str(rel_path),
+                    lifecycle_state="active",
+                    sha256=sha256_hex(content),
+                    created=fm.created.isoformat() if fm.created else None,
+                    updated=fm.updated.isoformat() if fm.updated else None,
+                    enforcement=fm.enforcement.value,
+                    confidence_score=0.0,
+                    size_bytes=len(content.encode("utf-8")),
+                )
+                insert_asset(conn, row)
+                result.registered += 1
+
+    return result
+
+
 def _require_joined_scope(kind: str, name: str) -> None:
     """Verify ``~/.engram/<kind>/<name>/.git`` exists; raise otherwise.
 
@@ -156,6 +279,15 @@ def _require_joined_scope(kind: str, name: str) -> None:
     "overwritten; existing local/, workflows/, kb/ content is preserved.",
 )
 @click.option(
+    "--adopt",
+    "adopt_flag",
+    is_flag=True,
+    default=False,
+    help="Adopt an existing .memory/: register all valid frontmatter assets "
+    "into graph.db without touching MEMORY.md or pools.toml. When .memory/ "
+    "already exists, init defaults to adopt mode unless --force is given.",
+)
+@click.option(
     "--subscribe",
     "subscribe_pools",
     multiple=True,
@@ -186,13 +318,58 @@ def init_cmd(
     name: str | None,
     no_adapter: bool,
     force: bool,
+    adopt_flag: bool,
     subscribe_pools: tuple[str, ...],
     org_name: str | None,
     team_name: str | None,
 ) -> None:
-    """Initialize an engram project at the target directory (cwd or --dir)."""
+    """Initialize an engram project at the target directory (cwd or --dir).
+
+    Three dispatch paths:
+
+    - ``.memory/`` does not exist → create skeleton (classic init)
+    - ``.memory/`` exists, no ``--force`` → adopt (register existing assets,
+      preserve MEMORY.md). ``--adopt`` makes this explicit.
+    - ``--force`` → regenerate skeleton and overwrite MEMORY.md / pools.toml
+      (legacy behavior, retained for the rare case the operator wants it)
+    """
     target = cfg.dir_override.expanduser().resolve() if cfg.dir_override else Path.cwd()
     target.mkdir(parents=True, exist_ok=True)
+
+    memory_existed = (target / ".memory").is_dir()
+
+    # Adopt path: explicit --adopt always adopts (errors if no .memory/),
+    # implicit adoption kicks in when .memory/ already exists and --force
+    # is not set. --force takes precedence to preserve the legacy escape
+    # hatch.
+    if adopt_flag or (memory_existed and not force):
+        if adopt_flag and not memory_existed:
+            raise click.ClickException(
+                f"no .memory/ at {target}; cannot adopt. "
+                "Run `engram init` (without --adopt) to create a fresh store."
+            )
+        result = adopt_project(target)
+        if cfg.output_format == "json":
+            click.echo(
+                json.dumps(
+                    {
+                        "memory": str(target / ".memory"),
+                        "engram": str(target / ".engram"),
+                        "adopted": True,
+                        "registered": result.registered,
+                        "skipped": result.skipped,
+                        "warnings": result.warnings,
+                    }
+                )
+            )
+        else:
+            click.echo(
+                f"adopted {target / '.memory'}: "
+                f"registered {result.registered}, skipped {result.skipped}"
+            )
+            for warning in result.warnings:
+                click.echo(f"  warning: {warning}", err=True)
+        return
 
     # Pre-flight scope validation — fail before writing the scaffold so the
     # project directory stays pristine on misuse.

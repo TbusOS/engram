@@ -132,13 +132,24 @@ def test_cli_init_with_name(tmp_path: Path) -> None:
     assert "myproj" in content
 
 
-def test_cli_init_errors_on_reinit_without_force(tmp_path: Path) -> None:
+def test_cli_init_reinit_defaults_to_adopt(tmp_path: Path) -> None:
+    """T-161 (issue #1): re-running init on an existing .memory/ adopts
+    instead of erroring. The classic ``--force`` path is still available
+    for the rare case the operator wants to regenerate the skeleton."""
     runner = CliRunner()
     result = runner.invoke(cli, ["--dir", str(tmp_path), "init"])
     assert result.exit_code == 0
+    # Curate something into MEMORY.md to verify adopt does not touch it
+    memory_md = tmp_path / ".memory" / "MEMORY.md"
+    memory_md.write_text(
+        memory_md.read_text(encoding="utf-8") + "\n## Hand-curated\n- entry\n",
+        encoding="utf-8",
+    )
     result2 = runner.invoke(cli, ["--dir", str(tmp_path), "init"])
-    assert result2.exit_code != 0
-    assert "already exists" in result2.output
+    assert result2.exit_code == 0, result2.output
+    assert "adopted" in result2.output.lower()
+    # Hand-curated content survives
+    assert "Hand-curated" in memory_md.read_text(encoding="utf-8")
 
 
 def test_cli_init_force_succeeds_on_reinit(tmp_path: Path) -> None:
