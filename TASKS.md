@@ -164,7 +164,7 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 
 | ID | Task | Status | Owner | Depends on | Notes |
 |----|------|--------|-------|------------|-------|
-| T-170 | `engram/usage/` module — append-only `~/.engram/journal/usage.jsonl` | todo | | T-15 | `appender.append_event(...)` + `reader.iter_events(filters)` + `recompute.derive_confidence_cache(asset_uri)` per issue #9 schema |
+| T-170 | `engram/usage/` module — append-only `~/.engram/journal/usage.jsonl` | done | | T-15 | `engram/usage/` multi-file (DESIGN §4.2): types (UsageEvent + 3 enums + 8 EvidenceKind values) / trust_weights (DEFAULT_TRUST_WEIGHTS authoritative table per issue #9 + EVIDENCE_VERSION) / appender (typed wrapper around journal.append_event) / reader (filter by asset_uri/task_hash/event_type/actor_type/evidence_kind) / recompute (derive_confidence_cache with co_assets attribution: weight / N per asset). 14 unit tests, 701 total |
 | T-171 | Wire all write paths into usage bus | todo | | T-170 | `context.py` records `loaded` events with `co_assets`; `consistency/resolve.py` records dismiss-with-reason; `validate.py` records mandatory-overridden events |
 | T-172 | trust_weight authoritative table → SPEC §11.4 | todo | | T-170 | 8 evidence_kinds × default trust_weight (explicit_user_confirmation=+1.0, ...); each kind has SPEC test fixture |
 | T-173 | Auto-derive task_hash from git context | todo | | T-170 | Reads HEAD SHA + branch + GH issue from commit message; falls back to timestamp-window bucket. CLI / MCP do not require user-supplied task_hash |
