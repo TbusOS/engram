@@ -4,7 +4,7 @@
 
 **Version target**: v0.2.0 (first public release) and beyond
 **Status**: active — claim tasks via GitHub Issue + self-assign
-**Last updated**: 2026-04-20
+**Last updated**: 2026-04-25
 **Canonical**: https://github.com/TbusOS/engram/blob/main/TASKS.md
 
 ---
@@ -43,6 +43,7 @@ This file is LIVE — edited via PR as tasks are claimed, completed, or split. D
 | **M3** — Scope + Pool + Migrate | All 4 hierarchy scopes + pool subscription + `migrate --from=v0.1` work end-to-end | Real v0.1 store migrates with zero data loss |
 | **M4** — Intelligence Phase 1-2 + Adapters + MCP | Relevance Gate + Consistency Phase 1-2 + Inter-Repo Messenger + Claude Code / Codex / Gemini CLI / Cursor / raw-api adapters + MCP server (read tools) | engram-cli installable via pip; all P0 CLI commands pass E2E |
 | **M4.5** — Benchmark infrastructure | `benchmarks/BENCHMARKS.md` + consistency_test + scope_isolation_test + docs/HISTORY.md | Results reproducible from committed scripts |
+| **M4.6** — 越用越好用 12 周主线(v0.2.1 + 6 wisdom curves + Evolve seeds) | Friction-zero entry + usage event bus + 6 SPEC-AMEND + LOCOMO/LongMemEval baseline + RRF/rerank + Consistency Phase 3/4 + Evolve Engine MVP | 6 wisdom curves render in `engram wisdom report`; LOCOMO public score table in README; one workflow autolearns 10 rounds with monotone improvement. See `docs/superpowers/specs/2026-04-25-越用越好用-12周主线.md` for the week-by-week plan |
 | **M5** — Workflow + Autolearn | Workflow asset full + Autolearn Darwin ratchet + phase gate | Single workflow autolearns 10 rounds with monotone metric improvement |
 | **M6** — KB + Inbox + Consistency Phase 3-4 | Knowledge Base compile + Inbox full + semantic + execution consistency phases | Cross-repo bug-report → acknowledge → resolve cycle works; KB `_compiled.md` auto-stales |
 | **M7** — Web UI P0 | engram-web 6 P0 pages (Dashboard, Memory Detail, Workflow Detail, KB Article, Inbox, Context Preview) | `engram web serve` → click through 6 pages → no 500s; WCAG AA checks pass |
@@ -143,6 +144,74 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 | T-60 | `benchmarks/scope_isolation_test/` — 30 scope scenarios | todo | | T-38, T-39 | Covers mandatory/default/hint interactions + pool subscribed_at levels |
 | T-61 | `docs/HISTORY.md` — corrections log starter (one entry per benchmark run) | todo | | T-58 | Format: date, metric name, before, after, cause |
 | T-62 | CI hook: benchmarks run on release tag only (not every commit) | todo | | T-58, T-59, T-60 | GitHub Actions job triggered by `v*` tag; results appended to HISTORY.md |
+
+---
+
+### M4.6 — 越用越好用 12 周主线 sprint
+
+**Authoritative spec**: `docs/superpowers/specs/2026-04-25-越用越好用-12周主线.md`. The sprint runs in 12 weekly nodes; T-IDs below cluster by week.
+
+#### Week 1 — friction-zero entry (降 C3 用户写入摩擦)
+
+| ID | Task | Status | Owner | Depends on | Notes |
+|----|------|--------|-------|------------|-------|
+| T-160 | `engram memory quick "<body>"` one-line command (issue #2) | todo | | T-19 | name/description auto-derived from body (first line ≤80 chars / first 150 chars); `--type` defaults to `project`; `--scope` defaults to `project`; collisions get `-1/-2/...` suffix; auto-derived assets must validate clean |
+| T-161 | `engram init --adopt` default for existing `.memory/` (issue #1) | todo | | T-17 | Detects SPEC-compliant `.memory/`; skips MEMORY.md write; scans `local/`/`workflows/`/`kb/` for valid frontmatter and registers to graph.db; invalid files become warnings, not errors |
+| T-162 | `engram doctor` health check + executable repair hints | todo | | T-20, T-21 | Single command: MEMORY.md reachability + graph.db consistency + pool sync state + mandatory budget + confidence anomalies; every issue line ends with `→ run: <command>` to fix it |
+| T-163 | `engram mcp install --target=<client>` writes MCP config | todo | | T-51 | Targets: claude-code / claude-desktop / cursor / zed / codex / opencode / vscode-continue / vscode-cline / vscode-copilot. Idempotent; `--dry-run` prints planned config write |
+
+#### Week 2 — usage event bus (整个学习神经系统的脊柱)
+
+| ID | Task | Status | Owner | Depends on | Notes |
+|----|------|--------|-------|------------|-------|
+| T-170 | `engram/usage/` module — append-only `~/.engram/journal/usage.jsonl` | todo | | T-15 | `appender.append_event(...)` + `reader.iter_events(filters)` + `recompute.derive_confidence_cache(asset_uri)` per issue #9 schema |
+| T-171 | Wire all write paths into usage bus | todo | | T-170 | `context.py` records `loaded` events with `co_assets`; `consistency/resolve.py` records dismiss-with-reason; `validate.py` records mandatory-overridden events |
+| T-172 | trust_weight authoritative table → SPEC §11.4 | todo | | T-170 | 8 evidence_kinds × default trust_weight (explicit_user_confirmation=+1.0, ...); each kind has SPEC test fixture |
+| T-173 | Auto-derive task_hash from git context | todo | | T-170 | Reads HEAD SHA + branch + GH issue from commit message; falls back to timestamp-window bucket. CLI / MCP do not require user-supplied task_hash |
+
+#### Week 3-4 — v0.2.1 SPEC-AMEND PR bundle (6 issues, one migration)
+
+| ID | Task | Status | Owner | Depends on | Notes |
+|----|------|--------|-------|------------|-------|
+| T-180 | graph.db canonical URI (issue #4) | todo | | T-14, T-161 | `(store_root_id, scope_kind, scope_name, asset_path)` URI; `store_root_id` = git remote SHA-256 prefix or path hash (reuses inbox repo-id resolution); `assets` PK becomes `canonical_uri`; legacy `id` retained as scope-local convenience |
+| T-181 | MEMORY.md reachability vs directly-listed (issue #5) | todo | | T-20 | SPEC §7/§11/§12 amend: every asset reachable from L1 within 2 hops; new frontmatter fields `primary_topic` (required) + `tags` (optional); conformance INV-I1 split → reachability check + INV-I3 no-duplicate-primary |
+| T-182 | ambiguous_conflict protocol (issue #6) | todo | | T-39 | SPEC §8.4 rule 4 → `ambiguous_conflict` (no winner); optional `[source_priority]` table in pools.toml restores determinism; LLM no longer in protocol-level decision; gate.py emits ambiguous flag |
+| T-183 | pool notify mode → accepted_revision / available_revision (issue #7) | todo | | T-31 | New schema fields in pools.toml; new commands `engram pool accept <name> [--rev=]` / `engram pool diff <name>`; legacy `last_synced_rev` retained as display-only |
+| T-184 | mandatory `directive` field + Stage 1 directive bypass (issue #8) | todo | | T-40 | SPEC §4.3 amend: mandatory feedback assets MUST have `directive` (≤200 chars); Relevance Gate Stage 1 bypass uses `directive` only; full body loaded on demand or via `--include-mandatory-bodies` |
+| T-185 | confidence as derived cache + usage bus integration (issue #9) | todo | | T-170 | SPEC §4.8 frontmatter `confidence` re-defined: `validated_score` / `contradicted_score` / `exposure_count` / `last_validated` / `evidence_version`; tools never write frontmatter directly, only append to usage.jsonl; `engram graph rebuild --recompute-confidence` recomputes cache |
+| T-186 | `engram migrate --from=v0.2 --to=v0.2.1` | todo | | T-180~T-185 | Backup → write `primary_topic` (default to current topic sub-index slug or `_unsorted`) → write `directive` (default to description / first sentence of body) → migrate `validated_count`/`contradicted_count` to `validated_score`/`contradicted_score` (assume trust_weight=0.5 per legacy count) → init `accepted_revision`/`available_revision` from `last_synced_rev` |
+
+#### Week 5 — LOCOMO + LongMemEval public benchmark (C1 baseline)
+
+| ID | Task | Status | Owner | Depends on | Notes |
+|----|------|--------|-------|------------|-------|
+| T-187 | LOCOMO + LongMemEval wrappers + README scoreboard | todo | | T-152 | `benchmarks/locomo/` + `benchmarks/longmemeval/`; reproducible scripts; README adds engram vs mem0 vs Letta vs Zep table second screen |
+
+#### Week 6-7 — Relevance to SOTA (提升 C1)
+
+| ID | Task | Status | Owner | Depends on | Notes |
+|----|------|--------|-------|------------|-------|
+| T-150r | Replace Stage 3 fusion with RRF (G-01) | todo | | T-40 | Reciprocal Rank Fusion of BM25 rank + vector rank; replaces hardcoded `fused_dist = dist * (1 - 0.30 * overlap)` |
+| T-151r | Stage 7.5 cross-encoder rerank (G-02) | todo | | T-40, T-150r | bge-reranker-v2-m3 over top-20; configurable model; CPU + GPU paths |
+| T-188 | `engram wisdom report` ASCII curves (6 metrics) | todo | | T-170, T-187 | Pre-M7 stand-in for the web UI; renders C1-C6 as ASCII sparklines + week-over-week deltas; pipes into terminal |
+
+#### Week 8 — Consistency 4-phase + auto-merge proposals (提升 C5)
+
+| ID | Task | Status | Owner | Depends on | Notes |
+|----|------|--------|-------|------------|-------|
+| T-47r | Consistency Phase 3 references — full enable | todo | | T-46 | Promotes Phase 3 from stub to full reference-graph traversal detecting REFERENCE_ROT |
+| T-48r | Consistency Phase 4 staleness — full enable | todo | | T-46 | Time decay + DBSCAN topic clustering for topic-divergence detection |
+| T-189 | Evaluator auto-proposes MERGE on body-hash similarity ≥ 0.85 | todo | | T-46 | Phase 2 already detects body-hash dupes; this surfaces MERGE proposals automatically; user still confirms |
+
+#### Week 9-12 (M6) — Evolve Engine (从不退化升级到主动变好)
+
+| ID | Task | Status | Owner | Depends on | Notes |
+|----|------|--------|-------|------------|-------|
+| T-190 | `engram/evolve/` module skeleton | todo | | T-46, T-170 | `Proposal` abstract + 4 concrete kinds (SPLIT / PROMOTE / DEMOTE / FORK); shares evaluator/journal interface with Consistency Engine |
+| T-191 | Workflow fork-and-evaluate loop | todo | | T-71, T-72, T-190 | `engram workflow evolve <name> --variants=N --budget=` pulls N variants from `rev/` archive, runs fixtures concurrently, ranks by metrics, top-1 → `rev/proposed`; human review → promote |
+| T-192 | Memory promote/demote auto-proposals | todo | | T-185, T-190 | confidence-cache thresholds (e.g., validated_score ≥ 5.0 + zero contradictions over 30 days → suggest hint→default) trigger Evolve proposal; never auto-executes |
+| T-193 | `engram autolearn run --duration=Nh` background daemon | todo | | T-190, T-191, T-192 | Karpathy NEVER STOP bounded variant; loops evolve + consistency + wisdom recompute within time window; appends `journal/autolearn.jsonl`; final summary report |
+| T-194 | simplicity criterion hard rule | todo | | T-190 | Any evolve proposal that grows asset size > 30% or reference-graph complexity > 20% is auto-rejected by evaluator (autoresearch principle 7) |
 
 ---
 

@@ -57,6 +57,8 @@ __all__ = [
     "apply_scope_weighting",
     "bm25_scores",
     "compute_id",
+    "derive_quick_description",
+    "derive_quick_name",
     "graph_db_path",
     "memory_file_path",
     "memory_group",
@@ -85,6 +87,60 @@ def slugify(text: str) -> str:
     """Lower-case and replace non-alphanumeric runs with single underscores."""
     slug = _SLUG_RE.sub("_", text.lower()).strip("_")
     return slug or "untitled"
+
+
+_HEADING_PREFIX_RE = re.compile(r"^#+\s*")
+_QUICK_NAME_CAP = 80
+_QUICK_DESC_CAP = 150
+
+
+def _first_non_blank_line(body: str) -> str:
+    for raw in body.splitlines():
+        line = raw.strip()
+        if line:
+            return _HEADING_PREFIX_RE.sub("", line).strip()
+    return ""
+
+
+def derive_quick_name(body: str) -> str:
+    """Extract a memory name from ``body`` for ``engram memory quick``.
+
+    Rules: first non-blank line, leading markdown ``#`` stripped, capped at
+    80 chars. Falls back to ``"untitled"`` for empty input.
+    """
+    head = _first_non_blank_line(body)
+    if not head:
+        return "untitled"
+    return head[:_QUICK_NAME_CAP]
+
+
+def derive_quick_description(body: str) -> str:
+    """Extract a description from ``body`` for ``engram memory quick``.
+
+    Rules: collapse newlines to single spaces, strip leading markdown
+    heading marks on the first line, cap at 150 chars (truncate with
+    ``...`` when longer). Returns empty string for empty input.
+    """
+    head = _first_non_blank_line(body)
+    if not head:
+        return ""
+    # Collapse remaining body into single-line description; the first line
+    # already had heading marks stripped via _first_non_blank_line.
+    rest_lines = []
+    seen_first = False
+    for raw in body.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if not seen_first:
+            seen_first = True
+            rest_lines.append(head)
+        else:
+            rest_lines.append(line)
+    flat = " ".join(rest_lines)
+    if len(flat) <= _QUICK_DESC_CAP:
+        return flat
+    return flat[: _QUICK_DESC_CAP - 3] + "..."
 
 
 def compute_id(scope_dir: str, subtype: str, slug: str) -> str:
@@ -354,6 +410,150 @@ def add_cmd(
         )
     else:
         click.echo(f"added {asset_id} → {file_path}")
+
+
+# -- quick ---------------------------------------------------------
+
+
+@memory_group.command("quick")
+@click.argument("body", required=True)
+@click.option(
+    "--type",
+    "memory_type",
+    default=MemoryType.PROJECT.value,
+    type=click.Choice([t.value for t in MemoryType]),
+    show_default=True,
+    help="Memory subtype (defaults to `project`; SPEC §4 has no `note` subtype, "
+    "`project` is the closest semantic match for an ad-hoc fact).",
+)
+@click.option("--name", "name_override", default=None, help="Override the auto-derived name.")
+@click.option(
+    "--description",
+    "description_override",
+    default=None,
+    help="Override the auto-derived description (≤150 chars).",
+)
+@click.option(
+    "--scope",
+    default=Scope.PROJECT.value,
+    type=click.Choice([s.value for s in Scope]),
+    show_default=True,
+    help="Scope (defaults to project; the quick path is intentionally local).",
+)
+@click.option(
+    "--enforcement",
+    default=None,
+    type=click.Choice([e.value for e in Enforcement]),
+    help="Enforcement level. Defaults to `default` when --type=feedback "
+    "(required by SPEC §4.3); ignored otherwise.",
+)
+@click.option("--tags", multiple=True, help="Repeatable topic tag.")
+@click.pass_obj
+def quick_cmd(
+    cfg: GlobalConfig,
+    body: str,
+    memory_type: str,
+    name_override: str | None,
+    description_override: str | None,
+    scope: str,
+    enforcement: str | None,
+    tags: tuple[str, ...],
+) -> None:
+    """Record a memory in one line — name/description auto-derived from BODY.
+
+    Reads BODY positionally; pass ``-`` to read from stdin. The asset is
+    written under ``local/<type>_<slug>.md`` and registered to graph.db
+    exactly like ``engram memory add``, but with auto-derived name and
+    description so a session can capture a thought without four required
+    flags.
+    """
+    body_text = _read_body_flag(body)
+    if not body_text.strip():
+        raise click.ClickException("body is empty; pass non-empty text or stdin via `-`")
+
+    derived_name = name_override or derive_quick_name(body_text)
+    derived_description = description_override or derive_quick_description(body_text)
+
+    # SPEC §4.3 requires enforcement on feedback assets; quick supplies a
+    # safe default so the operator does not have to remember.
+    if memory_type == MemoryType.FEEDBACK.value and enforcement is None:
+        enforcement = Enforcement.DEFAULT.value
+
+    root = cfg.resolve_project_root()
+    scope_dir = "local"
+    base_slug = slugify(derived_name)
+    final_slug, final_name = _resolve_quick_slug(
+        root, scope_dir, memory_type, base_slug, derived_name
+    )
+
+    fm = _build_frontmatter(
+        memory_type=memory_type,
+        name=final_name,
+        description=derived_description,
+        scope=scope,
+        enforcement=enforcement,
+        tags=tags,
+        source=None,
+        workflow_ref=None,
+    )
+    file_path = memory_file_path(root, scope_dir, memory_type, final_slug)
+    content = render_asset_file(fm, body_text)
+    write_atomic(file_path, content)
+
+    asset_id = compute_id(scope_dir, memory_type, final_slug)
+    rel_path = file_path.relative_to(memory_dir(root))
+    row = AssetRow(
+        id=asset_id,
+        scope=scope,
+        scope_name=None,
+        subtype=memory_type,
+        kind="memory",
+        path=str(rel_path),
+        lifecycle_state="active",
+        sha256=sha256_hex(content),
+        created=fm.created.isoformat() if fm.created else None,
+        updated=fm.updated.isoformat() if fm.updated else None,
+        enforcement=fm.enforcement.value,
+        confidence_score=0.0,
+        size_bytes=len(content.encode("utf-8")),
+    )
+    with open_graph_db(graph_db_path(root)) as conn:
+        insert_asset(conn, row)
+
+    if cfg.output_format == "json":
+        click.echo(
+            json.dumps(
+                {
+                    "id": asset_id,
+                    "path": str(file_path),
+                    "name": final_name,
+                    "sha256": row.sha256,
+                    "size_bytes": row.size_bytes,
+                }
+            )
+        )
+    else:
+        click.echo(f"added {asset_id} → {file_path}")
+
+
+def _resolve_quick_slug(
+    project_root: Path,
+    scope_dir: str,
+    subtype: str,
+    base_slug: str,
+    base_name: str,
+) -> tuple[str, str]:
+    """Return a non-colliding (slug, display_name). Appends ``_2``, ``_3``, ..."""
+    candidate = base_slug
+    suffix = 2
+    while memory_file_path(project_root, scope_dir, subtype, candidate).exists():
+        candidate = f"{base_slug}_{suffix}"
+        suffix += 1
+    if candidate == base_slug:
+        return candidate, base_name
+    # Reflect the disambiguation in the display name so MEMORY.md / list output
+    # is not surprising.
+    return candidate, f"{base_name} ({suffix - 1})"
 
 
 # -- list ----------------------------------------------------------
