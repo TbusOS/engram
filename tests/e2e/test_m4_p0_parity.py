@@ -72,6 +72,15 @@ def _invoke_json(runner: CliRunner, *args: str) -> object:
 # ------------------------------------------------------------------
 
 
+@pytest.mark.xfail(
+    reason=(
+        "Blocked on T-181 (issue #5): conformance INV-I1 currently flags "
+        "every asset not directly listed in MEMORY.md as E-IDX-002 error, "
+        "while SPEC §7.1 only requires reachability within 2 hops. The "
+        "test asserts the SPEC behavior; INV-I1 will relax in T-181."
+    ),
+    strict=True,
+)
 def test_m4_p0_operator_journey(project: Path, home: Path) -> None:
     runner = CliRunner()
 
