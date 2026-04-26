@@ -42,6 +42,11 @@ from engram.observer.queue import (
     enqueue,
     queue_depth,
 )
+from engram.observer.tier1 import (
+    Tier1Result,
+    compact_to_narrative,
+    compact_to_session_asset,
+)
 
 __all__ = [
     "ALLOWED_EVENT_KINDS",
@@ -49,6 +54,9 @@ __all__ = [
     "ProtocolError",
     "QueueError",
     "QueueFullError",
+    "Tier1Result",
+    "compact_to_narrative",
+    "compact_to_session_asset",
     "enqueue",
     "observe_queue_dir",
     "parse_event",
