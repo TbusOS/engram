@@ -13,7 +13,7 @@ from typing import Any
 
 import click
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.scope.git_ops import (
     join_scope,
     list_scopes,

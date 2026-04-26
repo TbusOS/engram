@@ -23,7 +23,7 @@ import click
 import tomli
 import tomli_w
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.core.fs import write_atomic
 from engram.core.paths import user_root
 

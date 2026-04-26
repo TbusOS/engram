@@ -8,7 +8,7 @@ from typing import Any
 
 import click
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.migrate.v0_1 import plan_migration, run_migration, run_rollback
 
 __all__ = ["migrate_cmd"]

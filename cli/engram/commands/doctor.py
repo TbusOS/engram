@@ -8,7 +8,7 @@ from pathlib import Path
 
 import click
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.doctor import (
     DEFAULT_MANDATORY_BUDGET_BYTES,
     DoctorReport,

@@ -27,36 +27,16 @@ from typing import Literal
 import click
 
 from engram import __version__
+from engram.config_types import GlobalConfig, OutputFormat
 from engram.core.paths import find_project_root
 
 __all__ = ["GlobalConfig", "OutputFormat", "cli", "main"]
 
-OutputFormat = Literal["text", "json"]
 
-
-@dataclass(frozen=True, slots=True)
-class GlobalConfig:
-    """Runtime configuration shared with every subcommand via ``ctx.obj``."""
-
-    dir_override: Path | None = None
-    output_format: OutputFormat = "text"
-    quiet: bool = False
-    debug: bool = False
-
-    def resolve_project_root(self) -> Path:
-        """Return the effective project root.
-
-        Resolution order (DESIGN §9.3):
-
-        1. ``--dir`` CLI flag (``dir_override`` field on this dataclass).
-        2. ``ENGRAM_DIR`` env var (honored inside
-           :func:`engram.core.paths.find_project_root`).
-        3. Walk upward from the current working directory looking for
-           ``.memory/``.
-        """
-        if self.dir_override is not None:
-            return self.dir_override.expanduser().resolve()
-        return find_project_root()
+# GlobalConfig + OutputFormat moved to engram.config_types in T-189 to
+# break the cli.py → command-modules → cli.py circular import. This
+# module re-exports them for backward compatibility — new code should
+# import from engram.config_types directly.
 
 
 def _configure_logging(*, quiet: bool, debug: bool) -> None:

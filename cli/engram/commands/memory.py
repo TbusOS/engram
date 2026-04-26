@@ -27,7 +27,7 @@ from typing import Any
 import click
 import yaml
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.core.frontmatter import (
     Enforcement,
     FrontmatterError,

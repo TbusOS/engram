@@ -26,7 +26,7 @@ from pathlib import Path
 import click
 import yaml
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.core.paths import memory_dir
 
 __all__ = [

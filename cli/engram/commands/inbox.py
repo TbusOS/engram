@@ -6,7 +6,7 @@ import json
 
 import click
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.inbox import (
     acknowledge,
     list_messages,

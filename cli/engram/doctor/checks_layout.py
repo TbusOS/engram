@@ -4,11 +4,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram.commands.init import STORE_VERSION
 from engram.doctor.types import CheckIssue, Severity
 
 
 def check_layout(project_root: Path) -> list[CheckIssue]:
+    # Lazy-import STORE_VERSION to break the import cycle:
+    # engram.commands.init → (transitively) engram.consistency / cli →
+    # engram.commands.review → engram.commands.validate → engram.cli →
+    # _register_subcommands → engram.commands.doctor → engram.doctor →
+    # engram.doctor.checks_layout (mid-init of engram.commands.init).
+    from engram.commands.init import STORE_VERSION  # noqa: PLC0415
+
     issues: list[CheckIssue] = []
     memory = project_root / ".memory"
     engram = project_root / ".engram"

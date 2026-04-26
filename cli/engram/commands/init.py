@@ -23,13 +23,14 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 
-from engram.cli import GlobalConfig
 from engram.core.fs import write_atomic
-from engram.pool.actions import subscribe_to_pool
-from engram.scope.git_ops import scope_root
+
+if TYPE_CHECKING:
+    from engram.config_types import GlobalConfig
 
 __all__ = ["AdoptResult", "STORE_VERSION", "adopt_project", "init_cmd", "init_project"]
 
@@ -237,6 +238,15 @@ def adopt_project(root: Path) -> AdoptResult:
     return result
 
 
+def _scope_root(kind: str, name: str) -> Path:
+    # Lazy import to avoid pulling in engram.scope (which transitively
+    # loads engram.cli) at module-load time — see the import-cycle note
+    # at the top of this module.
+    from engram.scope.git_ops import scope_root  # noqa: PLC0415
+
+    return scope_root(kind, name)
+
+
 def _require_joined_scope(kind: str, name: str) -> None:
     """Verify ``~/.engram/<kind>/<name>/.git`` exists; raise otherwise.
 
@@ -247,7 +257,7 @@ def _require_joined_scope(kind: str, name: str) -> None:
     keeps SPEC-aligned (no project-level membership file) and avoids
     surprising git operations at init time.
     """
-    dest = scope_root(kind, name)
+    dest = _scope_root(kind, name)
     if not dest.is_dir() or not (dest / ".git").is_dir():
         raise click.ClickException(
             f"{kind} {name!r} is not joined at {dest}; "
@@ -389,9 +399,14 @@ def init_cmd(
     paths = init_project(target, name=name, force=force)
 
     subscribed: list[str] = []
-    for pool in subscribe_pools:
-        subscribe_to_pool(target, pool, force=force)
-        subscribed.append(pool)
+    if subscribe_pools:
+        # Lazy import — pulls engram.pool which transitively imports
+        # engram.cli; only needed when the operator actually subscribes.
+        from engram.pool.actions import subscribe_to_pool  # noqa: PLC0415
+
+        for pool in subscribe_pools:
+            subscribe_to_pool(target, pool, force=force)
+            subscribed.append(pool)
 
     if cfg.output_format == "json":
         click.echo(

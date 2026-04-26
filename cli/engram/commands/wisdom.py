@@ -7,7 +7,7 @@ from pathlib import Path
 
 import click
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.wisdom import compute_wisdom_report
 from engram.wisdom.ascii_render import render_text
 

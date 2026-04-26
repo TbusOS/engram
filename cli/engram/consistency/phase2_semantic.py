@@ -35,6 +35,15 @@ from engram.consistency.types import (
 __all__ = ["detect_phase2"]
 
 
+# Master plan §第8周 / T-189: Jaccard shingle similarity ≥ this triggers a
+# fuzzy MERGE proposal. 3-word shingles + 0.85 threshold chosen so single
+# word substitutions in a long rule still trip MERGE (≈0.86 Jaccard for
+# one substituted word in a 30-token body), but unrelated rules with
+# stop-word overlap stay below 0.5.
+_FUZZY_MERGE_THRESHOLD = 0.85
+_SHINGLE_SIZE = 3
+
+
 _OPPOSITES: tuple[tuple[str, str], ...] = (
     ("prefer", "avoid"),
     ("always", "never"),
@@ -76,6 +85,29 @@ def _body_hash(body: str) -> str:
 
 def _word_set(text: str) -> set[str]:
     return set(_WORD_RE.findall(text.lower()))
+
+
+def _shingles(body: str, n: int = _SHINGLE_SIZE) -> frozenset[str]:
+    """N-word shingles over the normalized body text.
+
+    Frozen to allow set operations + use as dict keys when needed.
+    Returns an empty set when the body has fewer than ``n`` tokens —
+    callers should treat that as "no useful similarity signal".
+    """
+    tokens = _WORD_RE.findall(body.lower())
+    if len(tokens) < n:
+        return frozenset()
+    return frozenset(
+        " ".join(tokens[i : i + n]) for i in range(len(tokens) - n + 1)
+    )
+
+
+def _jaccard(a: frozenset[str], b: frozenset[str]) -> float:
+    if not a or not b:
+        return 0.0
+    inter = len(a & b)
+    union = len(a | b)
+    return inter / union if union else 0.0
 
 
 def _has_opposite(a: str, b: str) -> str | None:
@@ -133,6 +165,56 @@ def detect_phase2(store_root: Path) -> list[ConflictReport]:
             )
         else:
             seen[h] = asset_id
+
+    # 1b. Fuzzy MERGE — Jaccard shingle similarity ≥ threshold (T-189).
+    # Skip pairs already flagged in 1 (exact-hash) so we do not double-report.
+    flagged: set[frozenset[str]] = {
+        frozenset((r.primary_asset, *r.related_assets))
+        for r in reports
+        if r.conflict_class is ConflictClass.FACTUAL
+    }
+    shingled: list[tuple[str, frozenset[str]]] = [
+        (aid, _shingles(body)) for aid, _fm, body in entries
+    ]
+    for i, (aid_a, sh_a) in enumerate(shingled):
+        if not sh_a:
+            continue
+        for aid_b, sh_b in shingled[i + 1 :]:
+            if not sh_b:
+                continue
+            if frozenset((aid_a, aid_b)) in flagged:
+                continue
+            sim = _jaccard(sh_a, sh_b)
+            if sim < _FUZZY_MERGE_THRESHOLD:
+                continue
+            pct = int(round(sim * 100))
+            reports.append(
+                ConflictReport(
+                    conflict_class=ConflictClass.FACTUAL,
+                    severity=ConflictSeverity.WARNING,
+                    primary_asset=aid_a,
+                    related_assets=(aid_b,),
+                    message=(
+                        f"{aid_a} and {aid_b} are {pct}% similar by Jaccard "
+                        f"shingle (≥ {int(_FUZZY_MERGE_THRESHOLD * 100)}%); "
+                        "candidate for merge — review wording differences "
+                        "before consolidating"
+                    ),
+                    phase=2,
+                    proposed=(
+                        Resolution(
+                            kind=ResolutionKind.MERGE,
+                            target=aid_a,
+                            related=(aid_b,),
+                            detail=(
+                                f"merge near-duplicate ({pct}% similar); "
+                                "keep the more specific wording"
+                            ),
+                        ),
+                    ),
+                )
+            )
+            flagged.add(frozenset((aid_a, aid_b)))
 
     # 2. Rule conflict by name-opposite detection (feedback only — SPEC §4.3)
     feedback = [(aid, fm) for aid, fm, _ in entries if fm.get("type") == "feedback"]

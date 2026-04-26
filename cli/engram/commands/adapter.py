@@ -14,7 +14,7 @@ from engram.adapters import (
     find_adapter,
 )
 from engram.adapters.registry import target_path
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.core.fs import write_atomic
 
 __all__ = ["adapter_cmd"]

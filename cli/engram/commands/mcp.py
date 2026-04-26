@@ -6,7 +6,7 @@ import json
 
 import click
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.mcp import ServerContext, serve_stdio
 from engram.mcp.install import INSTALL_TARGETS, install_target, plan_install
 

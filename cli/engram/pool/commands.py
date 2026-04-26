@@ -8,7 +8,7 @@ from typing import Any
 
 import click
 
-from engram.cli import GlobalConfig
+from engram.config_types import GlobalConfig
 from engram.pool.actions import subscribe_to_pool
 from engram.pool.git_sync import list_git_pools, pool_has_git, pull_pool
 from engram.pool.propagation import sync_subscriptions
