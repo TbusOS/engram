@@ -213,6 +213,26 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 | T-193 | `engram autolearn run --duration=Nh` background daemon | todo | | T-190, T-191, T-192 | Karpathy NEVER STOP bounded variant; loops evolve + consistency + wisdom recompute within time window; appends `journal/autolearn.jsonl`; final summary report |
 | T-194 | simplicity criterion hard rule | todo | | T-190 | Any evolve proposal that grows asset size > 30% or reference-graph complexity > 20% is auto-rejected by evaluator (autoresearch principle 7) |
 
+#### Auto Session Continuation (T-200 ~ T-212) — engram 自动续接
+
+**Spec frozen 2026-04-26**: `docs/superpowers/specs/2026-04-26-auto-continuation.md`. 三层认知模型(Episodic/Semantic/Procedural)+ 4-tier compactor(mechanical → local LLM → semantic distiller → procedural recognizer)+ Session 作为新增第 4 类资产(SPEC §3.x bump v0.2.1)+ Stage 0 注入(DESIGN §5.1 扩展)+ cross-session task linkage + confidence-driven decay。和 claude-mem 的代差:不绑 SDK / 离线降级 / markdown 主存 / scope 2 轴 / consent 通路。
+
+| ID | Task | Status | Owner | Depends on | Notes |
+|----|------|--------|-------|------------|-------|
+| T-200 | observer 协议 + `engram observe` CLI | todo | | T-15 | `engram/observer/` 多文件:queue / protocol / cli。stdin 读 JSON 入 `~/.engram/observe-queue/<session>.jsonl`,fcntl.flock + os.O_APPEND 单 write 原子。p99 < 50 ms,队列满返回 ok=false 不阻塞 hook。永不 import 客户端 SDK。 |
+| T-201 | observer daemon 骨架 | todo | | T-200 | `engram/observer/daemon.py` 单例 lockfile (`~/.engram/observer.pid`)。fcntl.flock LOCK_EX\|LOCK_NB,死进程 steal + 接管孤儿队列。watcher 轮询(POSIX 通用,inotify/FSEvents 留待 web UI 复用 T-112)。SIGTERM 优雅关停。 |
+| T-202 | Tier 0 mechanical compactor | todo | | T-200, T-201 | `engram/observer/tier0.py` 永远跑无 LLM:从 queue jsonl 提取 tool name / file paths / errors / 时间戳 / token,写 `<session>.timeline.jsonl`。每条 ≤ 4 KB(超出 truncate),prompt/stderr 正文 不入 timeline 只入 raw(默认 30 天 TTL,opt-in 保留)。失败模式:不会失败。 |
+| T-203 | Session 资产类型 + SPEC §3.x | todo | | T-12, T-202 | SPEC.md 加 §3.x Session 章节 + frontmatter schema(type:session / session_id / client / started_at / ended_at / task_hash / tool_calls / files_touched / outcome / prev_session / next_session / distilled_into / scope:project / enforcement:hint)。`engram/core/frontmatter.py` 加 SESSION 枚举。Session 写到 `.memory/sessions/<YYYY-MM-DD>/sess_<id>.md`。validate 通过 + git diff 可读。 |
+| T-204 | Tier 1 LLM compactor + 离线降级 | todo | | T-202, T-203 | `engram/observer/tier1.py` 调 ollama / openai-compatible(`config.toml [observer.compactor.tier1]` provider/endpoint/model/timeout)。LLM 失败 / 未配置 → mechanical-only 降级(timeline jsonl 直接渲染成可读 markdown)。Tier 0 jsonl 是 ground truth,LLM 输出必须引用其中事实。输出 narrative 150~300 token + Investigated/Learned/Completed/Next。 |
+| T-205 | 5 adapter hook 脚本 + `engram observer install` | todo | | T-200 | `adapters/<client>/hooks/post_tool_use.sh` 5 个客户端各一份。`engram observer install --target=<client>` 写 hook 到客户端配置(类比 T-163 mcp install)。无 hook 客户端走 stdin pipe(raw-api)。`--list` / `--dry-run` / 幂等。 |
+| T-206 | Relevance Gate Stage 0 | todo | | T-40, T-203 | DESIGN §5.1 加 Stage 0:输入 task_hash → 查同 task_hash 最近 ≤ 3 个 session(按 ended_at 倒序)→ 整段 narrative 注入,优先级最高(Stage 1 之前),budget 上限 25% 保护 mandatory + 检索余地。`engram context pack` 命令默认开启,`--no-continuation` 关。 |
+| T-207 | Cross-session task linkage | todo | | T-203, T-173 | session 写盘时计算 task_hash → 找最近同 hash session → 写入 `prev_session` + 回填那一条的 `next_session`(原子重写,fcntl.flock)。形成任务链。E2E:跨 5 session 任务链完整。 |
+| T-208 | Tier 2 semantic distiller | todo | | T-204 | `engram/observer/tier2.py` daemon idle 5 min + 累计 ≥ 5 个未蒸馏 session → 跨 session 蒸馏 "稳定事实" → `.memory/distilled/<topic>.proposed.md`。配置 `[observer.compactor.tier2]`。distilled 不进 Relevance Gate 检索(避免污染)。 |
+| T-209 | distill review/promote/reject | todo | | T-208 | `engram/commands/distill.py`:review 列出候选 + 与现有 Memory 冲突预警;promote 移到 local/(consent 信号,人 / LLM 都能跑);reject 归档 archive/distilled/。journal 记 distilled_promoted / distilled_rejected。复用 T-49 apply_resolution dry-run 模式。 |
+| T-210 | Tier 3 procedural recognizer | todo | | T-208 | `engram/observer/tier3.py` weekly cron / 手动 `engram propose run` 触发。检测"同类问题 ≥ 3 次 + 解法稳定" → 候选 Workflow → `.memory/workflows/<name>/proposal.md`。`engram propose review/promote/reject` consent 通路。 |
+| T-211 | Confidence-driven decay + 跨 session 矛盾扫描 | todo | | T-46, T-203 | session effective_ttl 按 confidence 调整(spec §7.1 公式)。Consistency Engine Phase 4 staleness 扫 sessions/,识别"过时 session" + 跨 session 矛盾(降权不删)。wisdom report 加 C7 continuation hit / C8 distillation yield 两条曲线。 |
+| T-212 | E2E 跨 5 session 验收 | todo | | T-200~T-211 | `tests/e2e/test_auto_continuation_e2e.py` 跑同一个 bug 跨 5 session(claude-code / codex / cursor / 离线 ollama / claude-code 收尾)。验收:每次起手不需提示能引用上一次决策 / 第 5 次起手前 4 个 narrative ≤ 800 token 出现 / 离线 ollama 也产 narrative / 5 session 没自动写 Memory / distill review 至少 1 候选 / promote 后新 session 看到影响。 |
+
 ---
 
 ### M5 — Workflow + Autolearn

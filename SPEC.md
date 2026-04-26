@@ -320,6 +320,100 @@ The sections below expand each asset class and the shared infrastructure into th
 
 ---
 
+## 3.5 Session Asset (Episodic) — SPEC v0.2.1 Draft
+
+This section is a **draft** that lands with v0.2.1; it is reproduced
+here so that observer code (T-200 ~ T-212) has a stable contract to
+build against. The full normative wording moves into §3 / §4 once the
+v0.2.1 migrate (T-186) closes.
+
+A **Session** is a fourth asset class, distinct from Memory / Workflow
+/ Knowledge Base. Sessions capture **episodic** memory: one continuous
+LLM-driven work span, from `session_start` to `session_end`. They feed
+Stage 0 of the Relevance Gate (DESIGN §5.1, T-206) and may be promoted
+to Memory only via explicit consent (T-209).
+
+### 3.5.1 Layout
+
+```
+.memory/
+  sessions/
+    2026-04-26/                            # UTC date bucket
+      sess_<id>.md                         # session asset file
+      sess_<id>.timeline.jsonl             # Tier 0 mechanical fact stream
+```
+
+The date bucket uses the UTC calendar date of `started_at`. Two
+machines in different timezones produce identical paths.
+
+### 3.5.2 Session id
+
+A session id MUST match the regex `^[a-z0-9][a-z0-9_-]{0,95}$`:
+lowercase alphanumeric, underscore, or hyphen, length 1..96, leading
+character alphanumeric. Path components are forbidden. The filename
+prefix is always `sess_`.
+
+### 3.5.3 Frontmatter schema
+
+Required fields:
+
+- `type: session` — fixed string.
+- `session_id` — matches §3.5.2.
+- `client` — one of `claude-code | codex | cursor | gemini-cli |
+  opencode | manual | raw-api`.
+- `started_at` — ISO-8601 datetime (UTC if no timezone is supplied).
+
+Optional fields with default values:
+
+- `ended_at: null` — ISO-8601 datetime when the session ended.
+- `duration_seconds` — derived from `ended_at - started_at`.
+- `task_hash: null` — see DESIGN §11.4 for derivation.
+- `tool_calls: 0` — Tier 0 count.
+- `files_touched: []` — sorted, de-duplicated list of file paths read or modified.
+- `files_modified: []` — subset of `files_touched` that were modified.
+- `outcome: unknown` — one of `completed | abandoned | error | unknown`.
+- `error_summary: null` — first-line error if `outcome=error`.
+- `prev_session: null` — same-task-hash predecessor (T-207).
+- `next_session: null` — same-task-hash successor (T-207).
+- `distilled_into: []` — list of distilled candidate Memory ids.
+- `scope: project` — fixed default; `user` allowed via explicit consent.
+- `enforcement: hint` — sessions never participate in mandatory bypass.
+- `confidence` — same five-field block as §4.8 v0.2.1 (validated_score,
+  contradicted_score, exposure_count, last_validated, evidence_version).
+
+Unknown frontmatter fields MUST be preserved (§4.1 invariant).
+
+### 3.5.4 Body
+
+The body is a Markdown narrative with four required sections:
+**Investigated**, **Learned**, **Completed**, **Next steps**. Tier 1
+(LLM compactor) writes 150–300 token narratives; the mechanical
+fallback (Tier 0 only, no LLM available) renders deterministic
+bulleted lists from the timeline jsonl.
+
+### 3.5.5 Reachability
+
+Sessions are NOT subject to the §11 reachability invariant: they do not
+need to be referenced from MEMORY.md. Sessions are addressed by their
+task_hash linkage and date bucket, not by the topic graph.
+
+### 3.5.6 Lifecycle
+
+Sessions decay on a confidence-driven TTL (DESIGN §22.4, T-211):
+
+```
+effective_ttl = max(7d, 30d
+                    + min(exposure_count * 3d, 60d)
+                    - contradicted_score * 5d
+                    - (14d if outcome=abandoned else 0))
+```
+
+When `effective_ttl` elapses, the asset moves to
+`~/.engram/archive/sessions/<YYYY-MM>/`. Archive is never silently
+deleted; SPEC §1.2 six-month retention floor applies.
+
+---
+
 ## 4. Memory Subtypes and Frontmatter Schema
 
 ### §4.0 Overview

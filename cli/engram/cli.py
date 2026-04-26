@@ -129,6 +129,7 @@ def _register_subcommands() -> None:
     from engram.commands.version import version_cmd
     from engram.commands.wisdom import wisdom_cmd
     from engram.migrate import migrate_cmd
+    from engram.observer.cli import observe_cmd
     from engram.org import org_group
     from engram.pool import pool_group
     from engram.team import team_group
@@ -150,6 +151,7 @@ def _register_subcommands() -> None:
     cli.add_command(inbox_cmd)
     cli.add_command(doctor_cmd)
     cli.add_command(wisdom_cmd)
+    cli.add_command(observe_cmd)
 
 
 _register_subcommands()
