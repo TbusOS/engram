@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from engram.usage.types import EvidenceKind
 
-
 # Bump when the table below changes; ConfidenceCache stores this so
 # stale caches can be detected + recomputed automatically.
 EVIDENCE_VERSION = 1

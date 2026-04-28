@@ -23,8 +23,8 @@ from engram.doctor.checks_pools import check_pool_sync
 from engram.doctor.types import CheckIssue, DoctorReport, Severity
 
 __all__ = [
-    "CheckIssue",
     "DEFAULT_MANDATORY_BUDGET_BYTES",
+    "CheckIssue",
     "DoctorReport",
     "Severity",
     "run_doctor",

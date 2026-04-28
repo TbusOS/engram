@@ -20,15 +20,12 @@ Global flags (DESIGN §9.3 config resolution order):
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
 import click
 
 from engram import __version__
 from engram.config_types import GlobalConfig, OutputFormat
-from engram.core.paths import find_project_root
 
 __all__ = ["GlobalConfig", "OutputFormat", "cli", "main"]
 
@@ -130,6 +127,7 @@ def _register_subcommands() -> None:
     from engram.commands.wisdom import wisdom_cmd
     from engram.migrate import migrate_cmd
     from engram.observer.cli import observe_cmd
+    from engram.observer.install_cli import observer_group
     from engram.org import org_group
     from engram.pool import pool_group
     from engram.team import team_group
@@ -152,6 +150,7 @@ def _register_subcommands() -> None:
     cli.add_command(doctor_cmd)
     cli.add_command(wisdom_cmd)
     cli.add_command(observe_cmd)
+    cli.add_command(observer_group)
 
 
 _register_subcommands()

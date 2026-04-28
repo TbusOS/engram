@@ -13,7 +13,7 @@ def check_layout(project_root: Path) -> list[CheckIssue]:
     # engram.commands.review → engram.commands.validate → engram.cli →
     # _register_subcommands → engram.commands.doctor → engram.doctor →
     # engram.doctor.checks_layout (mid-init of engram.commands.init).
-    from engram.commands.init import STORE_VERSION  # noqa: PLC0415
+    from engram.commands.init import STORE_VERSION
 
     issues: list[CheckIssue] = []
     memory = project_root / ".memory"

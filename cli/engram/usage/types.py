@@ -72,7 +72,7 @@ class UsageEvent:
     def __post_init__(self) -> None:
         if self.trust_weight is None:
             # Local import to avoid circulars with trust_weights → types.
-            from engram.usage.trust_weights import DEFAULT_TRUST_WEIGHTS  # noqa: PLC0415
+            from engram.usage.trust_weights import DEFAULT_TRUST_WEIGHTS
 
             self.trust_weight = DEFAULT_TRUST_WEIGHTS[self.evidence_kind]
 

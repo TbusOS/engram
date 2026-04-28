@@ -247,7 +247,8 @@ do not run a planned command and assume it works — check the table.
 | `engram adapter list / install / refresh` | Generate or refresh `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/engram.mdc` / `ENGRAM_PROMPT.md` with marker-bounded blocks. | T-53 ~ T-55 |
 | `engram doctor` | One-shot store health check: layout / graph.db drift / index reachability / pool sync / mandatory budget. Every issue ends with `→ run: <fix command>`. | **T-162** |
 | `engram wisdom report` | 6 wisdom curves (C1 retrieval hit rate / C2 task recurrence / C3 write friction / C4 mandatory false-positive / C5 redundancy / C6 confidence calibration) rendered as Unicode-block sparklines from `~/.engram/journal/usage.jsonl`. | **T-188** |
-| `engram observe --session=<id> --client=<client>` | Append a tool-use event to the observer queue (`~/.engram/observe-queue/<session>.jsonl`). Stage 0 of the auto session continuation pipeline. p99 < 50 ms; queue-full is non-fatal. Reads JSON from stdin or `--event`. | **T-200** |
+| `engram observe --session=<id> --client=<client>` | Append a tool-use event to the observer queue (`~/.engram/observe-queue/<session>.jsonl`). Stage 0 of the auto session continuation pipeline. p99 < 50 ms; queue-full is non-fatal. Reads JSON from stdin or `--event`. Optional `--from=<client>` translator. | **T-200** |
+| `engram observer install --target=<client>` | One-line install of observer hooks for 5 clients (claude-code → write to `~/.claude/settings.json`; codex / cursor / gemini-cli / opencode → paste mode). `--list` enumerates targets; `--dry-run` previews the change. | **T-205** |
 
 ### Planned (M4.6 – M8)
 

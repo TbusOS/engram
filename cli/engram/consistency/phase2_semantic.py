@@ -187,7 +187,7 @@ def detect_phase2(store_root: Path) -> list[ConflictReport]:
             sim = _jaccard(sh_a, sh_b)
             if sim < _FUZZY_MERGE_THRESHOLD:
                 continue
-            pct = int(round(sim * 100))
+            pct = round(sim * 100)
             reports.append(
                 ConflictReport(
                     conflict_class=ConflictClass.FACTUAL,

@@ -79,10 +79,7 @@ def install_cmd(
             f"unknown target {target!r}; run `engram mcp install --list`"
         )
 
-    if dry_run:
-        plan = plan_install(target)
-    else:
-        plan = install_target(target)
+    plan = plan_install(target) if dry_run else install_target(target)
 
     if cfg.output_format == "json":
         click.echo(

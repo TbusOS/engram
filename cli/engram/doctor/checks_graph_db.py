@@ -9,7 +9,6 @@ from engram.core.graph_db import open_graph_db
 from engram.core.paths import memory_dir
 from engram.doctor.types import CheckIssue, Severity
 
-
 _SCAN_SUBDIRS: tuple[str, ...] = ("local", "workflows", "kb")
 
 

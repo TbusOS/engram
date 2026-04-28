@@ -335,6 +335,26 @@ def compact_to_session_asset(
     asset_path.parent.mkdir(parents=True, exist_ok=True)
     write_atomic(asset_path, render_session_file(fm, body))
 
+    # T-207: cross-session task linkage. Best-effort — never raises.
+    if task_hash:
+        from contextlib import suppress
+
+        from engram.observer.linkage import link_session_to_predecessor
+
+        memory_dir = (
+            project_root / ".memory" if project_root is not None else user_root()
+        )
+        # Linkage is advisory; never fail the Tier 1 write because of
+        # it. ``engram doctor`` will surface broken chains.
+        with suppress(Exception):
+            link_session_to_predecessor(
+                asset_path,
+                new_session_id=session_id,
+                new_started_at=started,
+                new_task_hash=task_hash,
+                memory_dir=memory_dir,
+            )
+
     return Tier1Result(
         session_id=session_id,
         asset_path=asset_path,

@@ -14,8 +14,8 @@ import sys
 import click
 
 from engram import __version__
-from engram.config_types import GlobalConfig
 from engram.commands.init import STORE_VERSION
+from engram.config_types import GlobalConfig
 
 __all__ = ["version_cmd"]
 

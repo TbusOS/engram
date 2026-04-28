@@ -19,9 +19,9 @@ Today's proxies:
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Iterable
 
 from engram.usage import EventType, EvidenceKind, UsageEvent, iter_events
 from engram.wisdom.types import Curve, Sample, WisdomReport

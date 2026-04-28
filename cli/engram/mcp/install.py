@@ -22,13 +22,11 @@ from __future__ import annotations
 import json
 import platform
 import shutil
-import sys
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 from engram.core.fs import write_atomic
-
 
 __all__ = [
     "INSTALL_TARGETS",
@@ -104,11 +102,11 @@ def _merge_into_json_config(path: Path) -> str:
     if path.exists():
         try:
             existing = json.loads(path.read_text(encoding="utf-8") or "{}")
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as exc:
             # Operator's config is broken; refuse to merge silently.
             raise RuntimeError(
                 f"{path} is not valid JSON; refusing to merge. Fix the file and re-run."
-            )
+            ) from exc
         if not isinstance(existing, dict):
             raise RuntimeError(f"{path} root is not a JSON object")
     else:
@@ -260,10 +258,10 @@ def _merge_into_zed_settings(path: Path) -> str:
     if path.exists():
         try:
             existing = json.loads(path.read_text(encoding="utf-8") or "{}")
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as exc:
             raise RuntimeError(
                 f"{path} is not valid JSON; refusing to merge. Fix and re-run."
-            )
+            ) from exc
         if not isinstance(existing, dict):
             raise RuntimeError(f"{path} root is not a JSON object")
     else:

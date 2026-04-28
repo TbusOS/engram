@@ -20,9 +20,9 @@ from pathlib import Path
 
 import click
 
-from engram.config_types import GlobalConfig
 from engram.commands.memory import graph_db_path
 from engram.commands.validate import Issue, run_validate
+from engram.config_types import GlobalConfig
 from engram.core.graph_db import open_graph_db
 from engram.core.paths import memory_dir
 

@@ -26,8 +26,8 @@ from typing import Any
 
 import click
 
-from engram.config_types import GlobalConfig
 from engram.commands.memory import graph_db_path
+from engram.config_types import GlobalConfig
 from engram.core.frontmatter import FrontmatterError, parse_file
 from engram.core.graph_db import open_graph_db
 from engram.core.paths import memory_dir
@@ -233,7 +233,7 @@ def pack_cmd(
         click.echo(_render_prompt(result, task))
 
 
-def _emit_loaded_events(result: "RelevanceResult", task: str, root: "Path") -> None:
+def _emit_loaded_events(result: RelevanceResult, task: str, root: Path) -> None:
     """Append one ``loaded_only`` usage event per included asset.
 
     ``co_assets`` lists every other asset loaded for the same task so
@@ -242,7 +242,7 @@ def _emit_loaded_events(result: "RelevanceResult", task: str, root: "Path") -> N
     """
     # Local import — keep cold start cheap and avoid pulling usage bus
     # into modules that do not need it.
-    from engram.usage import (  # noqa: PLC0415
+    from engram.usage import (
         ActorType,
         EventType,
         EvidenceKind,
@@ -255,10 +255,13 @@ def _emit_loaded_events(result: "RelevanceResult", task: str, root: "Path") -> N
     if not included_ids:
         return
 
+    from contextlib import suppress
+
     task_hash = derive_task_hash(cwd=root, explicit=None)
     for asset_id in included_ids:
         co = tuple(other for other in included_ids if other != asset_id)
-        try:
+        # Observability never breaks the user's pack output.
+        with suppress(Exception):
             append_usage_event(
                 UsageEvent(
                     asset_uri=asset_id,
@@ -269,6 +272,3 @@ def _emit_loaded_events(result: "RelevanceResult", task: str, root: "Path") -> N
                     co_assets=co,
                 )
             )
-        except Exception:  # noqa: BLE001
-            # Observability never breaks the user's pack output.
-            pass

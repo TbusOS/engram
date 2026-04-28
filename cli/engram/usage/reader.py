@@ -7,8 +7,7 @@ follow-up patch (Wisdom Metrics aggregation, T-188).
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import Iterable
+from collections.abc import Iterable, Iterator
 
 from engram.core.journal import read_events
 from engram.usage.types import (

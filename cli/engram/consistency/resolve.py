@@ -197,7 +197,7 @@ def _emit_consistency_event(
     consistency apply call.
     """
     try:
-        from engram.usage import (  # noqa: PLC0415
+        from engram.usage import (
             ActorType,
             EventType,
             EvidenceKind,
@@ -215,7 +215,7 @@ def _emit_consistency_event(
                 evidence_kind=EvidenceKind(evidence_kind_name),
             )
         )
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
 
 

@@ -16,7 +16,6 @@ from engram.core.graph_db import open_graph_db
 from engram.core.paths import memory_dir
 from engram.doctor.types import CheckIssue, Severity
 
-
 # Default budget chosen so a full Claude / Opus 4 context can absorb the
 # entire mandatory set without crowding out task-specific assets. The
 # operator can override via ``run_doctor(..., mandatory_budget_bytes=N)``.
@@ -30,7 +29,7 @@ def check_mandatory_budget(
     db_path = graph_db_path(project_root)
     if not db_path.parent.is_dir():
         return issues
-    mem_root = memory_dir(project_root)
+    memory_dir(project_root)
 
     total_bytes = 0
     overweight: list[tuple[str, int]] = []

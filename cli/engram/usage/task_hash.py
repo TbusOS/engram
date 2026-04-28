@@ -21,7 +21,6 @@ import subprocess
 import time
 from pathlib import Path
 
-
 __all__ = ["derive_task_hash"]
 
 
@@ -54,7 +53,7 @@ def _try_git_hash(cwd: Path) -> str | None:
     if not sha:
         return None
     branch = _run_git(cwd, ["rev-parse", "--abbrev-ref", "HEAD"]) or "detached"
-    payload = f"{sha}|{branch}".encode("utf-8")
+    payload = f"{sha}|{branch}".encode()
     digest = hashlib.sha256(payload).hexdigest()[:16]
     return digest
 

@@ -31,13 +31,12 @@ from pathlib import Path
 
 from engram.inbox.identity import resolve_repo_id
 
-
 __all__ = [
+    "VALID_SCOPE_KINDS",
     "CanonicalURI",
     "build_canonical_uri",
     "parse_canonical_uri",
     "resolve_store_root_id",
-    "VALID_SCOPE_KINDS",
 ]
 
 

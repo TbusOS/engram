@@ -32,7 +32,7 @@ from engram.core.fs import write_atomic
 if TYPE_CHECKING:
     from engram.config_types import GlobalConfig
 
-__all__ = ["AdoptResult", "STORE_VERSION", "adopt_project", "init_cmd", "init_project"]
+__all__ = ["STORE_VERSION", "AdoptResult", "adopt_project", "init_cmd", "init_project"]
 
 STORE_VERSION = "0.2"
 
@@ -152,20 +152,19 @@ def adopt_project(root: Path) -> AdoptResult:
     when the operator really wants to regenerate the skeleton.
     """
     # Lazy imports — keep cold-start cheap; these modules pull yaml + sqlite.
-    from engram.commands.memory import (  # noqa: PLC0415
+    from engram.commands.memory import (
         compute_id,
         graph_db_path,
-        memory_file_path,
         sha256_hex,
     )
-    from engram.core.frontmatter import FrontmatterError, parse_file  # noqa: PLC0415
-    from engram.core.graph_db import (  # noqa: PLC0415
+    from engram.core.frontmatter import FrontmatterError, parse_file
+    from engram.core.graph_db import (
         AssetRow,
         get_asset,
         insert_asset,
         open_graph_db,
     )
-    from engram.core.paths import engram_dir, memory_dir  # noqa: PLC0415
+    from engram.core.paths import engram_dir, memory_dir
 
     memory = root / ".memory"
     if not memory.is_dir():
@@ -206,10 +205,7 @@ def adopt_project(root: Path) -> AdoptResult:
                 # filename does not match this pattern (e.g. user-renamed),
                 # we fall back to the frontmatter type and the full stem.
                 subtype = fm.type.value
-                if slug.startswith(f"{subtype}_"):
-                    tail = slug[len(subtype) + 1 :]
-                else:
-                    tail = slug
+                tail = slug[len(subtype) + 1:] if slug.startswith(f"{subtype}_") else slug
                 asset_id = compute_id(sub, subtype, tail)
                 if get_asset(conn, asset_id) is not None:
                     result.skipped += 1
@@ -242,7 +238,7 @@ def _scope_root(kind: str, name: str) -> Path:
     # Lazy import to avoid pulling in engram.scope (which transitively
     # loads engram.cli) at module-load time — see the import-cycle note
     # at the top of this module.
-    from engram.scope.git_ops import scope_root  # noqa: PLC0415
+    from engram.scope.git_ops import scope_root
 
     return scope_root(kind, name)
 
@@ -402,7 +398,7 @@ def init_cmd(
     if subscribe_pools:
         # Lazy import — pulls engram.pool which transitively imports
         # engram.cli; only needed when the operator actually subscribes.
-        from engram.pool.actions import subscribe_to_pool  # noqa: PLC0415
+        from engram.pool.actions import subscribe_to_pool
 
         for pool in subscribe_pools:
             subscribe_to_pool(target, pool, force=force)

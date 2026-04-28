@@ -42,16 +42,27 @@ from engram.relevance.weights import (
 )
 
 __all__ = [
+    "STAGE0_DEFAULT_BUDGET_FRACTION",
+    "STAGE0_MAX_SESSIONS",
     "Asset",
     "RankedCandidate",
     "RelevanceRequest",
     "RelevanceResult",
+    "SessionContinuation",
     "run_relevance_gate",
+    "select_session_continuations",
 ]
 
 
 _TOKENS_PER_BYTE = 0.25
 """DESIGN §5.1.3 token estimator — 4 bytes per token on average."""
+
+# Stage 0 (T-206): cross-session continuation budget cap. Sessions
+# matching the request's task_hash are injected before the mandatory
+# bypass stage but their total cost is capped so they cannot starve
+# Stage 1 / 5 / 6.
+STAGE0_DEFAULT_BUDGET_FRACTION = 0.25
+STAGE0_MAX_SESSIONS = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,12 +97,36 @@ class RankedCandidate:
 
 
 @dataclass(frozen=True, slots=True)
+class SessionContinuation:
+    """One Episodic session selected by Stage 0 for context injection.
+
+    Body is the rendered Markdown narrative produced by Tier 1; size is
+    used by the Stage 0 budget cap so sessions cannot starve the rest
+    of the gate.
+    """
+
+    session_id: str
+    task_hash: str
+    body: str
+    size_bytes: int
+    ended_at: date | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class RelevanceRequest:
     query: str
     assets: Sequence[Asset]
     budget_tokens: int = 8000
     now: date = date(1970, 1, 1)  # overridden by caller; default is epoch
     recency_halflife_days: float = 30.0
+    # Stage 0 (T-206): if ``task_hash`` is set, sessions in
+    # ``sessions`` with a matching task_hash get injected first, capped
+    # at ``stage0_max_sessions`` and ``stage0_budget_fraction`` of the
+    # total budget. Default empty so existing callers are unaffected.
+    task_hash: str | None = None
+    sessions: Sequence[SessionContinuation] = ()
+    stage0_max_sessions: int = STAGE0_MAX_SESSIONS
+    stage0_budget_fraction: float = STAGE0_DEFAULT_BUDGET_FRACTION
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,6 +136,11 @@ class RelevanceResult:
     mandatory: tuple[Asset, ...]
     total_tokens: int
     budget: int
+    # Stage 0 output: sessions that survived task_hash matching + the
+    # max-count cap + the per-call budget cap. Empty when no
+    # ``task_hash`` was supplied or no sessions matched.
+    sessions: tuple[SessionContinuation, ...] = ()
+    sessions_tokens: int = 0
 
 
 def _tokens(asset: Asset) -> int:
@@ -119,9 +159,66 @@ def _recency_decay(asset: Asset, now: date, halflife_days: float) -> float:
     return math.exp(-days / halflife_days) if halflife_days > 0 else 1.0
 
 
+def select_session_continuations(
+    *,
+    task_hash: str | None,
+    sessions: Sequence[SessionContinuation],
+    budget_tokens: int,
+    max_count: int = STAGE0_MAX_SESSIONS,
+    budget_fraction: float = STAGE0_DEFAULT_BUDGET_FRACTION,
+) -> tuple[tuple[SessionContinuation, ...], int]:
+    """Stage 0 selector — pick at most ``max_count`` sessions matching ``task_hash``.
+
+    Returns ``(picked, tokens_consumed)``. The total ``tokens_consumed``
+    is bounded by ``int(budget_tokens * budget_fraction)``: when adding
+    the next session would exceed the cap, selection stops. Sessions
+    are picked in ``ended_at`` descending order (most-recent first); the
+    returned tuple keeps that order so the caller can render newest-first.
+    """
+    if not task_hash:
+        return ((), 0)
+    if budget_tokens <= 0 or budget_fraction <= 0.0:
+        return ((), 0)
+
+    matching = [s for s in sessions if s.task_hash == task_hash]
+    if not matching:
+        return ((), 0)
+
+    # Most recent first. ``ended_at`` may be None for in-flight sessions;
+    # sort those last so closed sessions are preferred when both apply.
+    def _sort_key(s: SessionContinuation) -> tuple[int, date]:
+        if s.ended_at is None:
+            return (0, date(1970, 1, 1))
+        return (1, s.ended_at)
+
+    matching.sort(key=_sort_key, reverse=True)
+
+    cap_tokens = int(budget_tokens * budget_fraction)
+    picked: list[SessionContinuation] = []
+    spent = 0
+    for s in matching:
+        if len(picked) >= max_count:
+            break
+        cost = max(1, int(s.size_bytes * _TOKENS_PER_BYTE))
+        if spent + cost > cap_tokens:
+            break
+        picked.append(s)
+        spent += cost
+    return (tuple(picked), spent)
+
+
 def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
     """Run the full pipeline. Pure function; safe to call in any context."""
     assets = list(request.assets)
+
+    # ------------- Stage 0 — session continuation (T-206) -------
+    sessions, sessions_tokens = select_session_continuations(
+        task_hash=request.task_hash,
+        sessions=request.sessions,
+        budget_tokens=request.budget_tokens,
+        max_count=request.stage0_max_sessions,
+        budget_fraction=request.stage0_budget_fraction,
+    )
 
     # ------------- Stage 1 — mandatory bypass -------------
     mandatory_assets = tuple(a for a in assets if a.enforcement == "mandatory")
@@ -199,4 +296,6 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
         mandatory=mandatory_assets,
         total_tokens=sum(c.tokens_est for c in included),
         budget=request.budget_tokens,
+        sessions=sessions,
+        sessions_tokens=sessions_tokens,
     )

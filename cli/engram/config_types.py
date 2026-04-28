@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-
 __all__ = ["GlobalConfig", "OutputFormat"]
 
 
@@ -38,7 +37,7 @@ class GlobalConfig:
         3. Walk up from cwd looking for a ``.memory/`` directory
         """
         # Lazy import to keep this module a pure leaf.
-        from engram.core.paths import find_project_root  # noqa: PLC0415
+        from engram.core.paths import find_project_root
 
         if self.dir_override is not None:
             return self.dir_override.expanduser().resolve()

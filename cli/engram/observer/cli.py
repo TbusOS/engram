@@ -37,6 +37,7 @@ from engram.observer.queue import (
     QueueFullError,
     enqueue,
 )
+from engram.observer.translators import KNOWN_TRANSLATORS, translate
 
 __all__ = ["observe_cmd"]
 
@@ -87,6 +88,16 @@ def _emit(payload: dict[str, Any], *, fmt: str) -> None:
     help="Event payload as JSON. If omitted, reads one JSON object from stdin.",
 )
 @click.option(
+    "--from",
+    "from_source",
+    type=click.Choice(sorted(KNOWN_TRANSLATORS.keys())),
+    default=None,
+    help=(
+        "Translate the input from a host hook payload shape into the engram "
+        "observer event format (e.g. claude-code's tool_name/tool_input/...)."
+    ),
+)
+@click.option(
     "--format",
     "fmt",
     type=click.Choice(["json", "text"]),
@@ -117,6 +128,7 @@ def observe_cmd(
     session_id: str,
     client: str,
     event_payload: str | None,
+    from_source: str | None,
     fmt: str,
     max_events_per_session: int,
     raw_retention: bool,
@@ -143,6 +155,22 @@ def observe_cmd(
     except observer_paths.InvalidSessionIdError as exc:
         _emit({"ok": False, "reason": f"invalid_session_id: {exc}"}, fmt=fmt)
         sys.exit(2)
+
+    if from_source is not None:
+        if not isinstance(payload, dict):
+            _emit({"ok": False, "reason": "translator_input_not_object"}, fmt=fmt)
+            sys.exit(2)
+        translated = translate(from_source, payload)
+        if translated is None:
+            _emit(
+                {
+                    "ok": False,
+                    "reason": f"translator_could_not_map: from={from_source}",
+                },
+                fmt=fmt,
+            )
+            sys.exit(2)
+        payload = translated
 
     try:
         event = parse_event(payload, session_id=session_id, client=client)

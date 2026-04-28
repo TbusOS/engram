@@ -22,8 +22,8 @@ from typing import Any
 import click
 import tomli
 
-from engram.config_types import GlobalConfig
 from engram.commands.memory import graph_db_path
+from engram.config_types import GlobalConfig
 from engram.core.graph_db import open_graph_db
 from engram.core.paths import engram_dir, memory_dir
 

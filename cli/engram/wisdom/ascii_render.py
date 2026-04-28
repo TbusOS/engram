@@ -8,8 +8,7 @@ they are missing data for.
 
 from __future__ import annotations
 
-from engram.wisdom.types import Curve, Sample, WisdomReport
-
+from engram.wisdom.types import Sample, WisdomReport
 
 _BLOCKS = "▁▂▃▄▅▆▇█"
 
