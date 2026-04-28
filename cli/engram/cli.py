@@ -115,6 +115,7 @@ def _register_subcommands() -> None:
     from engram.commands.adapter import adapter_cmd
     from engram.commands.config import config_group
     from engram.commands.context import context_cmd
+    from engram.commands.distill import distill_group
     from engram.commands.doctor import doctor_cmd
     from engram.commands.inbox import inbox_cmd
     from engram.commands.init import init_cmd
@@ -151,6 +152,7 @@ def _register_subcommands() -> None:
     cli.add_command(wisdom_cmd)
     cli.add_command(observe_cmd)
     cli.add_command(observer_group)
+    cli.add_command(distill_group)
 
 
 _register_subcommands()

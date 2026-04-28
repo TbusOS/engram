@@ -249,6 +249,7 @@ do not run a planned command and assume it works — check the table.
 | `engram wisdom report` | 6 wisdom curves (C1 retrieval hit rate / C2 task recurrence / C3 write friction / C4 mandatory false-positive / C5 redundancy / C6 confidence calibration) rendered as Unicode-block sparklines from `~/.engram/journal/usage.jsonl`. | **T-188** |
 | `engram observe --session=<id> --client=<client>` | Append a tool-use event to the observer queue (`~/.engram/observe-queue/<session>.jsonl`). Stage 0 of the auto session continuation pipeline. p99 < 50 ms; queue-full is non-fatal. Reads JSON from stdin or `--event`. Optional `--from=<client>` translator. | **T-200** |
 | `engram observer install --target=<client>` | One-line install of observer hooks for 5 clients (claude-code → write to `~/.claude/settings.json`; codex / cursor / gemini-cli / opencode → paste mode). `--list` enumerates targets; `--dry-run` previews the change. | **T-205** |
+| `engram distill review / promote / reject` | Consent gate for Tier 2 distilled candidates. `review` lists `*.proposed.md` under `.memory/distilled/`; `promote <name>` moves a candidate into `.memory/local/<name>.md` and back-links to source sessions; `reject <name>` archives under `~/.engram/archive/distilled/<YYYY-MM>/`. Both LLM and human can invoke. | **T-209** |
 
 ### Planned (M4.6 – M8)
 
