@@ -90,14 +90,14 @@ def _emit(asset: str, kind: EvidenceKind, days_ago: int = 0) -> None:
 
 
 class TestReportShape:
-    def test_empty_store_returns_six_curves_all_insufficient(
+    def test_empty_store_returns_eight_curves_all_insufficient(
         self, isolated: Path
     ) -> None:
         report = compute_wisdom_report(isolated, days=7)
         assert isinstance(report, WisdomReport)
-        assert len(report.curves) == 6
+        assert len(report.curves) == 8
         ids = {c.id for c in report.curves}
-        assert ids == {"C1", "C2", "C3", "C4", "C5", "C6"}
+        assert ids == {"C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8"}
         # All curves should declare insufficient data with no events
         for curve in report.curves:
             assert curve.summary  # always non-empty
@@ -219,7 +219,7 @@ class TestWisdomCli:
 
         payload = json.loads(result.output)
         assert "curves" in payload
-        assert len(payload["curves"]) == 6
+        assert len(payload["curves"]) == 8
 
     def test_days_flag(self, isolated: Path) -> None:
         runner = CliRunner()

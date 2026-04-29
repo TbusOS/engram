@@ -250,6 +250,7 @@ do not run a planned command and assume it works — check the table.
 | `engram observe --session=<id> --client=<client>` | Append a tool-use event to the observer queue (`~/.engram/observe-queue/<session>.jsonl`). Stage 0 of the auto session continuation pipeline. p99 < 50 ms; queue-full is non-fatal. Reads JSON from stdin or `--event`. Optional `--from=<client>` translator. | **T-200** |
 | `engram observer install --target=<client>` | One-line install of observer hooks for 5 clients (claude-code → write to `~/.claude/settings.json`; codex / cursor / gemini-cli / opencode → paste mode). `--list` enumerates targets; `--dry-run` previews the change. | **T-205** |
 | `engram distill review / promote / reject` | Consent gate for Tier 2 distilled candidates. `review` lists `*.proposed.md` under `.memory/distilled/`; `promote <name>` moves a candidate into `.memory/local/<name>.md` and back-links to source sessions; `reject <name>` archives under `~/.engram/archive/distilled/<YYYY-MM>/`. Both LLM and human can invoke. | **T-209** |
+| `engram propose review / promote / reject` | Consent gate for Tier 3 procedural proposals. `review` lists `workflows/<slug>/proposal.md`; `promote <name>` upgrades into a real Workflow scaffold (`README.md` + `spine.toml` placeholder + `metrics.yaml` + `fixtures/`); `reject <name>` archives the directory under `~/.engram/archive/workflows/<YYYY-MM>/`. | **T-210** |
 
 ### Planned (M4.6 – M8)
 

@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · 自动续接 MVP</span>
-  <span>2026-04-26 spec 冻结 —— 自动续接 pipeline 已贯穿到 Tier 2。T-200 ~ T-209 落地(997 单测)。distill review/promote/reject + LLM/人 consent · mechanical fallback 永不幻觉(只引用真实 file 路径)。零 SDK 依赖,完全离线可跑。</span>
+  <span>2026-04-26 spec 冻结 —— 自动续接 pipeline 端到端贯通。T-200 ~ T-212 落地(1043 单测)。4 个 tier 全部就位(mechanical / Tier 1 LLM / Tier 2 蒸馏 / Tier 3 propose)+ confidence 驱动衰减 + 8 条 wisdom 曲线(C7 命中率 / C8 蒸馏 yield)+ 跨 5 session E2E 全绿。零 SDK 依赖,完全离线可跑。</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">加入讨论区</a>
 </div>
 
@@ -842,7 +842,7 @@ engram wisdom report       # 看四组自改进曲线</code></pre>
       <div class="engram-roadmap-step">
         <div class="engram-roadmap-dot engram-roadmap-dot--current">M4</div>
         <p class="engram-roadmap-title">智能 + 自动续接</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">M4 P0 完工 + T-200~T-209 observer pipeline(队列 / daemon / Tier 0 / Session 资产 / Tier 1 LLM / 5 客户端 hook 安装 / Stage 0 / 任务链 / Tier 2 蒸馏 / distill consent CLI)。997 单测。T-210~T-212 推进中。</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">M4 完工 —— 自动续接 T-200~T-212 全部交付(队列 / daemon / Tier 0 / Session 资产 / Tier 1 LLM / 5 客户端 hook 安装 / Stage 0 / 任务链 / Tier 2 蒸馏 / Tier 3 propose / confidence 衰减 / wisdom C7+C8 / 跨 5 session E2E)。1043 单测。</p>
       </div>
       <div class="engram-roadmap-step">
         <div class="engram-roadmap-dot">M5</div>

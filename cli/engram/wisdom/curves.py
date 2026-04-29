@@ -22,6 +22,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any
 
 from engram.usage import EventType, EvidenceKind, UsageEvent, iter_events
 from engram.wisdom.types import Curve, Sample, WisdomReport
@@ -290,6 +291,165 @@ def _compute_c6_calibration(
 
 
 # ------------------------------------------------------------------
+# C7 / C8 — Auto-Continuation pipeline curves (T-211)
+# ------------------------------------------------------------------
+
+
+def _scan_session_files(store_root: Path) -> list[dict[str, Any]]:
+    """Walk session asset directories and pull out the few fields C7/C8 need.
+
+    Reads from both the project-local ``.memory/sessions/`` and the
+    user-global ``~/.engram/sessions/``. Sessions without a parseable
+    frontmatter or without an ``ended_at`` are skipped — the curves
+    are best-effort, not validators.
+    """
+    from contextlib import suppress
+
+    from engram.core.paths import user_root
+    from engram.observer.session import parse_session_file, sessions_root
+
+    roots: list[Path] = [sessions_root(store_root / ".memory"), sessions_root(user_root())]
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for path in root.rglob("sess_*.md"):
+            if not path.is_file():
+                continue
+            try:
+                fm, _ = parse_session_file(path)
+            except Exception:
+                continue
+            if fm.session_id in seen:
+                continue
+            seen.add(fm.session_id)
+            ended_iso: str | None = None
+            if fm.ended_at is not None:
+                with suppress(Exception):
+                    ended_iso = fm.ended_at.date().isoformat()
+            out.append(
+                {
+                    "session_id": fm.session_id,
+                    "task_hash": fm.task_hash,
+                    "ended_day": ended_iso,
+                    "exposure_count": int(fm.confidence.exposure_count),
+                    "distilled_into": list(fm.distilled_into),
+                }
+            )
+    return out
+
+
+def _compute_c7_continuation_hit_rate(
+    sessions: list[dict[str, Any]], days: int
+) -> Curve:
+    """Continuation hit rate = sessions per day with exposure_count > 0.
+
+    A "hit" is a session that the Relevance Gate Stage 0 actually
+    injected (and the LLM consumed) at least once. Captured via the
+    ``exposure_count`` field on the Session frontmatter that Tier 1
+    bumps when a downstream usage event references the session.
+    """
+    if not sessions:
+        return _empty_curve(
+            "C7",
+            "Continuation hit rate",
+            "ratio/day",
+            "no Session assets yet — install observer hooks (engram observer install)",
+        )
+    today = _today_utc()
+    by_day: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for s in sessions:
+        day = s.get("ended_day")
+        if isinstance(day, str):
+            by_day[day].append(s)
+
+    samples: list[Sample] = []
+    any_data = False
+    for offset in range(days - 1, -1, -1):
+        day = (today - timedelta(days=offset)).isoformat()
+        bucket = by_day.get(day, [])
+        if not bucket:
+            samples.append(Sample(day=day, value=0.0))
+            continue
+        any_data = True
+        hits = sum(1 for s in bucket if int(s.get("exposure_count", 0) or 0) > 0)
+        samples.append(Sample(day=day, value=hits / len(bucket)))
+
+    if not any_data:
+        return _empty_curve(
+            "C7",
+            "Continuation hit rate",
+            "ratio/day",
+            "no sessions ended in window — ride the observer pipeline more",
+        )
+    return Curve(
+        id="C7",
+        name="Continuation hit rate",
+        unit="ratio/day",
+        samples=tuple(samples),
+        summary=_ratio_summary(tuple(samples)),
+    )
+
+
+def _compute_c8_distillation_yield(
+    sessions: list[dict[str, Any]], days: int
+) -> Curve:
+    """Distillation yield = sessions per day that contributed to a promoted Memory.
+
+    Counted as: ``len(distilled_into) > 0``. Tier 2 (T-208) writes
+    candidates; T-209 promote stamps the source sessions with the
+    promoted asset name. So a non-empty ``distilled_into`` means the
+    session's content actually became durable Memory — the canonical
+    "did engram learn anything" signal.
+    """
+    if not sessions:
+        return _empty_curve(
+            "C8",
+            "Distillation yield",
+            "ratio/day",
+            "no Session assets — run more sessions, then `engram distill review`",
+        )
+    today = _today_utc()
+    by_day: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for s in sessions:
+        day = s.get("ended_day")
+        if isinstance(day, str):
+            by_day[day].append(s)
+
+    samples: list[Sample] = []
+    any_data = False
+    for offset in range(days - 1, -1, -1):
+        day = (today - timedelta(days=offset)).isoformat()
+        bucket = by_day.get(day, [])
+        if not bucket:
+            samples.append(Sample(day=day, value=0.0))
+            continue
+        any_data = True
+        promoted = sum(
+            1
+            for s in bucket
+            if isinstance(s.get("distilled_into"), list) and s.get("distilled_into")
+        )
+        samples.append(Sample(day=day, value=promoted / len(bucket)))
+
+    if not any_data:
+        return _empty_curve(
+            "C8",
+            "Distillation yield",
+            "ratio/day",
+            "no sessions in window; nothing to distill yet",
+        )
+    return Curve(
+        id="C8",
+        name="Distillation yield",
+        unit="ratio/day",
+        samples=tuple(samples),
+        summary=_ratio_summary(tuple(samples)),
+    )
+
+
+# ------------------------------------------------------------------
 # Public entry
 # ------------------------------------------------------------------
 
@@ -297,6 +457,7 @@ def _compute_c6_calibration(
 def compute_wisdom_report(store_root: Path, *, days: int = 7) -> WisdomReport:
     all_events = list(iter_events())
     in_window = _within_window(all_events, days)
+    session_rows = _scan_session_files(store_root)
 
     curves = [
         _compute_c1_hit_rate(in_window, days),
@@ -305,6 +466,8 @@ def compute_wisdom_report(store_root: Path, *, days: int = 7) -> WisdomReport:
         _compute_c4_mandatory_fp(in_window, days),
         _compute_c5_redundancy(in_window, days),
         _compute_c6_calibration(in_window, days),
+        _compute_c7_continuation_hit_rate(session_rows, days),
+        _compute_c8_distillation_yield(session_rows, days),
     ]
 
     return WisdomReport(
