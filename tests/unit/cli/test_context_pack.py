@@ -195,3 +195,133 @@ def test_context_pack_requires_task_flag(populated_project: Path) -> None:
     )
     assert result.exit_code != 0
     assert "--task" in result.output or "Missing option" in result.output
+
+
+# ------------------------------------------------------------------
+# Q8 / T-206 — Stage 0 task_hash wiring through the CLI
+# ------------------------------------------------------------------
+
+
+def _seed_session(project: Path, *, sid: str, task_hash: str, body: str) -> None:
+    from datetime import datetime, timezone
+
+    from engram.observer.session import (
+        SessionFrontmatter,
+        render_session_file,
+        session_path,
+    )
+
+    started = datetime(2026, 4, 26, 14, 0, tzinfo=timezone.utc)
+    fm = SessionFrontmatter(
+        type="session",
+        session_id=sid,
+        client="claude-code",
+        started_at=started,
+        ended_at=datetime(2026, 4, 26, 15, 0, tzinfo=timezone.utc),
+        task_hash=task_hash,
+    )
+    p = session_path(sid, started_at=started, memory_dir=project / ".memory")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(render_session_file(fm, body))
+
+
+def test_context_pack_explicit_task_hash_injects_session(
+    populated_project: Path,
+) -> None:
+    _seed_session(
+        populated_project,
+        sid="abc",
+        task_hash="explicit-hash",
+        body="## Investigated\n- Stage 0 must surface this body\n",
+    )
+    runner = CliRunner()
+    out = _invoke(
+        runner,
+        "--dir",
+        str(populated_project),
+        "context",
+        "pack",
+        "--task",
+        "kernel work",
+        "--task-hash",
+        "explicit-hash",
+    )
+    assert "Recent session continuation (Stage 0)" in out
+    assert "Stage 0 must surface this body" in out
+
+
+def test_context_pack_no_continuation_skips_stage0(
+    populated_project: Path,
+) -> None:
+    _seed_session(
+        populated_project,
+        sid="abc",
+        task_hash="explicit-hash",
+        body="must NOT appear when --no-continuation is set",
+    )
+    runner = CliRunner()
+    out = _invoke(
+        runner,
+        "--dir",
+        str(populated_project),
+        "context",
+        "pack",
+        "--task",
+        "kernel work",
+        "--task-hash",
+        "explicit-hash",
+        "--no-continuation",
+    )
+    assert "must NOT appear" not in out
+    assert "Stage 0" not in out
+
+
+def test_context_pack_empty_task_hash_disables_stage0(
+    populated_project: Path,
+) -> None:
+    _seed_session(
+        populated_project,
+        sid="abc",
+        task_hash="some-hash",
+        body="should be skipped",
+    )
+    runner = CliRunner()
+    out = _invoke(
+        runner,
+        "--dir",
+        str(populated_project),
+        "context",
+        "pack",
+        "--task",
+        "kernel work",
+        "--task-hash",
+        "",
+    )
+    assert "Stage 0" not in out
+
+
+def test_context_pack_json_includes_sessions(populated_project: Path) -> None:
+    _seed_session(
+        populated_project,
+        sid="abc",
+        task_hash="some-hash",
+        body="body content",
+    )
+    runner = CliRunner()
+    out = _invoke(
+        runner,
+        "--dir",
+        str(populated_project),
+        "context",
+        "pack",
+        "--task",
+        "kernel work",
+        "--task-hash",
+        "some-hash",
+        "--format",
+        "json",
+    )
+    payload = json.loads(out)
+    assert "sessions" in payload
+    assert any(s["session_id"] == "abc" for s in payload["sessions"])
+    assert payload["sessions_tokens"] > 0

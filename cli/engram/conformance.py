@@ -25,7 +25,7 @@ and starts being a friction tax.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -260,19 +260,70 @@ def _inv_f6(store_root: Path) -> tuple[bool, str]:
 
 
 def _inv_i1(store_root: Path) -> tuple[bool, str]:
-    """Every local asset is referenced by MEMORY.md (SPEC §7.2)."""
-    index_path = store_root / ".memory" / "MEMORY.md"
+    """Every local asset is reachable from MEMORY.md within 2 hops (SPEC §7.2 / T-181).
+
+    Reachability rules:
+
+    - 1-hop: the asset path appears textually in MEMORY.md.
+    - 2-hop: the asset path appears in any markdown file under
+      ``.memory/`` (e.g. a topic sub-index) that is itself referenced
+      from MEMORY.md.
+
+    Sessions / distilled / workflow proposals are out of scope —
+    they live under ``sessions/`` / ``distilled/`` / ``workflows/``
+    not ``local/``, so this check ignores them by construction
+    (``_iter_local_assets`` only walks ``local/``).
+    """
+    memory_root = store_root / ".memory"
+    index_path = memory_root / "MEMORY.md"
     if not index_path.is_file():
         return True, "skipped — INV-L2 will catch missing MEMORY.md"
     index_text = index_path.read_text(encoding="utf-8")
+
+    reachable_text = index_text
+    # Find any markdown reference inside MEMORY.md and follow it once.
+    for ref in _iter_markdown_refs(index_text):
+        candidate = memory_root / ref
+        if not candidate.is_file():
+            continue
+        if candidate.resolve() == index_path.resolve():
+            continue
+        try:
+            reachable_text += "\n" + candidate.read_text(encoding="utf-8")
+        except OSError:
+            continue
+
     missing: list[str] = []
     for asset in _iter_local_assets(store_root):
         rel = f"local/{asset.name}"
-        if rel not in index_text:
+        if rel not in reachable_text:
             missing.append(asset.name)
     if not missing:
         return True, ""
-    return False, f"{len(missing)} asset(s) not in MEMORY.md: {missing[:5]}"
+    return False, f"{len(missing)} asset(s) not reachable from MEMORY.md: {missing[:5]}"
+
+
+# Match path-like markdown references such as ``local/foo.md``,
+# ``index/auth.md``, ``[link](path/to/file.md)``. Conservative — only
+# captures relative paths ending in ``.md``.
+_MD_REF_RE = re.compile(r"(?:[\w./-]+/)?[\w.-]+\.md")
+
+
+def _iter_markdown_refs(text: str) -> Iterable[str]:
+    """Yield every relative ``*.md`` path mentioned in ``text``.
+
+    Output is de-duplicated and excludes the bare ``MEMORY.md`` ref
+    (the index is its own anchor, not a hop).
+    """
+    seen: set[str] = set()
+    for match in _MD_REF_RE.finditer(text):
+        ref = match.group(0)
+        if ref == "MEMORY.md":
+            continue
+        if ref in seen:
+            continue
+        seen.add(ref)
+        yield ref
 
 
 def _inv_i2(store_root: Path) -> tuple[bool, str]:
@@ -402,8 +453,8 @@ INVARIANTS: tuple[Invariant, ...] = (
     ),
     Invariant(
         id="INV-I1",
-        title="every local asset is referenced by MEMORY.md",
-        reference="SPEC §7.2",
+        title="every local asset is reachable from MEMORY.md within 2 hops",
+        reference="SPEC §7.2 + T-181",
         checker=_inv_i1,
     ),
     Invariant(

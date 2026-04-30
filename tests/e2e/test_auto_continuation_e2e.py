@@ -250,7 +250,12 @@ def test_cross_5_session_pipeline(env: dict[str, Path]) -> None:
     by_id = {c.id: c for c in wisdom.curves}
     assert "C7" in by_id and "C8" in by_id
     # C8 must show at least one promoted day since 5/5 sessions have
-    # distilled_into populated post-promote.
+    # distilled_into populated post-promote. The fixture sessions end on
+    # 2026-04-25..29, so the day-of-fixture sample is what to inspect —
+    # not the last one (which can drift past the fixture window when
+    # the test runs after midnight UTC).
     c8 = by_id["C8"]
     assert c8.insufficient is False
-    assert c8.samples[-1].value > 0.0
+    assert any(s.value > 0.0 for s in c8.samples), (
+        "expected at least one C8 sample > 0 across the wisdom window"
+    )

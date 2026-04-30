@@ -83,6 +83,14 @@ def _render_prompt(result: RelevanceResult, task: str) -> str:
         f"Task: {task}",
         "",
     ]
+    if result.sessions:
+        lines.append("## Recent session continuation (Stage 0)")
+        lines.append("")
+        for s in result.sessions:
+            lines.append(f"### {s.session_id}  (task_hash={s.task_hash})")
+            lines.append("")
+            lines.append(s.body.strip())
+            lines.append("")
     if result.mandatory:
         lines.append("## Mandatory rules")
         lines.append("")
@@ -99,7 +107,7 @@ def _render_prompt(result: RelevanceResult, task: str) -> str:
             lines.append("")
             lines.append(c.asset.body.strip())
             lines.append("")
-    if not result.mandatory and not result.included:
+    if not result.sessions and not result.mandatory and not result.included:
         lines.append("_(no memories matched the query within the budget)_")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -147,6 +155,16 @@ def _render_json(result: RelevanceResult, task: str, budget: int) -> str:
         "task": task,
         "budget": budget,
         "total_tokens": result.total_tokens,
+        "sessions_tokens": result.sessions_tokens,
+        "sessions": [
+            {
+                "session_id": s.session_id,
+                "task_hash": s.task_hash,
+                "size_bytes": s.size_bytes,
+                "ended_at": s.ended_at.isoformat() if s.ended_at else None,
+            }
+            for s in result.sessions
+        ],
         "mandatory": [
             {"id": a.id, "scope": a.scope, "enforcement": a.enforcement}
             for a in result.mandatory
@@ -197,21 +215,61 @@ def context_cmd() -> None:
     show_default=True,
     help="Output format: prompt (default), json, markdown.",
 )
+@click.option(
+    "--task-hash",
+    "task_hash",
+    metavar="HASH",
+    default=None,
+    help=(
+        "Stage 0 (T-206) task hash. Same-hash Session assets are injected "
+        "before mandatory bypass, capped by budget_fraction. Defaults to "
+        "T-173 git-derived hash; pass empty string to disable Stage 0."
+    ),
+)
+@click.option(
+    "--no-continuation",
+    is_flag=True,
+    default=False,
+    help="Disable Stage 0 session continuation injection for this call.",
+)
 @click.pass_obj
 def pack_cmd(
     cfg: GlobalConfig,
     task: str,
     budget: int,
     output_format: str,
+    task_hash: str | None,
+    no_continuation: bool,
 ) -> None:
     """Run the Relevance Gate against ``task`` and emit the pack to stdout."""
     root = cfg.resolve_project_root()
     assets = _load_assets(root)
+
+    # Stage 0 (T-206): task_hash + Session loader.
+    sessions: tuple[Any, ...] = ()
+    effective_task_hash: str | None = None
+    if not no_continuation:
+        if task_hash is None:
+            from engram.usage.task_hash import derive_task_hash
+
+            effective_task_hash = derive_task_hash(cwd=root, explicit=None)
+        elif task_hash == "":
+            effective_task_hash = None
+        else:
+            effective_task_hash = task_hash
+
+        if effective_task_hash:
+            from engram.observer.loader import load_session_continuations
+
+            sessions = tuple(load_session_continuations(project_root=root))
+
     req = RelevanceRequest(
         query=task,
         assets=tuple(assets),
         budget_tokens=budget,
         now=date.today(),
+        task_hash=effective_task_hash,
+        sessions=sessions,
     )
     result = run_relevance_gate(req)
 
