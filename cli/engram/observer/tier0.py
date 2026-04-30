@@ -187,6 +187,11 @@ def compact_session(
 
     written = 0
     parse_errors = 0
+    # Single-write contract (code reviewer C4, 2026-04-30): each line
+    # MUST be one ``out.write(...)`` call so a SIGKILL between the
+    # payload and the trailing newline is impossible. POSIX guarantees
+    # atomicity for writes < PIPE_BUF (>= 512 bytes); events are capped
+    # at 4 KB by ``protocol.MAX_EVENT_BYTES``.
     with open(timeline_path, "a", encoding="utf-8") as out:
         fcntl.flock(out.fileno(), fcntl.LOCK_EX)
         try:
@@ -199,15 +204,14 @@ def compact_session(
                             ensure_ascii=False,
                             separators=(",", ":"),
                         )
+                        + "\n"
                     )
-                    out.write("\n")
                     continue
                 fact = extract_facts(parsed)
                 if fact is None:
                     parse_errors += 1
                     continue
-                out.write(fact.to_line())
-                out.write("\n")
+                out.write(fact.to_line() + "\n")
                 written += 1
             out.flush()
         finally:

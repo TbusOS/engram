@@ -315,7 +315,8 @@ def _scan_session_files(store_root: Path) -> list[dict[str, Any]]:
         if not root.is_dir():
             continue
         for path in root.rglob("sess_*.md"):
-            if not path.is_file():
+            # Security reviewer F5 — refuse to read through symlinks.
+            if not path.is_file() or path.is_symlink():
                 continue
             try:
                 fm, _ = parse_session_file(path)

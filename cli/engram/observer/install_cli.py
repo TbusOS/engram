@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -332,12 +333,18 @@ def status_cmd(fmt: str, base_dir: Path | None) -> None:
         }
         for p in pending
     ]
+
+    # Code reviewer C1 — surface tier errors in status so operators
+    # know when something is silently degrading to mechanical mode.
+    last_error = _read_last_journal_error(base / "journal" / "observer.jsonl")
+
     payload = {
         "observer_pid_file": str(pid_path),
         "observer_pid": pid_value,
         "observer_alive": pid_alive,
         "pending_sessions": pending_rows,
         "pending_count": len(pending_rows),
+        "last_error": last_error,
     }
     if fmt == "json":
         click.echo(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -346,5 +353,32 @@ def status_cmd(fmt: str, base_dir: Path | None) -> None:
     click.echo(f"observer pid:       {pid_value if pid_value else '(none)'}")
     click.echo(f"observer alive:     {pid_alive}")
     click.echo(f"pending sessions:   {len(pending_rows)}")
+    if last_error is not None:
+        click.echo(
+            f"last error:         {last_error['t']} {last_error['tier']} "
+            f"{last_error['session_id']} {last_error['error_type']}"
+        )
     for row in pending_rows[:10]:
         click.echo(f"  - {row['session_id']}  ({row['queue_size_bytes']} bytes)")
+
+
+def _read_last_journal_error(path: Path) -> dict[str, Any] | None:
+    """Return the most-recent line from the observer error journal."""
+    if not path.is_file():
+        return None
+    try:
+        # Cheap "tail -1" without reading the whole file: jump near EOF.
+        size = path.stat().st_size
+        with path.open("rb") as f:
+            f.seek(max(0, size - 4096))
+            tail = f.read().decode("utf-8", errors="replace")
+        last_line = next(
+            (ln for ln in reversed(tail.splitlines()) if ln.strip()),
+            None,
+        )
+        if last_line is None:
+            return None
+        parsed = json.loads(last_line)
+        return parsed if isinstance(parsed, dict) else None
+    except (OSError, ValueError):
+        return None

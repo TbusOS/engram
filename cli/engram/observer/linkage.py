@@ -66,10 +66,20 @@ class LinkageResult:
 
 
 def _iter_session_paths(memory_dir: Path) -> Iterator[Path]:
+    """Yield every session asset path that is a real regular file.
+
+    Security reviewer F5 — refuse to follow symlinks. A malicious
+    project bootstrap could plant ``sess_x.md -> /etc/passwd`` and
+    have its content slurped into the next Tier 1 / Tier 2 prompt.
+    """
     root = sessions_root(memory_dir)
     if not root.is_dir():
         return iter(())
-    return (p for p in root.rglob("sess_*.md") if p.is_file())
+    return (
+        p
+        for p in root.rglob("sess_*.md")
+        if p.is_file() and not p.is_symlink()
+    )
 
 
 def find_predecessor(

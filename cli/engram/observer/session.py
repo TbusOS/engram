@@ -315,9 +315,20 @@ def _str_tuple(value: Any) -> tuple[str, ...]:
 
 
 def _iso(dt: datetime) -> str:
+    """Render a UTC ISO-8601 string preserving sub-second precision.
+
+    The queue + timeline carry millisecond resolution (see
+    ``protocol._server_timestamp``); the Session asset must preserve
+    it too so cross-asset correlation works (code reviewer A2,
+    2026-04-30). Naive datetimes are interpreted as UTC.
+    """
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    utc = dt.astimezone(timezone.utc)
+    if utc.microsecond:
+        ms = utc.microsecond // 1000
+        return utc.strftime("%Y-%m-%dT%H:%M:%S.") + f"{ms:03d}Z"
+    return utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 # ----------------------------------------------------------------------

@@ -36,9 +36,8 @@ with low-quality drafts.
 from __future__ import annotations
 
 import json
-import re
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
@@ -59,8 +58,8 @@ from engram.observer.tier2 import (
 
 __all__ = [
     "DEFAULT_PROCEDURE_PROMPT",
-    "DEFAULT_TIER3_MIN_TASK_RECURRENCES",
     "DEFAULT_TIER3_MIN_COMPLETED",
+    "DEFAULT_TIER3_MIN_TASK_RECURRENCES",
     "ProcedureProposal",
     "ProcedureResult",
     "build_procedure_prompt",
@@ -119,15 +118,23 @@ def build_procedure_prompt(
     *,
     header: str = DEFAULT_PROCEDURE_PROMPT,
 ) -> str:
-    """Render the prompt: header + per-session block (id, hash, body)."""
+    """Render the prompt: header + per-session block (id, hash, body).
+
+    Security reviewer F4 — file paths run through :func:`redact_path`
+    so secret-bearing paths never reach Tier 3 (the most likely tier
+    to point at a hosted LLM endpoint).
+    """
+    from engram.observer.translators import redact_path
+
     parts: list[str] = [header, "## Sessions"]
     for s in sessions:
         parts.append(f"\n### {s.session_id} (outcome={s.outcome})")
         if s.task_hash:
             parts.append(f"task_hash: {s.task_hash}")
         if s.files_touched:
+            safe = [redact_path(f) for f in s.files_touched]
             parts.append(
-                "Files touched: " + ", ".join(f"`{f}`" for f in s.files_touched)
+                "Files touched: " + ", ".join(f"`{f}`" for f in safe)
             )
         parts.append("")
         parts.append(s.body.strip())

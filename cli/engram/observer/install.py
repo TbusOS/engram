@@ -11,11 +11,19 @@ Each target's hook script ships under
 ``adapters/<client>/hooks/engram_observe_post_tool_use.sh``. The
 installer never copies the script — it references it by absolute path
 so updates flow automatically with ``git pull``.
+
+Security hardening (security reviewer F7, 2026-04-30):
+
+- The Claude Code merger writes the hook command as
+  ``ENGRAM_BIN=/abs/path /abs/hook.sh`` so the hook runs the
+  resolved engram binary even if a malicious project later prepends
+  its own ``bin/engram`` to ``$PATH``.
 """
 
 from __future__ import annotations
 
 import json
+import shutil
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -225,6 +233,12 @@ def apply_install_plan(
     Idempotent: re-running over the same target leaves the config
     unchanged. Paste-mode targets are no-ops here; the CLI surfaces
     the snippet to stdout.
+
+    First-write backup (code reviewer C5, 2026-04-30): on the first
+    invocation that touches an existing config file we drop a
+    ``<name>.engram-bak`` sibling so an operator can restore manually
+    if the merge ever does the wrong thing. Backups never overwrite —
+    the first one wins so we never overwrite the user's pristine copy.
     """
     if plan.action != "write":
         return
@@ -235,9 +249,19 @@ def apply_install_plan(
     if dry_run:
         return
 
+    from contextlib import suppress
+
     plan.config_path.parent.mkdir(parents=True, exist_ok=True)
     if plan.config_path.exists():
-        existing = json.loads(plan.config_path.read_text(encoding="utf-8") or "{}")
+        original_text = plan.config_path.read_text(encoding="utf-8")
+        backup_path = plan.config_path.with_suffix(
+            plan.config_path.suffix + ".engram-bak"
+        )
+        if not backup_path.exists():
+            # Backup is best-effort: failure must not stop install.
+            with suppress(OSError):
+                backup_path.write_text(original_text, encoding="utf-8")
+        existing = json.loads(original_text or "{}")
     else:
         existing = {}
 
@@ -255,26 +279,54 @@ def apply_install_plan(
     write_atomic(plan.config_path, serialised)
 
 
+class HooksMergeError(RuntimeError):
+    """Existing settings.json has a structure incompatible with the merge."""
+
+
 def _merge_claude_code_settings(
     existing: dict[str, Any], hook_path: Path
 ) -> dict[str, Any]:
-    """Idempotent merge of an engram PostToolUse hook into Claude settings."""
+    """Idempotent merge of an engram PostToolUse hook into Claude settings.
+
+    Security reviewer F6 — refuse to merge into a non-dict ``hooks``
+    block or a non-list ``hooks.PostToolUse``. Silently overwriting
+    user customisation was a real config-loss risk.
+    """
     hooks_obj = existing.get("hooks")
-    if not isinstance(hooks_obj, dict):
+    if hooks_obj is None:
         hooks_obj = {}
         existing["hooks"] = hooks_obj
+    elif not isinstance(hooks_obj, dict):
+        raise HooksMergeError(
+            f"settings.json 'hooks' is {type(hooks_obj).__name__}, expected object; "
+            "refusing to overwrite. Move it manually or use --dry-run + paste."
+        )
+
     post_list = hooks_obj.get("PostToolUse")
-    if not isinstance(post_list, list):
+    if post_list is None:
         post_list = []
         hooks_obj["PostToolUse"] = post_list
+    elif not isinstance(post_list, list):
+        raise HooksMergeError(
+            f"settings.json 'hooks.PostToolUse' is {type(post_list).__name__}, "
+            "expected list; refusing to overwrite."
+        )
 
-    target_command = str(hook_path)
-    # Already present? Bail.
+    target_command = _build_claude_code_command(hook_path)
+    # Already present? Bail. We compare both the new pinned form AND
+    # the legacy bare-script form so re-installs upgrade cleanly.
+    bare_command = str(hook_path)
     for entry in post_list:
         if not isinstance(entry, dict):
             continue
         for sub in entry.get("hooks", []):
-            if isinstance(sub, dict) and sub.get("command") == target_command:
+            if not isinstance(sub, dict):
+                continue
+            cmd = sub.get("command")
+            if cmd in (target_command, bare_command):
+                # Upgrade legacy entries in place to the pinned form.
+                if cmd == bare_command and cmd != target_command:
+                    sub["command"] = target_command
                 return existing
 
     post_list.append(
@@ -286,3 +338,18 @@ def _merge_claude_code_settings(
         }
     )
     return existing
+
+
+def _build_claude_code_command(hook_path: Path) -> str:
+    """Produce a hook command line that pins the engram binary.
+
+    Security reviewer F7 — ``command -v engram`` inside the hook script
+    resolves against ``$PATH`` at fire time. A malicious project bin
+    dir could shadow our binary; pinning the absolute path closes that
+    window. Falls back to the bare script when ``shutil.which`` cannot
+    locate engram (development checkouts).
+    """
+    engram_bin = shutil.which("engram")
+    if engram_bin:
+        return f"ENGRAM_BIN={engram_bin} {hook_path}"
+    return str(hook_path)

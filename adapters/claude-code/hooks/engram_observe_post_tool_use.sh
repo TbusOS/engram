@@ -19,20 +19,27 @@
 
 set -euo pipefail
 
-session_id="${CLAUDE_SESSION_ID:-${ENGRAM_SESSION_ID:-default}}"
+# Security: honour ENGRAM_BIN written by `engram observer install` so a
+# malicious project bin/ on $PATH cannot shadow our binary (security
+# reviewer F7). Fall back to PATH lookup only when the env var is not
+# set (development checkouts).
+engram_bin="${ENGRAM_BIN:-$(command -v engram 2>/dev/null || true)}"
+[ -x "$engram_bin" ] || exit 0
 
-if ! command -v engram >/dev/null 2>&1; then
-    exit 0
-fi
+# Security: do not invent a session id. F8 — falling back to "default"
+# silently merges every Claude Code instance that forgets to set
+# CLAUDE_SESSION_ID. Refuse cleanly instead.
+session_id="${CLAUDE_SESSION_ID:-${ENGRAM_SESSION_ID:-}}"
+[ -n "$session_id" ] || exit 0
 
 # `--from=claude-code` lets engram parse the host-shaped JSON; if the
 # flag is unrecognised by an older engram, fall back to passing
 # through engram-format JSON verbatim.
-engram observe \
+"$engram_bin" observe \
     --session="${session_id}" \
     --client=claude-code \
     --from=claude-code 2>/dev/null \
-  || engram observe \
+  || "$engram_bin" observe \
     --session="${session_id}" \
     --client=claude-code 2>/dev/null \
   || true

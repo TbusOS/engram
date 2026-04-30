@@ -8,17 +8,17 @@
 
 set -euo pipefail
 
-session_id="${OPENCODE_SESSION_ID:-${ENGRAM_SESSION_ID:-default}}"
+engram_bin="${ENGRAM_BIN:-$(command -v engram 2>/dev/null || true)}"
+[ -x "$engram_bin" ] || exit 0
 
-if ! command -v engram >/dev/null 2>&1; then
-    exit 0
-fi
+session_id="${OPENCODE_SESSION_ID:-${ENGRAM_SESSION_ID:-}}"
+[ -n "$session_id" ] || exit 0
 
-engram observe \
+"$engram_bin" observe \
     --session="${session_id}" \
     --client=opencode \
     --from=claude-code 2>/dev/null \
-  || engram observe \
+  || "$engram_bin" observe \
     --session="${session_id}" \
     --client=opencode 2>/dev/null \
   || true

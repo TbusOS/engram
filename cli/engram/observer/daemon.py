@@ -268,6 +268,10 @@ class DaemonStats:
     pending_sessions_seen: int = 0
     tier0_invocations: int = 0
     tier1_invocations: int = 0
+    tier0_errors: int = 0
+    tier1_errors: int = 0
+    last_error: str | None = None
+    last_error_at: str | None = None
     started_at: float = field(default_factory=time.time)
 
 
@@ -341,14 +345,21 @@ class ObserverDaemon:
         now = self.clock()
 
         for pending in scan_pending_sessions(base=self.base):
+            if self._stop_requested:
+                # Code reviewer C6 — honour SIGTERM mid-tick instead of
+                # waiting for the whole pending-session list to drain.
+                return
             self.stats.pending_sessions_seen += 1
             try:
                 self.tier0_runner(pending)
                 self.stats.tier0_invocations += 1
-            except Exception:
-                # Tier 0 is the floor — never let an exception kill the
-                # daemon. Re-raise only if the runner is the no-op default
-                # (tests may inject a raising runner explicitly).
+            except Exception as exc:
+                # Code reviewer C1 — never silently swallow. Append a
+                # diagnostic line to ``~/.engram/journal/observer.jsonl``
+                # so operators can see what went wrong; counters surface
+                # in ``engram observer status``.
+                self.stats.tier0_errors += 1
+                self._log_error("tier0", pending.session_id, exc)
                 continue
 
             if pending.is_idle(
@@ -358,8 +369,43 @@ class ObserverDaemon:
                 try:
                     self.tier1_runner(pending)
                     self.stats.tier1_invocations += 1
-                except Exception:
+                except Exception as exc:
+                    self.stats.tier1_errors += 1
+                    self._log_error("tier1", pending.session_id, exc)
                     continue
+
+    def _log_error(self, tier: str, session_id: str, exc: Exception) -> None:
+        """Record a tier exception to the daemon journal + stats.
+
+        Best-effort: a failure here MUST NOT abort the tick. The journal
+        path is derived from ``base`` so tests can isolate it via the
+        ``--base`` flag without touching ``~/.engram/``.
+        """
+        from datetime import datetime, timezone
+
+        now_iso = datetime.now(tz=timezone.utc).isoformat(timespec="milliseconds")
+        message = f"{type(exc).__name__}: {exc}"
+        self.stats.last_error = f"{tier}/{session_id}: {message}"
+        self.stats.last_error_at = now_iso
+        try:
+            from engram.core.journal import append_event
+
+            base = self.base if self.base is not None else user_root()
+            path = base / "journal" / "observer.jsonl"
+            append_event(
+                path,
+                {
+                    "t": now_iso,
+                    "tier": tier,
+                    "session_id": session_id,
+                    "error_type": type(exc).__name__,
+                    "message": str(exc)[:1024],
+                },
+            )
+        except Exception:
+            # Last-ditch: never let a logging failure mask the original
+            # exception. Stats already capture the latest error.
+            return
 
 
 @contextmanager

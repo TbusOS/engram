@@ -89,9 +89,14 @@ class ObserveEvent:
 
 
 def _server_timestamp() -> str:
-    return datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.") + (
-        f"{datetime.now(tz=timezone.utc).microsecond // 1000:03d}Z"
-    )
+    """Single-shot UTC ISO-8601 with millisecond precision.
+
+    Calling ``datetime.now()`` twice (once for the second-resolution
+    string and once for the microsecond field) lets the milliseconds
+    drift across the second boundary — code reviewer A1, 2026-04-30.
+    """
+    now = datetime.now(tz=timezone.utc)
+    return now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
 
 
 def parse_event(

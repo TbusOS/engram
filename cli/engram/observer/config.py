@@ -99,21 +99,68 @@ class TierConfig:
         return self.provider == "mechanical"
 
 
-def _resolve_env_ref(value: str | None) -> str | None:
-    """Expand ``$VAR`` and ``${VAR}`` env refs, returning None if unset.
+# Security reviewer F1 — restrict env-var expansion in api_key fields
+# to a closed allowlist. Without this, ``api_key = "$HOME"`` silently
+# sends the home dir as a Bearer token to whatever endpoint Tier N
+# was configured against. The allowlist accepts engram-managed names
+# and the conventional ``*_API_KEY`` / ``*_TOKEN`` patterns.
+_API_KEY_ENV_PREFIXES: tuple[str, ...] = ("ENGRAM_",)
+_API_KEY_ENV_SUFFIXES: tuple[str, ...] = ("_API_KEY", "_TOKEN")
 
-    A literal value with no ``$`` prefix passes through verbatim. This
-    keeps secrets out of the config file while letting users hardcode
-    values when they want.
+
+def _is_api_key_env_name(name: str) -> bool:
+    if name.startswith(_API_KEY_ENV_PREFIXES):
+        return True
+    return any(name.endswith(suffix) for suffix in _API_KEY_ENV_SUFFIXES)
+
+
+def _resolve_env_ref(value: str | None) -> str | None:
+    """Expand ``$VAR`` and ``${VAR}`` env refs for the ``api_key`` field.
+
+    Constraints (security reviewer F1, 2026-04-30):
+
+    - Only env names matching :data:`_API_KEY_ENV_PREFIXES` /
+      ``_API_KEY_ENV_SUFFIXES`` are honoured. Anything else raises
+      :class:`ObserverConfigError` so the daemon never silently sends
+      ``$HOME`` or ``$AWS_SECRET_ACCESS_KEY`` as Bearer auth.
+    - An unset allowlisted env name is also an error — failing closed
+      surfaces "your DEEPSEEK_API_KEY is unset" instead of degrading
+      to anonymous calls or to silent mechanical-only output.
+    - Values containing path separators are rejected because legitimate
+      API tokens never look like ``/Users/...``.
     """
     if value is None:
         return None
     s = value.strip()
-    if s.startswith("${") and s.endswith("}"):
-        return os.environ.get(s[2:-1])
-    if s.startswith("$"):
-        return os.environ.get(s[1:])
-    return s or None
+    if not s:
+        return None
+    if not s.startswith("$"):
+        # Literal token; refuse anything that looks like a filesystem path.
+        if s.startswith(("/", "\\")) or "/" in s:
+            raise ObserverConfigError(
+                "api_key looks like a filesystem path; refusing to send as Bearer"
+            )
+        return s
+
+    name = s[2:-1] if s.startswith("${") and s.endswith("}") else s[1:]
+
+    if not name:
+        raise ObserverConfigError("api_key env reference is missing a variable name")
+    if not _is_api_key_env_name(name):
+        raise ObserverConfigError(
+            f"env var {name!r} is not in the api_key allowlist "
+            f"(prefixes {_API_KEY_ENV_PREFIXES}, suffixes {_API_KEY_ENV_SUFFIXES})"
+        )
+    val = os.environ.get(name)
+    if val is None:
+        raise ObserverConfigError(
+            f"api_key references env var {name!r} but it is unset; "
+            "set it before invoking the observer"
+        )
+    val = val.strip()
+    if not val:
+        raise ObserverConfigError(f"env var {name!r} is empty")
+    return val
 
 
 def load_tier_config(

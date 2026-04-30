@@ -40,6 +40,21 @@ from engram.core.paths import find_project_root, memory_dir, user_root
 __all__ = ["propose_group"]
 
 
+# Security reviewer F3 — Click argument validation. ``name`` reaches
+# this command from a CLI invocation that may have been written by an
+# LLM agent based on attacker-controlled session content; reject
+# anything that could traverse outside ``.memory/workflows/``.
+_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,95}$")
+
+
+def _validate_name(name: str) -> str:
+    if not isinstance(name, str) or not _NAME_RE.match(name):
+        raise click.ClickException(
+            f"invalid name {name!r}; must match {_NAME_RE.pattern}"
+        )
+    return name
+
+
 # ----------------------------------------------------------------------
 # Path helpers
 # ----------------------------------------------------------------------
@@ -186,6 +201,7 @@ last_completion: null
 )
 @click.pass_obj
 def promote_cmd(_cfg: GlobalConfig, name: str, dry_run: bool) -> None:
+    name = _validate_name(name)
     project = find_project_root()
     mem = memory_dir(project)
     wdir = _workflows_dir(mem) / name
@@ -264,6 +280,7 @@ def _slug_reason(reason: str | None) -> str:
 def reject_cmd(
     _cfg: GlobalConfig, name: str, reason: str | None, dry_run: bool
 ) -> None:
+    name = _validate_name(name)
     project = find_project_root()
     mem = memory_dir(project)
     src = _workflows_dir(mem) / name

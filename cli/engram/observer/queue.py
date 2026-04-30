@@ -27,15 +27,18 @@ from engram.observer.protocol import ObserveEvent, render_event_line
 
 __all__ = [
     "DEFAULT_MAX_EVENTS_PER_SESSION",
+    "DEFAULT_MAX_TOTAL_SESSIONS",
     "EnqueueResult",
     "QueueError",
     "QueueFullError",
+    "QueueOverflowError",
     "enqueue",
     "queue_depth",
 ]
 
 
 DEFAULT_MAX_EVENTS_PER_SESSION = 10_000
+DEFAULT_MAX_TOTAL_SESSIONS = 1_000  # security reviewer F8
 
 
 class QueueError(RuntimeError):
@@ -44,6 +47,16 @@ class QueueError(RuntimeError):
 
 class QueueFullError(QueueError):
     """Raised when the per-session queue exceeds the configured cap."""
+
+
+class QueueOverflowError(QueueError):
+    """Raised when the global session count exceeds :data:`DEFAULT_MAX_TOTAL_SESSIONS`.
+
+    Security reviewer F8 — without a global cap, a misbehaving (or
+    malicious) hook that cycles through unique session ids could
+    exhaust inodes / disk in ``~/.engram/observe-queue/`` while every
+    individual queue stays under its 10k cap.
+    """
 
 
 class EnqueueResult:
@@ -74,15 +87,18 @@ def enqueue(
     *,
     base: Path | None = None,
     max_events_per_session: int = DEFAULT_MAX_EVENTS_PER_SESSION,
+    max_total_sessions: int = DEFAULT_MAX_TOTAL_SESSIONS,
     raw_retention: bool = False,
 ) -> EnqueueResult:
     """Append ``event`` to its session queue.
 
-    Atomic across processes via ``fcntl.flock``. The depth check is
-    *advisory*: under heavy concurrency two writers may both observe
-    ``depth = max - 1`` and append, leaving the queue at ``max + 1``.
-    Daemon-side processing tolerates a small overshoot; the cap exists
-    to prevent runaway growth, not to be exact.
+    Atomic across processes via ``fcntl.flock``. Two caps:
+
+    - per-session ``max_events_per_session`` (10k by default) — protects
+      against a single runaway session.
+    - global ``max_total_sessions`` (1k by default, security reviewer
+      F8) — protects against a flood of distinct session ids that
+      would exhaust inodes / disk.
 
     When ``raw_retention`` is True, the full pre-trim payload is also
     appended to ``~/.engram/raw/sessions/<id>.full.jsonl``. The trimmed
@@ -90,6 +106,20 @@ def enqueue(
     """
     queue_path = queue_file_for_session(event.session_id, base=base)
     queue_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Global cap check — only fires when this would create a new
+    # session file. Existing sessions are unaffected.
+    if not queue_path.exists():
+        existing_sessions = sum(
+            1 for p in queue_path.parent.iterdir() if p.suffix == ".jsonl"
+        )
+        if existing_sessions >= max_total_sessions:
+            raise QueueOverflowError(
+                f"observe queue holds {existing_sessions} sessions "
+                f"(>= {max_total_sessions} cap); refusing to create "
+                f"{event.session_id}. Run 'engram observer daemon --once' "
+                "to drain, or increase max_total_sessions."
+            )
 
     line = render_event_line(event) + "\n"
     encoded = line.encode("utf-8")

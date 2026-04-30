@@ -16,8 +16,11 @@ from typing import TypeAlias
 __all__ = [
     "MECHANICAL_MARKER",
     "Provider",
+    "ProviderAuthError",
     "ProviderError",
+    "ProviderRateLimitError",
     "ProviderTimeout",
+    "ProviderUnavailable",
     "mechanical_provider",
 ]
 
@@ -42,6 +45,24 @@ class ProviderError(RuntimeError):
 
 class ProviderTimeout(ProviderError):
     """Raised when an LLM call exceeded the configured timeout."""
+
+
+class ProviderAuthError(ProviderError):
+    """HTTP 401 / 403 — credentials missing, invalid, or expired.
+
+    Code reviewer C3 — subtypes let the daemon journal log auth
+    failures distinctly so users see "Tier 1 keeps falling back to
+    mechanical because your DEEPSEEK_API_KEY is invalid" rather than
+    silent mechanical-only output forever.
+    """
+
+
+class ProviderRateLimitError(ProviderError):
+    """HTTP 429 — rate limited; back off and retry later."""
+
+
+class ProviderUnavailable(ProviderError):
+    """HTTP 5xx / network unreachable — server-side problem."""
 
 
 def mechanical_provider(_prompt: str) -> str:

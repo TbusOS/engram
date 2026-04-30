@@ -34,7 +34,9 @@ from engram.observer import paths as observer_paths
 from engram.observer.protocol import ProtocolError, parse_event
 from engram.observer.queue import (
     DEFAULT_MAX_EVENTS_PER_SESSION,
+    DEFAULT_MAX_TOTAL_SESSIONS,
     QueueFullError,
+    QueueOverflowError,
     enqueue,
 )
 from engram.observer.translators import KNOWN_TRANSLATORS, translate
@@ -112,6 +114,13 @@ def _emit(payload: dict[str, Any], *, fmt: str) -> None:
     help="Hard cap on per-session queue depth before we refuse new events.",
 )
 @click.option(
+    "--max-total-sessions",
+    type=int,
+    default=DEFAULT_MAX_TOTAL_SESSIONS,
+    show_default=True,
+    help="Hard cap on number of distinct sessions in the queue dir (F8).",
+)
+@click.option(
     "--raw-retention/--no-raw-retention",
     default=False,
     help="Also append to ~/.engram/raw/sessions/<id>.full.jsonl (opt-in, 30-day TTL).",
@@ -131,6 +140,7 @@ def observe_cmd(
     from_source: str | None,
     fmt: str,
     max_events_per_session: int,
+    max_total_sessions: int,
     raw_retention: bool,
     base_dir: Path | None,
 ) -> None:
@@ -183,12 +193,16 @@ def observe_cmd(
             event,
             base=base_dir,
             max_events_per_session=max_events_per_session,
+            max_total_sessions=max_total_sessions,
             raw_retention=raw_retention,
         )
     except QueueFullError as exc:
         # Queue full is a non-fatal advisory; we exit 0 with ok=false so
         # client hooks can `|| true` without surfacing an error to users.
         _emit({"ok": False, "reason": "queue_full", "detail": str(exc)}, fmt=fmt)
+        sys.exit(0)
+    except QueueOverflowError as exc:
+        _emit({"ok": False, "reason": "queue_overflow", "detail": str(exc)}, fmt=fmt)
         sys.exit(0)
 
     _emit(

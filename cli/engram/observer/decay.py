@@ -32,11 +32,11 @@ from datetime import date, timedelta
 from engram.observer.session import SessionFrontmatter
 
 __all__ = [
-    "DEFAULT_BASE_TTL_DAYS",
-    "DEFAULT_EXPOSURE_BONUS_PER_HIT_DAYS",
-    "DEFAULT_EXPOSURE_BONUS_CAP_DAYS",
-    "DEFAULT_CONTRADICTED_PENALTY_PER_HIT_DAYS",
     "DEFAULT_ABANDONED_PENALTY_DAYS",
+    "DEFAULT_BASE_TTL_DAYS",
+    "DEFAULT_CONTRADICTED_PENALTY_PER_HIT_DAYS",
+    "DEFAULT_EXPOSURE_BONUS_CAP_DAYS",
+    "DEFAULT_EXPOSURE_BONUS_PER_HIT_DAYS",
     "MIN_TTL_DAYS",
     "DecayDecision",
     "compute_effective_ttl_days",

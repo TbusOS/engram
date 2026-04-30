@@ -107,8 +107,11 @@ timeout_seconds = 300
 # ----------------------------------------------------------------------
 
 
-def test_api_key_env_dollar_expanded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MY_KEY", "secret123")
+def test_api_key_env_dollar_expanded_allowlisted_suffix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``*_API_KEY`` matches the allowlist suffix → expansion permitted."""
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "secret123")
     f = tmp_path / "config.toml"
     _write(
         f,
@@ -117,15 +120,18 @@ def test_api_key_env_dollar_expanded(tmp_path: Path, monkeypatch: pytest.MonkeyP
 provider = "openai-compatible"
 endpoint = "http://x"
 model = "m"
-api_key = "$MY_KEY"
+api_key = "$DEEPSEEK_API_KEY"
 """,
     )
     cfg = load_tier_config(1, config_path=f)
     assert cfg.api_key == "secret123"
 
 
-def test_api_key_env_braces_expanded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MY_KEY", "secret456")
+def test_api_key_env_braces_expanded_allowlisted_prefix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``ENGRAM_*`` matches the allowlist prefix → expansion permitted."""
+    monkeypatch.setenv("ENGRAM_DISTILL_KEY", "secret456")
     f = tmp_path / "config.toml"
     _write(
         f,
@@ -134,15 +140,18 @@ def test_api_key_env_braces_expanded(tmp_path: Path, monkeypatch: pytest.MonkeyP
 provider = "openai-compatible"
 endpoint = "http://x"
 model = "m"
-api_key = "${MY_KEY}"
+api_key = "${ENGRAM_DISTILL_KEY}"
 """,
     )
     cfg = load_tier_config(1, config_path=f)
     assert cfg.api_key == "secret456"
 
 
-def test_api_key_env_unset_yields_none(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("MISSING_KEY", raising=False)
+def test_api_key_env_disallowed_name_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Security reviewer F1 — refuse $HOME / arbitrary env names."""
+    monkeypatch.setenv("HOME", "/Users/victim")
     f = tmp_path / "config.toml"
     _write(
         f,
@@ -151,11 +160,48 @@ def test_api_key_env_unset_yields_none(tmp_path: Path, monkeypatch: pytest.Monke
 provider = "openai-compatible"
 endpoint = "http://x"
 model = "m"
-api_key = "$MISSING_KEY"
+api_key = "$HOME"
 """,
     )
-    cfg = load_tier_config(1, config_path=f)
-    assert cfg.api_key is None
+    with pytest.raises(ObserverConfigError):
+        load_tier_config(1, config_path=f)
+
+
+def test_api_key_env_unset_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Allowlisted but unset env var fails closed (was silently None)."""
+    monkeypatch.delenv("MISSING_API_KEY", raising=False)
+    f = tmp_path / "config.toml"
+    _write(
+        f,
+        """
+[observer.compactor.tier1]
+provider = "openai-compatible"
+endpoint = "http://x"
+model = "m"
+api_key = "$MISSING_API_KEY"
+""",
+    )
+    with pytest.raises(ObserverConfigError):
+        load_tier_config(1, config_path=f)
+
+
+def test_api_key_path_like_literal_rejected(tmp_path: Path) -> None:
+    """A token that looks like a filesystem path is refused."""
+    f = tmp_path / "config.toml"
+    _write(
+        f,
+        """
+[observer.compactor.tier1]
+provider = "openai-compatible"
+endpoint = "http://x"
+model = "m"
+api_key = "/Users/victim"
+""",
+    )
+    with pytest.raises(ObserverConfigError):
+        load_tier_config(1, config_path=f)
 
 
 # ----------------------------------------------------------------------

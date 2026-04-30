@@ -14,14 +14,28 @@ from __future__ import annotations
 
 import json
 import urllib.error
+import urllib.parse
 import urllib.request
 from typing import Any
 
 from engram.observer.providers.base import (
     Provider,
+    ProviderAuthError,
     ProviderError,
+    ProviderRateLimitError,
     ProviderTimeout,
+    ProviderUnavailable,
 )
+
+_ALLOWED_SCHEMES = {"http", "https"}
+
+
+def _validate_endpoint(endpoint: str) -> None:
+    parsed = urllib.parse.urlparse(endpoint)
+    if parsed.scheme not in _ALLOWED_SCHEMES or not parsed.netloc:
+        raise ProviderError(
+            f"ollama endpoint must be http(s)://; got {endpoint!r}"
+        )
 
 __all__ = ["make_ollama_provider"]
 
@@ -43,6 +57,7 @@ def make_ollama_provider(
     production it stays ``None`` and we use ``urllib.request.urlopen``
     directly.
     """
+    _validate_endpoint(endpoint)
     url = endpoint.rstrip("/") + "/api/generate"
 
     def _call(prompt: str) -> str:
@@ -65,12 +80,28 @@ def make_ollama_provider(
                 resp = opener(req, timeout=timeout_seconds)
             else:
                 resp = urllib.request.urlopen(req, timeout=timeout_seconds)
+        except urllib.error.HTTPError as exc:
+            if exc.code in (401, 403):
+                raise ProviderAuthError(
+                    f"ollama auth failure (HTTP {exc.code}): {exc.reason}"
+                ) from exc
+            if exc.code == 429:
+                raise ProviderRateLimitError(
+                    f"ollama rate limited (HTTP 429): {exc.reason}"
+                ) from exc
+            if 500 <= exc.code < 600:
+                raise ProviderUnavailable(
+                    f"ollama server error (HTTP {exc.code}): {exc.reason}"
+                ) from exc
+            raise ProviderError(
+                f"ollama HTTP {exc.code}: {exc.reason}"
+            ) from exc
         except urllib.error.URLError as exc:
             if "timed out" in str(exc).lower():
                 raise ProviderTimeout(
                     f"ollama call timed out after {timeout_seconds}s: {exc}"
                 ) from exc
-            raise ProviderError(f"ollama HTTP error: {exc}") from exc
+            raise ProviderUnavailable(f"ollama unreachable: {exc}") from exc
         except TimeoutError as exc:
             raise ProviderTimeout(
                 f"ollama call timed out after {timeout_seconds}s: {exc}"

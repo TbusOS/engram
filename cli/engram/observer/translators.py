@@ -19,16 +19,61 @@ The set of supported ``--from`` values is exposed as
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from typing import Any
 
 __all__ = [
     "KNOWN_TRANSLATORS",
+    "REDACTED_PATH_MARKER",
+    "SECRET_PATH_PATTERNS",
     "Translator",
+    "is_secret_path",
+    "redact_path",
     "translate",
     "translate_claude_code",
     "translate_codex",
 ]
+
+
+# Security reviewer F4 — file paths flow from hook payloads into the
+# Session asset frontmatter, the Tier 0 timeline, and (worst case) the
+# Tier 2 / Tier 3 prompt sent to a hosted LLM. Even just the *name*
+# of ``/etc/shadow`` or ``~/.aws/credentials`` is sensitive metadata,
+# and the LLM might learn enough from a session body to attempt path-
+# guessing in a later interaction. We never let secret-bearing paths
+# enter the pipeline; they get replaced by a marker string instead.
+SECRET_PATH_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"(^|/)\.aws(/|$)"),
+    re.compile(r"(^|/)\.ssh(/|$)"),
+    re.compile(r"(^|/)\.gnupg(/|$)"),
+    re.compile(r"(^|/)\.kube(/|$)"),
+    re.compile(r"(^|/)\.netrc$"),
+    re.compile(r"(^|/)\.pgpass$"),
+    re.compile(r"(^|/)\.env(\.[^/]+)?$"),
+    re.compile(r"\.pem$"),
+    re.compile(r"\.key$"),
+    re.compile(r"\.p12$"),
+    re.compile(r"\.pfx$"),
+    re.compile(r"id_(rsa|ed25519|ecdsa|dsa)(\.pub)?$"),
+    re.compile(r"^/etc/(shadow|passwd|sudoers|gshadow)(/|$)"),
+    re.compile(r"(^|/)credentials(\.[a-z0-9]+)?$", re.IGNORECASE),
+    re.compile(r"(^|/)secret[s]?(/|\.|$)", re.IGNORECASE),
+)
+
+REDACTED_PATH_MARKER = "<redacted-secret-path>"
+
+
+def is_secret_path(path: str) -> bool:
+    """Return True when ``path`` matches any :data:`SECRET_PATH_PATTERNS`."""
+    if not isinstance(path, str) or not path:
+        return False
+    return any(rx.search(path) for rx in SECRET_PATH_PATTERNS)
+
+
+def redact_path(path: str) -> str:
+    """Return ``path`` if safe, else :data:`REDACTED_PATH_MARKER`."""
+    return REDACTED_PATH_MARKER if is_secret_path(path) else path
 
 
 Translator = Callable[[dict[str, Any]], dict[str, Any] | None]
@@ -101,7 +146,9 @@ def _extract_files_from_input(tool_input: dict[str, Any]) -> list[str]:
 
     Looks at the standard keys Claude Code uses: file_path, paths,
     file_paths, target. Skips non-string values and dedupes while
-    preserving first-seen order.
+    preserving first-seen order. Paths matching
+    :data:`SECRET_PATH_PATTERNS` are replaced with
+    :data:`REDACTED_PATH_MARKER` (security reviewer F4).
     """
     candidates: list[str] = []
     for key in ("file_path", "path", "target", "filename"):
@@ -117,9 +164,10 @@ def _extract_files_from_input(tool_input: dict[str, Any]) -> list[str]:
     seen: set[str] = set()
     out: list[str] = []
     for c in candidates:
-        if c not in seen:
-            seen.add(c)
-            out.append(c)
+        redacted = redact_path(c)
+        if redacted not in seen:
+            seen.add(redacted)
+            out.append(redacted)
     return out
 
 

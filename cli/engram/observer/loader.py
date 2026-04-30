@@ -43,7 +43,12 @@ def iter_session_files(
         root = sessions_root(user_root())
     if not root.is_dir():
         return iter(())
-    return (p for p in root.rglob("sess_*.md") if p.is_file())
+    # Security reviewer F5 — never traverse symlinks under sessions/.
+    return (
+        p
+        for p in root.rglob("sess_*.md")
+        if p.is_file() and not p.is_symlink()
+    )
 
 
 def session_to_continuation(path: Path) -> SessionContinuation | None:

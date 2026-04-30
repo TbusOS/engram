@@ -181,13 +181,22 @@ def build_distill_prompt(
     *,
     header: str = DEFAULT_DISTILL_PROMPT,
 ) -> str:
-    """Render the full prompt: header + each session's body block."""
+    """Render the full prompt: header + each session's body block.
+
+    Security reviewer F4 — file paths in ``files_touched`` are routed
+    through :func:`redact_path` before they ever leave the process,
+    even though the ingest translator already redacts. Sessions
+    written before the F4 fix are still safe.
+    """
+    from engram.observer.translators import redact_path
+
     parts: list[str] = [header, "## Sessions"]
     for s in sessions:
         parts.append(f"\n### {s.session_id} (outcome={s.outcome})")
         if s.files_touched:
+            safe = [redact_path(f) for f in s.files_touched]
             parts.append(
-                "Files touched: " + ", ".join(f"`{f}`" for f in s.files_touched)
+                "Files touched: " + ", ".join(f"`{f}`" for f in safe)
             )
         if s.task_hash:
             parts.append(f"task_hash: {s.task_hash}")

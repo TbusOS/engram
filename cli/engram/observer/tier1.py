@@ -46,13 +46,24 @@ from engram.observer.session import (
 from engram.observer.tier0 import render_narrative_from_timeline
 
 __all__ = [
+    "AUTO_BLOCK_END",
+    "AUTO_BLOCK_START",
     "DEFAULT_PROMPT_HEADER",
     "Tier1Result",
     "build_prompt",
     "compact_to_narrative",
     "compact_to_session_asset",
+    "merge_auto_block",
     "summarize_timeline",
 ]
+
+
+# Code reviewer A8 — daemon-owned region markers. Tier 1 only rewrites
+# the bytes BETWEEN these comments; everything outside survives. Same
+# pattern the file-based adapters (T-53/54/55) use for CLAUDE.md /
+# AGENTS.md so users have one consistent mental model.
+AUTO_BLOCK_START = "<!-- engram:auto:start -->"
+AUTO_BLOCK_END = "<!-- engram:auto:end -->"
 
 
 # ----------------------------------------------------------------------
@@ -195,7 +206,15 @@ def _parse_iso(s: str) -> datetime | None:
 
 
 def build_prompt(summary: TimelineSummary, *, header: str = DEFAULT_PROMPT_HEADER) -> str:
-    """Render a self-contained prompt: header + structured facts."""
+    """Render a self-contained prompt: header + structured facts.
+
+    Security reviewer F4 — applies :func:`redact_path` defence-in-depth
+    on file fields. The translator already redacts at ingest, but a
+    timeline could pre-date the F4 fix or the user could have written
+    Session assets directly.
+    """
+    from engram.observer.translators import redact_path
+
     facts: list[str] = []
     facts.append(f"Tool calls: {summary.tool_calls}")
     facts.append(f"User prompts: {summary.user_prompts}")
@@ -206,10 +225,12 @@ def build_prompt(summary: TimelineSummary, *, header: str = DEFAULT_PROMPT_HEADE
         )
         facts.append(f"Tools used: {items}")
     if summary.files_touched:
-        facts.append("Files touched: " + ", ".join(f"`{f}`" for f in summary.files_touched))
+        safe_paths = [redact_path(f) for f in summary.files_touched]
+        facts.append("Files touched: " + ", ".join(f"`{f}`" for f in safe_paths))
     if summary.files_modified:
+        safe_paths = [redact_path(f) for f in summary.files_modified]
         facts.append(
-            "Files modified: " + ", ".join(f"`{f}`" for f in summary.files_modified)
+            "Files modified: " + ", ".join(f"`{f}`" for f in safe_paths)
         )
     if summary.errors:
         facts.append("Errors recorded:")
@@ -250,6 +271,53 @@ def compact_to_narrative(
     if not text:
         return render_narrative_from_timeline(timeline_path)
     return text + ("\n" if not text.endswith("\n") else "")
+
+
+def merge_auto_block(existing_body: str, new_narrative: str) -> str:
+    """Splice ``new_narrative`` between ``AUTO_BLOCK_START`` / ``AUTO_BLOCK_END``.
+
+    Behaviour:
+
+    - First-time write (no markers in ``existing_body``): the result is
+      ``<markers + new_narrative>``. Any pre-existing body content
+      (e.g. user notes added before the first daemon run) is preserved
+      and the daemon block is appended after it.
+    - Subsequent writes: the bytes BETWEEN the markers are replaced;
+      any user content outside the markers — even directly after
+      ``AUTO_BLOCK_END`` — is kept verbatim.
+    - Multiple markers (manual edit gone wrong): the FIRST start..end
+      pair wins; the rest of the file is left alone.
+
+    Tests: see ``test_observer_tier1.py::test_merge_*`` block.
+    """
+    new_block = (
+        AUTO_BLOCK_START
+        + "\n"
+        + new_narrative.rstrip("\n")
+        + "\n"
+        + AUTO_BLOCK_END
+        + "\n"
+    )
+    start_idx = existing_body.find(AUTO_BLOCK_START)
+    if start_idx < 0:
+        # No markers yet. Preserve any existing user content; append
+        # the daemon block. If the existing body is empty, just emit
+        # the block.
+        if not existing_body.strip():
+            return new_block
+        sep = "" if existing_body.endswith("\n") else "\n"
+        return existing_body + sep + "\n" + new_block
+
+    end_idx = existing_body.find(AUTO_BLOCK_END, start_idx + len(AUTO_BLOCK_START))
+    if end_idx < 0:
+        # Half-broken markers — replace everything from the start to EOF.
+        return existing_body[:start_idx] + new_block
+
+    after_end = end_idx + len(AUTO_BLOCK_END)
+    # Eat one trailing newline so we don't leak duplicate blank lines.
+    if after_end < len(existing_body) and existing_body[after_end] == "\n":
+        after_end += 1
+    return existing_body[:start_idx] + new_block + existing_body[after_end:]
 
 
 @dataclass(frozen=True)
@@ -333,7 +401,17 @@ def compact_to_session_asset(
         )
 
     asset_path.parent.mkdir(parents=True, exist_ok=True)
-    write_atomic(asset_path, render_session_file(fm, body))
+    # Code reviewer A8 — preserve user edits outside the auto block.
+    existing_body = ""
+    if asset_path.exists():
+        from contextlib import suppress
+
+        from engram.observer.session import parse_session_file
+
+        with suppress(Exception):
+            _, existing_body = parse_session_file(asset_path)
+    merged_body = merge_auto_block(existing_body, body)
+    write_atomic(asset_path, render_session_file(fm, merged_body))
 
     # T-207: cross-session task linkage. Best-effort — never raises.
     if task_hash:
@@ -384,8 +462,16 @@ def session_destination_dir(
 
 
 def all_session_files(*, project_root: Path | None = None) -> Iterable[Path]:
-    """Iterate over every session asset under the chosen destination."""
+    """Iterate over every session asset under the chosen destination.
+
+    Security reviewer F5 — drop symlinks so we never read through to
+    attacker-controlled targets.
+    """
     root = session_destination_dir(project_root=project_root)
     if not root.is_dir():
         return iter(())
-    return (p for p in root.rglob("sess_*.md") if p.is_file())
+    return (
+        p
+        for p in root.rglob("sess_*.md")
+        if p.is_file() and not p.is_symlink()
+    )

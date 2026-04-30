@@ -26,6 +26,7 @@ principle 4 requires *deliberate action*, not human eyeballs.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Iterable
 from datetime import date, datetime
 from pathlib import Path
@@ -39,6 +40,20 @@ from engram.core.fs import write_atomic
 from engram.core.paths import find_project_root, memory_dir, user_root
 
 __all__ = ["distill_group"]
+
+
+# Security reviewer F3 — `<name>` arrives from CLI / LLM hooks. A
+# slug-shaped regex prevents path-traversal joins like
+# ``.memory/distilled/../../etc/foo.proposed.md``.
+_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,95}$")
+
+
+def _validate_name(name: str) -> str:
+    if not isinstance(name, str) or not _NAME_RE.match(name):
+        raise click.ClickException(
+            f"invalid name {name!r}; must match {_NAME_RE.pattern}"
+        )
+    return name
 
 
 # ----------------------------------------------------------------------
@@ -186,6 +201,7 @@ def promote_cmd(
     enforcement: str | None,
     dry_run: bool,
 ) -> None:
+    name = _validate_name(name)
     project = find_project_root()
     mem = memory_dir(project)
     src = _distilled_dir(mem) / f"{name}.proposed.md"
@@ -249,6 +265,10 @@ def _stamp_source_sessions(
         if not root.is_dir():
             continue
         for path in root.rglob("sess_*.md"):
+            # Security reviewer F5 — never follow symlinks; skip anything
+            # that is not a real regular file.
+            if not path.is_file() or path.is_symlink():
+                continue
             try:
                 fm, body = parse_session_file(path)
             except Exception:
@@ -310,6 +330,7 @@ def _stamp_source_sessions(
 def reject_cmd(
     _cfg: GlobalConfig, name: str, reason: str | None, dry_run: bool
 ) -> None:
+    name = _validate_name(name)
     project = find_project_root()
     mem = memory_dir(project)
     src = _distilled_dir(mem) / f"{name}.proposed.md"
