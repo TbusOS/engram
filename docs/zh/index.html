@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · 自动续接 MVP</span>
-  <span>自动续接安全 + 生产化审计完工:并行 code-reviewer + security-reviewer 双 agent 报出 5 CRITICAL + 9 HIGH,全部修完(env 白名单 / 跨 host 重定向去 auth / 秘密路径 denylist / symlink 跳过 / Tier 1 marker 块 / daemon 错误 journal 等)。1104 单测,M4 P0 parity 转绿。</span>
+  <span>Observer 加固批次落地:count sidecar 把队列深度查询降到 O(1)、Tier 0 排空即截断、session 文件 1 MB 有界读取、prompt 256 KB 硬预算、payload 键白名单 —— 每项修复 commit 前都过并行 code-reviewer + security-reviewer 双 agent 复审。1116 单测,ruff + mypy strict 全绿。</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">加入讨论区</a>
 </div>
 
