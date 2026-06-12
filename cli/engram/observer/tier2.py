@@ -55,6 +55,7 @@ from engram.observer.session import (
 __all__ = [
     "DEFAULT_DISTILL_PROMPT",
     "DEFAULT_TIER2_MIN_SESSIONS",
+    "MAX_PROMPT_BYTES",
     "DistillResult",
     "DistilledCandidate",
     "build_distill_prompt",
@@ -70,6 +71,14 @@ __all__ = [
 
 DEFAULT_TIER2_MIN_SESSIONS = 5
 
+# F13 (2026-05-02) — total prompt byte budget. Distillation prompts can
+# accumulate across dozens of sessions; without a cap a degenerate
+# repository could feed >100 MB to the provider. 256 KB keeps us well
+# inside both Anthropic and OpenAI context windows after the model
+# tokenises (UTF-8 → tokens is roughly 1:0.3) while still letting Tier 2
+# see ~30+ medium sessions per call.
+MAX_PROMPT_BYTES = 256_000
+
 
 # ----------------------------------------------------------------------
 # Path helpers
@@ -82,6 +91,14 @@ def distilled_dir(*, memory_dir: Path) -> Path:
 
 
 _SLUG_BAD = re.compile(r"[^a-z0-9]+")
+
+
+def _truncate_utf8(text: str, limit: int) -> str:
+    """Cut ``text`` to at most ``limit`` UTF-8 bytes on a char boundary."""
+    raw = text.encode("utf-8")
+    if len(raw) <= limit:
+        return text
+    return raw[:limit].decode("utf-8", errors="ignore")
 
 
 def slugify_topic(name: str) -> str:
@@ -180,6 +197,7 @@ def build_distill_prompt(
     sessions: Sequence[SessionForDistill],
     *,
     header: str = DEFAULT_DISTILL_PROMPT,
+    max_bytes: int = MAX_PROMPT_BYTES,
 ) -> str:
     """Render the full prompt: header + each session's body block.
 
@@ -187,21 +205,42 @@ def build_distill_prompt(
     through :func:`redact_path` before they ever leave the process,
     even though the ingest translator already redacts. Sessions
     written before the F4 fix are still safe.
+
+    F13 (2026-05-02) — incremental rendering stops once the running
+    UTF-8 byte count would exceed ``max_bytes``; the budget is a hard
+    cap, so a first session that alone exceeds it gets its body
+    byte-truncated rather than shipped whole (review 2026-06-13).
+    Caller is expected to order ``sessions`` newest-first if it wants
+    the freshest evidence preserved when truncation kicks in.
     """
     from engram.observer.translators import redact_path
 
     parts: list[str] = [header, "## Sessions"]
+    # +1 per part: ``"\n".join(parts) + "\n"`` costs exactly one newline
+    # byte per part, so this running total is the exact rendered size.
+    running = sum(len(p.encode("utf-8")) + 1 for p in parts)
     for s in sessions:
-        parts.append(f"\n### {s.session_id} (outcome={s.outcome})")
+        block: list[str] = [f"\n### {s.session_id} (outcome={s.outcome})"]
         if s.files_touched:
             safe = [redact_path(f) for f in s.files_touched]
-            parts.append(
-                "Files touched: " + ", ".join(f"`{f}`" for f in safe)
-            )
+            block.append("Files touched: " + ", ".join(f"`{f}`" for f in safe))
         if s.task_hash:
-            parts.append(f"task_hash: {s.task_hash}")
-        parts.append("")
-        parts.append(s.body.strip())
+            block.append(f"task_hash: {s.task_hash}")
+        block.append("")
+        block.append(s.body.strip())
+        block_bytes = sum(len(p.encode("utf-8")) + 1 for p in block)
+        if running + block_bytes > max_bytes:
+            if len(parts) > 2:
+                break
+            # First session block: keep it so the prompt is never empty,
+            # but byte-truncate the body to honor the hard cap.
+            overshoot = running + block_bytes - max_bytes
+            body_limit = max(0, len(block[-1].encode("utf-8")) - overshoot)
+            block[-1] = _truncate_utf8(block[-1], body_limit)
+            parts.extend(block)
+            break
+        parts.extend(block)
+        running += block_bytes
     return "\n".join(parts) + "\n"
 
 

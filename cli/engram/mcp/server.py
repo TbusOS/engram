@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TextIO
@@ -137,7 +138,9 @@ def _tool_error(id_: Any, message: str) -> dict[str, Any]:
     )
 
 
-_METHODS: dict[str, Any] = {
+_MethodHandler = Callable[[dict[str, Any], "ServerContext"], dict[str, Any]]
+
+_METHODS: dict[str, _MethodHandler] = {
     "initialize": _handle_initialize,
     "tools/list": _handle_tools_list,
     "tools/call": _handle_tools_call,

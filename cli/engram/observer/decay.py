@@ -131,6 +131,14 @@ def decide_decay(
     effective_ttl = max(min_ttl_days, raw_ttl)
 
     anchor_dt = fm.ended_at if fm.ended_at is not None else fm.started_at
+    if anchor_dt is None:
+        # A5 (2026-05-02) — synthetic frontmatter with neither
+        # ``started_at`` nor ``ended_at`` should never reach decay; raise
+        # a clear error instead of letting ``.date()`` blow up below.
+        raise ValueError(
+            f"session {fm.session_id} has no started_at/ended_at; "
+            "cannot compute decay anchor"
+        )
     anchor = anchor_dt.date()
     expires = anchor + timedelta(days=effective_ttl)
     archivable = today >= expires

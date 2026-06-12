@@ -12,8 +12,10 @@ from engram.observer.session import (
     CLIENT_VALUES,
     DEFAULT_ENFORCEMENT,
     DEFAULT_SCOPE,
+    MAX_SESSION_FILE_BYTES,
     OUTCOME_VALUES,
     SessionConfidence,
+    SessionFrontmatter,
     SessionParseError,
     parse_session_file,
     parse_session_frontmatter,
@@ -259,3 +261,40 @@ def test_session_path_validates_id(tmp_path: Path) -> None:
     started = datetime(2026, 4, 26, 14, 0, 0, tzinfo=timezone.utc)
     with pytest.raises(Exception):  # InvalidSessionIdError
         session_path("BAD/ID", started_at=started, memory_dir=tmp_path)
+
+
+# ----------------------------------------------------------------------
+# F12 — file size cap (2026-05-02) + bounded read (review 2026-06-13)
+# ----------------------------------------------------------------------
+
+
+def test_parse_rejects_file_over_size_cap(tmp_path: Path) -> None:
+    f = tmp_path / "sess.md"
+    f.write_bytes(b"-" * (MAX_SESSION_FILE_BYTES + 1))
+    with pytest.raises(SessionParseError, match="F12"):
+        parse_session_file(f)
+
+
+def test_parse_accepts_file_at_size_cap_boundary(tmp_path: Path) -> None:
+    started = datetime(2026, 6, 13, 14, 0, 0, tzinfo=timezone.utc)
+    fm = SessionFrontmatter(
+        type="session",
+        session_id="cap_test",
+        client="claude-code",
+        started_at=started,
+        ended_at=None,
+    )
+    text = render_session_file(fm, "body\n")
+    padded = text + "x" * (MAX_SESSION_FILE_BYTES - len(text.encode("utf-8")))
+    f = tmp_path / "sess.md"
+    f.write_text(padded, encoding="utf-8")
+    assert len(padded.encode("utf-8")) == MAX_SESSION_FILE_BYTES
+    fm2, _ = parse_session_file(f)
+    assert fm2.session_id == "cap_test"
+
+
+def test_parse_rejects_non_utf8(tmp_path: Path) -> None:
+    f = tmp_path / "sess.md"
+    f.write_bytes(b"---\xff\xfe\ntype: session\n---\nbody\n")
+    with pytest.raises(SessionParseError, match="UTF-8"):
+        parse_session_file(f)

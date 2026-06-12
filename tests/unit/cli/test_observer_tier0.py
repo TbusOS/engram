@@ -148,14 +148,25 @@ def test_compact_records_parse_errors(tmp_path: Path) -> None:
     assert result.facts_written == 0
 
 
-def test_compact_appends_only(tmp_path: Path) -> None:
+def test_compact_truncates_queue_after_drain(tmp_path: Path) -> None:
+    """A7 (2026-05-02) — Tier 0 truncates the queue + sidecar count.
+
+    Re-running compaction on the same queue must produce zero new
+    timeline rows; the sidecar count file must reset to 0.
+    """
     queue_path = _enqueue(tmp_path, {"event": "tool_use", "tool": "Read"})
     sessions_dir = tmp_path / "out"
     compact_session("sess_abc", queue_path=queue_path, sessions_dir=sessions_dir)
-    # second pass on same queue → duplicates expected per docstring
-    compact_session("sess_abc", queue_path=queue_path, sessions_dir=sessions_dir)
+    assert queue_path.stat().st_size == 0
+    sidecar = queue_path.with_suffix(".count")
+    assert sidecar.read_text().strip() == "0"
+
+    second = compact_session(
+        "sess_abc", queue_path=queue_path, sessions_dir=sessions_dir
+    )
+    assert second.facts_written == 0
     timeline = (sessions_dir / "sess_abc.timeline.jsonl").read_text().splitlines()
-    assert len(timeline) == 2
+    assert len(timeline) == 1
 
 
 # ----------------------------------------------------------------------

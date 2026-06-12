@@ -117,27 +117,51 @@ def build_procedure_prompt(
     sessions: Sequence[SessionForDistill],
     *,
     header: str = DEFAULT_PROCEDURE_PROMPT,
+    max_bytes: int | None = None,
 ) -> str:
     """Render the prompt: header + per-session block (id, hash, body).
 
     Security reviewer F4 — file paths run through :func:`redact_path`
     so secret-bearing paths never reach Tier 3 (the most likely tier
     to point at a hosted LLM endpoint).
+
+    F13 (2026-05-02) — bytes-budget caps the running prompt size; once
+    a session block would push past the cap we stop appending. The cap
+    is hard: a first session that alone exceeds it gets its body
+    byte-truncated rather than shipped whole (review 2026-06-13).
+    Default is :data:`engram.observer.tier2.MAX_PROMPT_BYTES`.
     """
+    from engram.observer.tier2 import MAX_PROMPT_BYTES, _truncate_utf8
     from engram.observer.translators import redact_path
 
+    cap = MAX_PROMPT_BYTES if max_bytes is None else max_bytes
+
     parts: list[str] = [header, "## Sessions"]
+    # +1 per part: ``"\n".join(parts) + "\n"`` costs exactly one newline
+    # byte per part, so this running total is the exact rendered size.
+    running = sum(len(p.encode("utf-8")) + 1 for p in parts)
     for s in sessions:
-        parts.append(f"\n### {s.session_id} (outcome={s.outcome})")
+        block: list[str] = [f"\n### {s.session_id} (outcome={s.outcome})"]
         if s.task_hash:
-            parts.append(f"task_hash: {s.task_hash}")
+            block.append(f"task_hash: {s.task_hash}")
         if s.files_touched:
             safe = [redact_path(f) for f in s.files_touched]
-            parts.append(
-                "Files touched: " + ", ".join(f"`{f}`" for f in safe)
-            )
-        parts.append("")
-        parts.append(s.body.strip())
+            block.append("Files touched: " + ", ".join(f"`{f}`" for f in safe))
+        block.append("")
+        block.append(s.body.strip())
+        block_bytes = sum(len(p.encode("utf-8")) + 1 for p in block)
+        if running + block_bytes > cap:
+            if len(parts) > 2:
+                break
+            # First session block: keep it so the prompt is never empty,
+            # but byte-truncate the body to honor the hard cap.
+            overshoot = running + block_bytes - cap
+            body_limit = max(0, len(block[-1].encode("utf-8")) - overshoot)
+            block[-1] = _truncate_utf8(block[-1], body_limit)
+            parts.extend(block)
+            break
+        parts.extend(block)
+        running += block_bytes
     return "\n".join(parts) + "\n"
 
 

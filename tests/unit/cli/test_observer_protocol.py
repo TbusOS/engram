@@ -33,16 +33,24 @@ def test_parse_minimal_tool_use() -> None:
     assert event.server_t == "2026-04-26T14:00:00.000Z"
 
 
-def test_parse_passes_through_extra_fields() -> None:
+def test_parse_keeps_known_fields_drops_unknown() -> None:
+    """F14 (2026-05-02) — only :data:`ALLOWED_PAYLOAD_KEYS` survive."""
     event = parse_event(
-        {"event": "tool_use", "tool": "Edit", "files": ["a.py"], "diff_lines": 5},
+        {
+            "event": "tool_use",
+            "tool": "Edit",
+            "files": ["a.py"],
+            "diff_lines_added": 5,
+            "x_unknown": "smuggled",
+        },
         session_id="sess_abc",
         client="codex",
     )
     line = json.loads(render_event_line(event))
     assert line["tool"] == "Edit"
     assert line["files"] == ["a.py"]
-    assert line["diff_lines"] == 5
+    assert line["diff_lines_added"] == 5
+    assert "x_unknown" not in line
 
 
 def test_to_line_dict_has_canonical_order() -> None:

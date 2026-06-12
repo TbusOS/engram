@@ -69,7 +69,7 @@ def _move_and_rewrite(
     return dst
 
 
-def _journal_event(event_type: str, fm: dict[str, Any], extra: dict) -> None:
+def _journal_event(event_type: str, fm: dict[str, Any], extra: dict[str, Any]) -> None:
     payload: dict[str, Any] = {
         "timestamp": _now_iso(),
         "event": event_type,

@@ -137,3 +137,22 @@ def test_decide_decay_as_dict() -> None:
     assert out["session_id"] == "abc"
     assert out["effective_ttl_days"] == 30
     assert "expires_on" in out
+
+
+# ----------------------------------------------------------------------
+# A5 (2026-05-02) — no time anchor
+# ----------------------------------------------------------------------
+
+
+def test_decide_decay_raises_without_time_anchor() -> None:
+    import pytest
+
+    fm = SessionFrontmatter(
+        type="session",
+        session_id="abc",
+        client="claude-code",
+        started_at=None,  # type: ignore[arg-type]  # synthetic: parser never emits this
+        ended_at=None,
+    )
+    with pytest.raises(ValueError, match="decay anchor"):
+        decide_decay(fm, today=date(2026, 6, 13))

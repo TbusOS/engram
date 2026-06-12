@@ -17,6 +17,7 @@ from engram.core.paths import user_root
 __all__ = [
     "OBSERVER_PID_FILE",
     "archive_raw_dir",
+    "count_file_for_session",
     "observe_queue_dir",
     "queue_file_for_session",
     "raw_queue_file_for_session",
@@ -69,6 +70,18 @@ def queue_file_for_session(session_id: str, *, base: Path | None = None) -> Path
     """Path to the per-session enqueue jsonl file."""
     sid = validate_session_id(session_id)
     return observe_queue_dir(base=base) / f"{sid}.jsonl"
+
+
+def count_file_for_session(session_id: str, *, base: Path | None = None) -> Path:
+    """Sidecar holding the queue line count as a decimal integer.
+
+    A3/F10 (2026-05-02) — keeps :func:`engram.observer.queue.enqueue` O(1)
+    instead of re-scanning the queue on every write. The file lives next
+    to the queue jsonl with a ``.count`` suffix and is updated under the
+    same flock that protects the queue.
+    """
+    sid = validate_session_id(session_id)
+    return observe_queue_dir(base=base) / f"{sid}.count"
 
 
 def raw_sessions_dir(*, base: Path | None = None) -> Path:

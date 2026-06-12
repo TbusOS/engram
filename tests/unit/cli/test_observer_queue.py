@@ -140,3 +140,51 @@ def test_raw_retention_on_writes_full_file(tmp_path: Path) -> None:
     assert raw_path.exists()
     content = raw_path.read_text().strip()
     assert json.loads(content)["client"] == "claude-code"
+
+
+# ------------------------------------------------------------------
+# A3/F10 (2026-05-02) — O(1) sidecar count
+# ------------------------------------------------------------------
+
+
+def test_sidecar_seeded_on_first_enqueue(tmp_path: Path) -> None:
+    from engram.observer.paths import count_file_for_session
+
+    enqueue(_event(), base=tmp_path)
+    sidecar = count_file_for_session("sess_abc", base=tmp_path)
+    assert sidecar.read_text().strip() == "1"
+
+
+def test_sidecar_recovers_after_deletion(tmp_path: Path) -> None:
+    from engram.observer.paths import count_file_for_session
+
+    for _ in range(3):
+        enqueue(_event(), base=tmp_path)
+    sidecar = count_file_for_session("sess_abc", base=tmp_path)
+    sidecar.unlink()
+    enqueue(_event(), base=tmp_path)
+    assert sidecar.read_text().strip() == "4"
+
+
+def test_sidecar_recovers_from_corrupt_content(tmp_path: Path) -> None:
+    from engram.observer.paths import count_file_for_session
+
+    for _ in range(2):
+        enqueue(_event(), base=tmp_path)
+    sidecar = count_file_for_session("sess_abc", base=tmp_path)
+    sidecar.write_text("not-a-number\n")
+    assert queue_depth("sess_abc", base=tmp_path) == 2
+    enqueue(_event(), base=tmp_path)
+    assert sidecar.read_text().strip() == "3"
+
+
+def test_queue_depth_shared_lock_never_seeds_sidecar(tmp_path: Path) -> None:
+    """Two concurrent shared-lock readers would race on the sidecar's tmp
+    file, so the read path must not persist (review 2026-06-13)."""
+    from engram.observer.paths import count_file_for_session
+
+    enqueue(_event(), base=tmp_path)
+    sidecar = count_file_for_session("sess_abc", base=tmp_path)
+    sidecar.unlink()
+    assert queue_depth("sess_abc", base=tmp_path) == 1
+    assert not sidecar.exists()

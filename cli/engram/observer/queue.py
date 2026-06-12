@@ -22,7 +22,11 @@ import time
 from pathlib import Path
 from typing import Any
 
-from engram.observer.paths import queue_file_for_session, raw_session_file
+from engram.observer.paths import (
+    count_file_for_session,
+    queue_file_for_session,
+    raw_session_file,
+)
 from engram.observer.protocol import ObserveEvent, render_event_line
 
 __all__ = [
@@ -123,13 +127,16 @@ def enqueue(
 
     line = render_event_line(event) + "\n"
     encoded = line.encode("utf-8")
+    count_path = count_file_for_session(event.session_id, base=base)
 
     # fcntl.flock serialises all writers; do depth check + append under
-    # one lock so we never race ourselves on the cap.
+    # one lock so we never race ourselves on the cap. Sidecar count file
+    # (A3/F10, 2026-05-02) keeps the depth check O(1) instead of
+    # re-scanning the queue on every write.
     with open(queue_path, "a+", encoding="utf-8") as f:
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         try:
-            depth_before = _count_lines_locked(f)
+            depth_before = _read_count_locked(count_path, queue_file=f)
             if depth_before >= max_events_per_session:
                 raise QueueFullError(
                     f"observe queue for session {event.session_id} is full "
@@ -138,6 +145,7 @@ def enqueue(
             f.write(line.lstrip("\n"))  # already has trailing \n; lstrip is paranoia
             f.flush()
             depth_after = depth_before + 1
+            _write_count_locked(count_path, depth_after)
         finally:
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
@@ -148,29 +156,69 @@ def enqueue(
 
 
 def queue_depth(session_id: str, *, base: Path | None = None) -> int:
-    """Return the number of events currently queued for ``session_id``."""
+    """Return the number of events currently queued for ``session_id``.
+
+    Reads the sidecar ``.count`` file (A3/F10) under a shared lock; falls
+    back to a one-shot line scan if the sidecar is missing (legacy queues
+    written before the sidecar landed). The shared-lock path never seeds
+    the sidecar — concurrent readers would race on the same tmp file —
+    so seeding waits for the next enqueue, which holds the exclusive lock.
+    """
     path = queue_file_for_session(session_id, base=base)
     if not path.exists():
         return 0
-    count = 0
+    count_path = count_file_for_session(session_id, base=base)
     with open(path, encoding="utf-8") as f:
         fcntl.flock(f.fileno(), fcntl.LOCK_SH)
         try:
-            for _ in f:
-                count += 1
+            return _read_count_locked(count_path, queue_file=f, persist=False)
         finally:
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-    return count
 
 
-def _count_lines_locked(f: Any) -> int:
-    """Count newlines in an already-locked file. Caller MUST hold the lock."""
+def _read_count_locked(count_path: Path, *, queue_file: Any, persist: bool = True) -> int:
+    """Return the queue depth from the sidecar, falling back to a one-shot scan.
+
+    Caller MUST hold the queue's flock. With ``persist=True`` the caller
+    MUST hold it *exclusively*: a recovered count is seeded back to the
+    sidecar, and two shared-lock holders would race each other on the
+    sidecar's tmp file. Shared-lock readers pass ``persist=False`` and
+    only pay the one-shot scan. Missing/corrupt sidecar means the queue
+    predates A3/F10 or a crash interrupted the reset — recover by
+    counting once.
+    """
+    try:
+        raw = count_path.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        depth = _count_lines_unlocked(queue_file)
+        if persist:
+            _write_count_locked(count_path, depth)
+        return depth
+    try:
+        depth = int(raw)
+    except ValueError:
+        depth = _count_lines_unlocked(queue_file)
+        if persist:
+            _write_count_locked(count_path, depth)
+        return depth
+    return max(0, depth)
+
+
+def _count_lines_unlocked(f: Any) -> int:
+    """Count lines in an open file. Caller MUST hold a flock on the file."""
     f.seek(0)
     count = 0
     for _ in f:
         count += 1
     f.seek(0, 2)  # seek to end so the next write appends
     return count
+
+
+def _write_count_locked(count_path: Path, depth: int) -> None:
+    """Atomically replace the sidecar count file. Caller MUST hold the queue flock."""
+    tmp = count_path.with_suffix(count_path.suffix + ".tmp")
+    tmp.write_text(f"{depth}\n", encoding="utf-8")
+    tmp.replace(count_path)
 
 
 def _append_raw(event: ObserveEvent, primary_line: bytes, *, base: Path | None) -> None:

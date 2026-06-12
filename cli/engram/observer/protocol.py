@@ -24,6 +24,7 @@ from typing import Any
 
 __all__ = [
     "ALLOWED_EVENT_KINDS",
+    "ALLOWED_PAYLOAD_KEYS",
     "MAX_EVENT_BYTES",
     "ObserveEvent",
     "ProtocolError",
@@ -50,6 +51,45 @@ ALLOWED_EVENT_KINDS: frozenset[str] = frozenset(
 # ``truncated: true`` and drop large fields (prompt body, stderr body,
 # args). Spec §3.3 caps timeline lines at 4 KB.
 MAX_EVENT_BYTES = 4096
+
+# F14 (2026-05-02) — closed set of payload keys we accept from clients.
+# Anything outside this set is dropped before the line hits the queue,
+# so a misbehaving hook cannot smuggle arbitrary fields into Tier 0/1
+# input. Server-injected keys (``t`` / ``client`` / ``session_id`` /
+# ``kind``) are added by :meth:`ObserveEvent.to_line_dict` and never
+# need to appear in the client payload.
+ALLOWED_PAYLOAD_KEYS: frozenset[str] = frozenset(
+    {
+        "event",
+        # Tool-use facts
+        "tool",
+        "files",
+        "files_modified",
+        "args",
+        "args_hash",
+        "result",
+        "result_chars",
+        # Token / size accounting
+        "tokens_in",
+        "tokens_out",
+        "prompt",
+        "prompt_full",
+        "prompt_chars",
+        "prompt_hash",
+        # Errors / exit
+        "exit_code",
+        "stderr",
+        "stderr_full",
+        "stderr_first_line",
+        # Diff stats
+        "diff_lines_added",
+        "diff_lines_removed",
+        # Session-end
+        "outcome",
+        # Internal markers
+        "truncated",
+    }
+)
 
 
 class ProtocolError(ValueError):
@@ -133,7 +173,10 @@ def parse_event(
     if not isinstance(client, str) or not client:
         raise ProtocolError("client tag must be a non-empty string")
 
-    raw = _trim_to_size(dict(payload))
+    # F14 (2026-05-02) — strip unknown keys before any further processing
+    # so a misbehaving client cannot inject arbitrary fields downstream.
+    filtered = {k: v for k, v in payload.items() if k in ALLOWED_PAYLOAD_KEYS}
+    raw = _trim_to_size(filtered)
 
     return ObserveEvent(
         kind=kind,

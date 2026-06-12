@@ -117,11 +117,11 @@ def _register_subcommands() -> None:
     from engram.commands.context import context_cmd
     from engram.commands.distill import distill_group
     from engram.commands.doctor import doctor_cmd
-    from engram.commands.propose import propose_group
     from engram.commands.inbox import inbox_cmd
     from engram.commands.init import init_cmd
     from engram.commands.mcp import mcp_cmd
     from engram.commands.memory import memory_group
+    from engram.commands.propose import propose_group
     from engram.commands.review import review_cmd
     from engram.commands.status import status_cmd
     from engram.commands.validate import validate_cmd

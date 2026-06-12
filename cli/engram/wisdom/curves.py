@@ -19,7 +19,7 @@ Today's proxies:
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -65,7 +65,7 @@ def _within_window(events: Iterable[UsageEvent], days: int) -> list[UsageEvent]:
 def _daily_samples(
     events: Iterable[UsageEvent],
     days: int,
-    reducer,
+    reducer: Callable[[list[UsageEvent]], float],
 ) -> tuple[Sample, ...]:
     """Bucket events into daily values via ``reducer(events_for_day) -> float``.
 

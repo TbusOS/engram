@@ -35,6 +35,7 @@ __all__ = [
     "CLIENT_VALUES",
     "DEFAULT_ENFORCEMENT",
     "DEFAULT_SCOPE",
+    "MAX_SESSION_FILE_BYTES",
     "OUTCOME_VALUES",
     "SESSION_FILENAME_RE",
     "SessionConfidence",
@@ -338,14 +339,38 @@ def _iso(dt: datetime) -> str:
 
 _FRONTMATTER_DELIM = "---"
 
+# F12 (2026-05-02) — hard cap on session asset file size. Anything above
+# this is treated as malformed: a healthy session file is dozens of KB,
+# so a 1 MB file is either corruption or attacker-supplied bloat. We
+# refuse to load it instead of inflating the parser's memory footprint.
+MAX_SESSION_FILE_BYTES = 1 * 1024 * 1024
+
 
 def parse_session_file(path: Path) -> tuple[SessionFrontmatter, str]:
     """Parse a session asset file → (frontmatter, body).
 
     Body is returned verbatim so daemon-driven appends and Tier 2
     distillation never lose user content (SPEC §4.1 preservation).
+    Files over :data:`MAX_SESSION_FILE_BYTES` raise
+    :class:`SessionParseError` (F12, 2026-05-02). The cap is enforced
+    as a bounded read on the open file — not a stat() beforehand — so
+    a file growing or being swapped between check and read cannot
+    smuggle an unbounded blob past it (security review 2026-06-13).
+    Non-UTF-8 content is also a :class:`SessionParseError`.
     """
-    text = path.read_text(encoding="utf-8")
+    try:
+        with open(path, "rb") as fh:
+            raw = fh.read(MAX_SESSION_FILE_BYTES + 1)
+    except OSError as exc:
+        raise SessionParseError(f"cannot read session file {path}: {exc}") from exc
+    if len(raw) > MAX_SESSION_FILE_BYTES:
+        raise SessionParseError(
+            f"session file {path} exceeds {MAX_SESSION_FILE_BYTES}-byte cap (F12)"
+        )
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise SessionParseError(f"session file {path} is not valid UTF-8: {exc}") from exc
     if not text.startswith(_FRONTMATTER_DELIM):
         raise SessionParseError(f"missing leading '---' frontmatter in {path}")
 

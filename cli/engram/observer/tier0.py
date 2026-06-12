@@ -174,12 +174,29 @@ def compact_session(
     queue_path: Path,
     sessions_dir: Path,
 ) -> Tier0Result:
-    """Read every line in ``queue_path`` and append derived facts.
+    """Drain ``queue_path`` into the timeline and truncate the queue.
 
-    Idempotency: Tier 0 only **appends**. Re-running it on the same
-    queue produces duplicate timeline lines. Higher tiers are expected
-    to consume + truncate the queue file once they're done, which makes
-    the next Tier 0 run a no-op.
+    Lock order (A7, 2026-05-02): exclusive flock on the queue first,
+    then exclusive flock on the timeline. With both locks held we read
+    the queue, append derived facts, and reset the queue (truncate +
+    rewrite the sidecar count) so a subsequent Tier 0 tick on a quiet
+    queue writes nothing.
+
+    Crash window (review 2026-06-13): the timeline append and the queue
+    truncate hit two different files, so they cannot commit atomically.
+    A SIGKILL or power loss after the timeline flush but before the
+    truncate means the next run re-drains the same lines and the
+    timeline carries duplicates. That is the chosen failure mode —
+    duplicated facts over lost facts — and consumers (narrative
+    rendering, Tier 1 prompts) tolerate repeated lines. Within a live
+    process the flocks make the drain exclusive; duplication requires a
+    hard crash inside that window, not mere concurrency.
+
+    Single-write contract (code reviewer C4, 2026-04-30): each timeline
+    line is one ``out.write(...)`` call so a SIGKILL between the
+    payload and the trailing newline is impossible. POSIX guarantees
+    atomicity for writes < PIPE_BUF (>= 512 bytes); events are capped
+    at 4 KB by ``protocol.MAX_EVENT_BYTES``.
     """
     sid = validate_session_id(session_id)
     sessions_dir.mkdir(parents=True, exist_ok=True)
@@ -187,35 +204,56 @@ def compact_session(
 
     written = 0
     parse_errors = 0
-    # Single-write contract (code reviewer C4, 2026-04-30): each line
-    # MUST be one ``out.write(...)`` call so a SIGKILL between the
-    # payload and the trailing newline is impossible. POSIX guarantees
-    # atomicity for writes < PIPE_BUF (>= 512 bytes); events are capped
-    # at 4 KB by ``protocol.MAX_EVENT_BYTES``.
-    with open(timeline_path, "a", encoding="utf-8") as out:
-        fcntl.flock(out.fileno(), fcntl.LOCK_EX)
+
+    if not queue_path.exists():
+        return Tier0Result(
+            session_id=sid,
+            facts_written=0,
+            parse_errors=0,
+            timeline_path=timeline_path,
+        )
+
+    with open(queue_path, "a+", encoding="utf-8") as qf:
+        fcntl.flock(qf.fileno(), fcntl.LOCK_EX)
         try:
-            for parsed in iter_queue_lines(queue_path):
-                if parsed is None:
-                    parse_errors += 1
-                    out.write(
-                        json.dumps(
-                            {"t": "0", "kind": "parse_error"},
-                            ensure_ascii=False,
-                            separators=(",", ":"),
-                        )
-                        + "\n"
-                    )
-                    continue
-                fact = extract_facts(parsed)
-                if fact is None:
-                    parse_errors += 1
-                    continue
-                out.write(fact.to_line() + "\n")
-                written += 1
-            out.flush()
+            qf.seek(0)
+            with open(timeline_path, "a", encoding="utf-8") as out:
+                fcntl.flock(out.fileno(), fcntl.LOCK_EX)
+                try:
+                    for raw in qf:
+                        line = raw.strip()
+                        if not line:
+                            continue
+                        try:
+                            parsed = json.loads(line)
+                        except json.JSONDecodeError:
+                            parse_errors += 1
+                            out.write(
+                                json.dumps(
+                                    {"t": "0", "kind": "parse_error"},
+                                    ensure_ascii=False,
+                                    separators=(",", ":"),
+                                )
+                                + "\n"
+                            )
+                            continue
+                        fact = extract_facts(parsed)
+                        if fact is None:
+                            parse_errors += 1
+                            continue
+                        out.write(fact.to_line() + "\n")
+                        written += 1
+                    out.flush()
+                finally:
+                    fcntl.flock(out.fileno(), fcntl.LOCK_UN)
+            # A7 (2026-05-02) — reset the queue and its sidecar count
+            # only after the timeline write succeeded.
+            qf.seek(0)
+            qf.truncate(0)
+            qf.flush()
         finally:
-            fcntl.flock(out.fileno(), fcntl.LOCK_UN)
+            fcntl.flock(qf.fileno(), fcntl.LOCK_UN)
+        _reset_count_sidecar(queue_path)
 
     return Tier0Result(
         session_id=sid,
@@ -223,6 +261,21 @@ def compact_session(
         parse_errors=parse_errors,
         timeline_path=timeline_path,
     )
+
+
+def _reset_count_sidecar(queue_path: Path) -> None:
+    """Zero the sidecar count file alongside ``queue_path``.
+
+    Best-effort: if the sidecar is missing the next enqueue will
+    recover by counting once. We never raise from here.
+    """
+    sidecar = queue_path.with_suffix(".count")
+    tmp = sidecar.with_suffix(".count.tmp")
+    try:
+        tmp.write_text("0\n", encoding="utf-8")
+        tmp.replace(sidecar)
+    except OSError:
+        pass
 
 
 def run_tier0(pending: PendingSession, *, sessions_dir: Path) -> Tier0Result:

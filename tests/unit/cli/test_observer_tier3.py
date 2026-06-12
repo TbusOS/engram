@@ -305,3 +305,23 @@ def test_run_tier3_end_to_end(tmp_path: Path) -> None:
     result = run_tier3(sessions_paths=paths, memory_dir=tmp_path)
     assert result.used_mechanical_fallback is True
     assert len(result.proposals) == 1
+
+
+# ----------------------------------------------------------------------
+# F13 (2026-05-02) — prompt byte budget
+# ----------------------------------------------------------------------
+
+
+def test_procedure_prompt_budget_drops_sessions_past_cap() -> None:
+    first = _sfd("first", body="F" * 400)
+    second = _sfd("second", body="S" * 400)
+    p = build_procedure_prompt([first, second], header="H", max_bytes=600)
+    assert "first" in p
+    assert "second" not in p
+
+
+def test_procedure_prompt_budget_is_hard_cap_for_single_oversized_session() -> None:
+    s = _sfd("huge", body="X" * 10_000)
+    p = build_procedure_prompt([s], header="H", max_bytes=2_000)
+    assert len(p.encode("utf-8")) <= 2_000
+    assert "huge" in p
