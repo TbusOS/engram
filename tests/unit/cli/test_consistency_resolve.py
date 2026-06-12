@@ -81,7 +81,6 @@ def test_archive_moves_asset_to_user_archive(store: Path) -> None:
     )
     assert result.applied is True
     assert not (store / ".memory" / "local" / "user_alpha.md").exists()
-    home = Path.home() if Path.home().exists() else Path.cwd()  # not used
     import os
 
     archive_root = Path(os.environ["HOME"]) / ".engram" / "archive"

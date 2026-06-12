@@ -23,14 +23,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator
-from datetime import date
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
 
 from engram.cli import cli
-from engram.commands.init import STORE_VERSION, adopt_project, init_project
+from engram.commands.init import STORE_VERSION, adopt_project
 from engram.commands.memory import graph_db_path
 from engram.core.graph_db import open_graph_db
 

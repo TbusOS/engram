@@ -11,7 +11,6 @@ from click.testing import CliRunner
 
 from engram.cli import cli
 from engram.commands.init import init_project
-from engram.commands.memory import render_asset_file
 from engram.commands.validate import (
     EXIT_CLEAN,
     EXIT_ERRORS,

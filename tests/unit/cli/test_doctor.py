@@ -32,8 +32,6 @@ from click.testing import CliRunner
 
 from engram.cli import cli
 from engram.commands.init import adopt_project, init_project
-from engram.commands.memory import graph_db_path
-from engram.core.graph_db import open_graph_db
 from engram.doctor import run_doctor
 from engram.doctor.types import CheckIssue, DoctorReport, Severity
 

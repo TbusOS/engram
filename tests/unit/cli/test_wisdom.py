@@ -36,8 +36,6 @@ from engram.usage import (
     append_usage_event,
 )
 from engram.wisdom import (
-    Curve,
-    Sample,
     WisdomReport,
     compute_wisdom_report,
 )

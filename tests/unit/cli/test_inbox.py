@@ -161,7 +161,7 @@ def test_dedup_by_code_refs_merges_into_existing(
 def test_dedup_by_first_line_fallback(
     home: Path, sender_project: Path
 ) -> None:
-    first = _send(sender_project)
+    _send(sender_project)
     # Same summary / sender / intent / no code refs → first-line fallback.
     second = _send(sender_project)
     assert second["status"] == DEDUP_DETECTED
@@ -175,7 +175,7 @@ def test_dedup_by_first_line_fallback(
 
 
 def test_dedup_explicit_key_wins(home: Path, sender_project: Path) -> None:
-    first = _send(sender_project, dedup_key="user-404-bug", summary="A different summary")
+    _send(sender_project, dedup_key="user-404-bug", summary="A different summary")
     second = _send(
         sender_project, dedup_key="user-404-bug", summary="Yet another different summary"
     )

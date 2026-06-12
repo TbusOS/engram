@@ -23,7 +23,6 @@ Schema (one event = one JSON object in
 from __future__ import annotations
 
 import json
-import os
 from collections.abc import Iterator
 from pathlib import Path
 
