@@ -26,7 +26,6 @@ The test is **fully hermetic**: HOME + ENGRAM_DIR are isolated to
 from __future__ import annotations
 
 import json
-import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -37,7 +36,7 @@ from engram.cli import cli
 from engram.commands.init import init_project
 from engram.observer.protocol import parse_event
 from engram.observer.queue import enqueue
-from engram.observer.session import parse_session_file, sessions_root
+from engram.observer.session import parse_session_file
 from engram.observer.tier0 import compact_session
 from engram.observer.tier1 import compact_to_session_asset
 from engram.observer.tier2 import (
@@ -88,13 +87,15 @@ def test_cross_5_session_pipeline(env: dict[str, Path]) -> None:
     timelines = base / "timelines"
     timelines.mkdir(parents=True, exist_ok=True)
 
-    started_dates = [
-        datetime(2026, 4, 25, 10, 0, tzinfo=timezone.utc),
-        datetime(2026, 4, 26, 10, 0, tzinfo=timezone.utc),
-        datetime(2026, 4, 27, 10, 0, tzinfo=timezone.utc),
-        datetime(2026, 4, 28, 10, 0, tzinfo=timezone.utc),
-        datetime(2026, 4, 29, 10, 0, tzinfo=timezone.utc),
-    ]
+    # Dates are relative to the wall clock: the C7/C8 wisdom curves in
+    # step 11 only bucket sessions inside their trailing 7-day window,
+    # so absolute fixture dates rot once the calendar moves past them.
+    # 2 hours back keeps even the newest session in the past near
+    # midnight UTC; one day apart keeps the prev/next linkage ordering.
+    newest = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0) - timedelta(
+        hours=2
+    )
+    started_dates = [newest - timedelta(days=offset) for offset in range(4, -1, -1)]
     outcomes = ["completed", "abandoned", "completed", "completed", "completed"]
     sids = ["s1_first", "s2_codex", "s3_cursor", "s4_offline", "s5_ship"]
 
@@ -173,8 +174,6 @@ def test_cross_5_session_pipeline(env: dict[str, Path]) -> None:
         RelevanceRequest,
         run_relevance_gate,
     )
-    from datetime import date
-
     sessions_for_gate = load_session_continuations(project_root=project)
     matching = [s for s in sessions_for_gate if s.task_hash == TASK_HASH]
     assert len(matching) == 5
@@ -188,12 +187,12 @@ def test_cross_5_session_pipeline(env: dict[str, Path]) -> None:
                 enforcement="default",
                 subscribed_at=None,
                 body="some unrelated note",
-                updated=date(2026, 4, 25),
+                updated=started_dates[0].date(),
                 size_bytes=64,
             )
         ],
         budget_tokens=8000,
-        now=date(2026, 4, 29),
+        now=newest.date(),
         task_hash=TASK_HASH,
         sessions=sessions_for_gate,
     )
@@ -250,10 +249,9 @@ def test_cross_5_session_pipeline(env: dict[str, Path]) -> None:
     by_id = {c.id: c for c in wisdom.curves}
     assert "C7" in by_id and "C8" in by_id
     # C8 must show at least one promoted day since 5/5 sessions have
-    # distilled_into populated post-promote. The fixture sessions end on
-    # 2026-04-25..29, so the day-of-fixture sample is what to inspect —
-    # not the last one (which can drift past the fixture window when
-    # the test runs after midnight UTC).
+    # distilled_into populated post-promote. The fixture sessions end
+    # inside the trailing 7-day window by construction (see
+    # started_dates above), so at least one daily sample carries them.
     c8 = by_id["C8"]
     assert c8.insufficient is False
     assert any(s.value > 0.0 for s in c8.samples), (
