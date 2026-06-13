@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · Auto-Continuation MVP</span>
-  <span>Observer hardening batch landed: O(1) queue depth via count sidecar, Tier 0 drain-and-truncate, 1 MB session cap with bounded read, 256 KB hard prompt budget, payload-key whitelist — every fix re-reviewed by parallel code-reviewer + security-reviewer agents before commit. 1116 tests; ruff + mypy strict clean.</span>
+  <span>Session-frontmatter integrity batch landed: one per-store advisory lock now serializes every prev/next, distilled_into, and re-compaction rewrite across the daemon and CLI (locking the data file was useless — write_atomic swaps the inode), re-compaction preserves all owned fields, and the daemon pid file is cleared under its lock instead of racing a successor. Every fix re-reviewed by parallel code-reviewer + security-reviewer agents. 1127 tests; ruff + mypy strict clean.</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">Join the discussion</a>
 </div>
 
