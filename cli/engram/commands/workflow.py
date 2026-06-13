@@ -89,9 +89,10 @@ def workflow_group() -> None:
 )
 @click.option(
     "--scope",
-    type=click.Choice(["project", "user", "team", "org", "pool"]),
+    type=click.Choice(["project", "user"]),
     default="project",
     show_default=True,
+    help="team/org/pool need a scope name; create those under their root directly.",
 )
 @click.option("--description", default="Describe what this workflow does (<=150 chars).")
 @click.pass_obj

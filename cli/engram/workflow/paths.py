@@ -42,21 +42,23 @@ def validate_workflow_name(name: str) -> str:
 
 
 def workflows_root(project_root: Path, *, scope: str = "project") -> Path:
-    """Return the ``workflows/`` directory for ``scope``.
+    """Return the ``workflows/`` directory for ``scope`` (SPEC §5.1).
 
-    SPEC §5.1 scope-root table:
-
-    - ``project`` -> ``<project>/.memory/workflows/``
-    - ``user``    -> ``~/.engram/user/workflows/``
-    - ``team``/``org``/``pool`` -> ``~/.engram/<kind>/<name>/workflows/``
-      cannot be resolved from name alone, so for those the caller passes
-      the already-resolved scope root via ``project_root`` and
-      ``scope='project'`` semantics. We keep the common cases first-class
-      and fall back to project-local for anything else.
+    Only ``project`` and ``user`` resolve unambiguously from a project
+    root. ``team`` / ``org`` / ``pool`` need a specific scope *name*
+    (``~/.engram/team/<name>/workflows/`` etc.) that the CLI does not yet
+    thread through, so they raise rather than silently mis-filing the
+    workflow under the project store.
     """
+    if scope == "project":
+        return memory_dir(project_root) / "workflows"
     if scope == "user":
         return user_root() / "user" / "workflows"
-    return memory_dir(project_root) / "workflows"
+    raise ValueError(
+        f"workflow scope {scope!r} needs a scope name and is not yet creatable via "
+        "the CLI; create it under the team/org/pool root directly, or use "
+        "scope=project / scope=user"
+    )
 
 
 def workflow_dir(project_root: Path, name: str, *, scope: str = "project") -> Path:

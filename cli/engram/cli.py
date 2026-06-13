@@ -119,6 +119,7 @@ def _register_subcommands() -> None:
     from engram.commands.doctor import doctor_cmd
     from engram.commands.inbox import inbox_cmd
     from engram.commands.init import init_cmd
+    from engram.commands.kb import kb_group
     from engram.commands.mcp import mcp_cmd
     from engram.commands.memory import memory_group
     from engram.commands.propose import propose_group
@@ -157,6 +158,7 @@ def _register_subcommands() -> None:
     cli.add_command(distill_group)
     cli.add_command(propose_group)
     cli.add_command(workflow_group)
+    cli.add_command(kb_group)
 
 
 _register_subcommands()

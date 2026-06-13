@@ -407,3 +407,10 @@ def test_outcome_tsv_metric_injection_neutralized(tmp_path: Path) -> None:
     tsv = (wdir / "rev" / "current" / "outcome.tsv").read_text(encoding="utf-8")
     # Each fixture produced exactly one row (no injected extra rows).
     assert len([ln for ln in tsv.splitlines() if ln.strip()]) == 2
+
+
+def test_workflows_root_rejects_unresolvable_scope(tmp_path: Path) -> None:
+    from engram.workflow.paths import workflows_root
+
+    with pytest.raises(ValueError, match="scope name"):
+        workflows_root(tmp_path, scope="team")
