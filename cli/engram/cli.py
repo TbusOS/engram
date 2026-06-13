@@ -127,6 +127,7 @@ def _register_subcommands() -> None:
     from engram.commands.validate import validate_cmd
     from engram.commands.version import version_cmd
     from engram.commands.wisdom import wisdom_cmd
+    from engram.commands.workflow import workflow_group
     from engram.migrate import migrate_cmd
     from engram.observer.cli import observe_cmd
     from engram.observer.install_cli import observer_group
@@ -155,6 +156,7 @@ def _register_subcommands() -> None:
     cli.add_command(observer_group)
     cli.add_command(distill_group)
     cli.add_command(propose_group)
+    cli.add_command(workflow_group)
 
 
 _register_subcommands()
