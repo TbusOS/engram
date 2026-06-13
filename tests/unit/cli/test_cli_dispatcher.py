@@ -204,6 +204,20 @@ def test_resolve_project_root_honors_env_when_no_dir_override(
     assert cfg.resolve_project_root() == override.resolve()
 
 
+def test_resolve_project_root_no_project_raises_clean_click_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No --dir, no ENGRAM_DIR, no .memory/ ancestor → a friendly
+    ClickException (exit 1 + hint), not a ProjectNotFoundError traceback."""
+    import click
+
+    monkeypatch.delenv("ENGRAM_DIR", raising=False)
+    monkeypatch.chdir(tmp_path)
+    cfg = GlobalConfig(dir_override=None)
+    with pytest.raises(click.ClickException, match="engram init"):
+        cfg.resolve_project_root()
+
+
 # ------------------------------------------------------------------
 # Logging
 # ------------------------------------------------------------------

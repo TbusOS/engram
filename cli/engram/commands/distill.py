@@ -37,7 +37,7 @@ import yaml
 
 from engram.config_types import GlobalConfig
 from engram.core.fs import write_atomic
-from engram.core.paths import find_project_root, memory_dir, user_root
+from engram.core.paths import memory_dir, user_root
 
 __all__ = ["distill_group"]
 
@@ -129,8 +129,8 @@ def distill_group() -> None:
     show_default=True,
 )
 @click.pass_obj
-def review_cmd(_cfg: GlobalConfig, fmt: str) -> None:
-    project = find_project_root()
+def review_cmd(cfg: GlobalConfig, fmt: str) -> None:
+    project = cfg.resolve_project_root()
     mem = memory_dir(project)
     rows: list[dict[str, Any]] = []
     for path in _list_candidates(mem):
@@ -195,14 +195,14 @@ def review_cmd(_cfg: GlobalConfig, fmt: str) -> None:
 )
 @click.pass_obj
 def promote_cmd(
-    _cfg: GlobalConfig,
+    cfg: GlobalConfig,
     name: str,
     scope: str | None,
     enforcement: str | None,
     dry_run: bool,
 ) -> None:
     name = _validate_name(name)
-    project = find_project_root()
+    project = cfg.resolve_project_root()
     mem = memory_dir(project)
     src = _distilled_dir(mem) / f"{name}.proposed.md"
     if not src.exists():
@@ -338,10 +338,10 @@ def _stamp_source_sessions(
 )
 @click.pass_obj
 def reject_cmd(
-    _cfg: GlobalConfig, name: str, reason: str | None, dry_run: bool
+    cfg: GlobalConfig, name: str, reason: str | None, dry_run: bool
 ) -> None:
     name = _validate_name(name)
-    project = find_project_root()
+    project = cfg.resolve_project_root()
     mem = memory_dir(project)
     src = _distilled_dir(mem) / f"{name}.proposed.md"
     if not src.exists():

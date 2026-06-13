@@ -15,9 +15,14 @@ Coverage map (TASKS P0 command surface):
 - engram conformance (via library — no CLI yet; exercised here so the
   invariant suite stays wired into the P0 parity gate)
 - engram adapter list/install/refresh
-- engram inbox send/list/acknowledge/resolve
+- engram inbox send/list/acknowledge/resolve/reject
 - engram mcp serve (stdio handshake via the public dispatch())
+- engram mcp install --list
 - engram migrate --from=v0.1 (uses tests/fixtures/v0.1_store/)
+- engram pool subscribe/list/unsubscribe (T-30)
+- engram observe / observer status (auto-continuation ingest surface)
+- engram distill review / propose review (consent-gate CLI)
+- engram doctor / config / version / wisdom report / memory quick
 """
 
 from __future__ import annotations
@@ -417,3 +422,188 @@ def test_m4_p0_frontmatter_survives_round_trip(
     fm_disk = yaml.safe_load(fm_text)
     for required in ("name", "description", "type", "scope", "enforcement"):
         assert required in fm_disk, f"missing {required} in on-disk frontmatter"
+
+
+# ------------------------------------------------------------------
+# Pool lifecycle — T-57's own dependency T-30, previously uncovered
+# ------------------------------------------------------------------
+
+
+def test_m4_p0_pool_lifecycle(project: Path, home: Path) -> None:
+    """subscribe -> list -> unsubscribe against a local pool dir."""
+    runner = CliRunner()
+    _invoke(runner, "--dir", str(project), "init")
+
+    # A pool must already exist at ~/.engram/pools/<name>/ before subscribe.
+    (home / ".engram" / "pools" / "acme-shared").mkdir(parents=True)
+    _invoke(runner, "--dir", str(project), "pool", "subscribe", "acme-shared")
+
+    # The subscribe lands both a symlink and a pools.toml entry.
+    assert (project / ".memory" / "pools" / "acme-shared").is_symlink()
+    listed = _invoke_json(runner, "--dir", str(project), "pool", "list")
+    assert isinstance(listed, list)
+    assert any(p["pool"] == "acme-shared" for p in listed)
+
+    _invoke(runner, "--dir", str(project), "pool", "unsubscribe", "acme-shared")
+    after = _invoke_json(runner, "--dir", str(project), "pool", "list")
+    assert all(p["pool"] != "acme-shared" for p in after)
+
+
+# ------------------------------------------------------------------
+# Auto-Continuation CLI surface — newest code, only unit-tested so far
+# ------------------------------------------------------------------
+
+
+def test_m4_p0_auto_continuation_cli_surface(project: Path, home: Path) -> None:
+    """observe -> observer status -> distill review -> propose review.
+
+    Exercises CLI dispatch + exit codes for the auto-continuation
+    commands, which previously had only function-level unit coverage.
+    Also a regression guard for distill/propose honoring --dir.
+    """
+    runner = CliRunner()
+    _invoke(runner, "--dir", str(project), "init")
+    base = str(home / ".engram")
+
+    # observe enqueues one event; returns ok=true JSON envelope, exit 0.
+    out = _invoke(
+        runner,
+        "observe",
+        "--session",
+        "sess_p0",
+        "--client",
+        "claude-code",
+        "--event",
+        '{"event":"tool_use","tool":"Read","files":["a.py"]}',
+        "--base",
+        base,
+    )
+    assert json.loads(out.strip())["ok"] is True
+
+    # observer status: a pending session, no live daemon, exit 0.
+    status = runner.invoke(
+        cli, ["observer", "status", "--format", "json", "--base", base]
+    )
+    assert status.exit_code == 0, status.output
+    spayload = json.loads(status.output.strip())
+    assert spayload["observer_pid"] is None
+    assert spayload["pending_count"] >= 1
+
+    # distill / propose review on an empty store: clean exit, honor --dir.
+    # (Regression: these used find_project_root() and ignored --dir before.)
+    assert (
+        runner.invoke(cli, ["--dir", str(project), "distill", "review"]).exit_code == 0
+    )
+    assert (
+        runner.invoke(cli, ["--dir", str(project), "propose", "review"]).exit_code == 0
+    )
+
+
+def test_m4_p0_no_project_gives_clean_error_not_traceback(
+    tmp_path: Path, home: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Running a project command outside any store exits cleanly with a
+    'run engram init' hint, never a ProjectNotFoundError traceback."""
+    monkeypatch.delenv("ENGRAM_DIR", raising=False)
+    monkeypatch.chdir(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(cli, ["memory", "list"])
+    assert result.exit_code != 0
+    assert result.exception is None or isinstance(result.exception, SystemExit)
+    assert "engram init" in result.output
+
+
+# ------------------------------------------------------------------
+# Operator utility commands — day-one surface a user actually runs
+# ------------------------------------------------------------------
+
+
+def test_m4_p0_operator_utility_commands(project: Path, home: Path) -> None:
+    runner = CliRunner()
+    _invoke(runner, "--dir", str(project), "init")
+
+    # version — names the tool + store schema.
+    assert "engram" in _invoke(runner, "version").lower()
+
+    # memory quick — friction-zero one-line add (T-160).
+    _invoke(
+        runner,
+        "--dir",
+        str(project),
+        "memory",
+        "quick",
+        "rotate signing keys each quarter",
+    )
+    entries = _invoke_json(runner, "--dir", str(project), "memory", "list")
+    assert len(entries) == 1
+
+    # doctor — a healthy store exits 0 (2 = warnings tolerated, 1 = errors).
+    doctor = runner.invoke(cli, ["--dir", str(project), "doctor"])
+    assert doctor.exit_code in (0, 2), doctor.output
+
+    # config set/get round-trips through ~/.engram/config.toml.
+    _invoke(runner, "config", "set", "editor.name", "vim")
+    assert "vim" in _invoke(runner, "config", "get", "editor.name")
+
+    # wisdom report renders even on near-empty usage data.
+    assert "WISDOM REPORT" in _invoke(runner, "--dir", str(project), "wisdom", "report")
+
+    # mcp install --list enumerates targets without writing config.
+    assert "claude-code" in _invoke(runner, "mcp", "install", "--list")
+
+
+def test_m4_p0_inbox_reject_terminal_transition(project: Path, home: Path) -> None:
+    """inbox reject is the third terminal lifecycle transition (after
+    acknowledge/resolve covered in the main journey)."""
+    runner = CliRunner()
+    _invoke(runner, "--dir", str(project), "init")
+    (project / ".engram" / "config.toml").write_text(
+        '[project]\nrepo_id = "acme/platform"\n', encoding="utf-8"
+    )
+    _invoke(
+        runner,
+        "--dir",
+        str(project),
+        "inbox",
+        "send",
+        "--to",
+        "acme/service-b",
+        "--intent",
+        "bug-report",
+        "--summary",
+        "reject-path message",
+        "--what",
+        "w",
+        "--why",
+        "y",
+        "--how",
+        "h",
+    )
+    pending = _invoke_json(
+        runner, "--dir", str(project), "inbox", "list", "--as", "acme/service-b"
+    )
+    mid = pending[0]["message_id"]
+    _invoke(
+        runner,
+        "--dir",
+        str(project),
+        "inbox",
+        "reject",
+        mid,
+        "--as",
+        "acme/service-b",
+        "--reason",
+        "not our bug",
+    )
+    rejected = _invoke_json(
+        runner,
+        "--dir",
+        str(project),
+        "inbox",
+        "list",
+        "--as",
+        "acme/service-b",
+        "--status",
+        "rejected",
+    )
+    assert any(m["message_id"] == mid for m in rejected)

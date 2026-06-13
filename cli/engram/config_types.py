@@ -35,10 +35,23 @@ class GlobalConfig:
         1. ``--dir`` flag (``self.dir_override``)
         2. ``ENGRAM_DIR`` environment variable (handled inside ``find_project_root``)
         3. Walk up from cwd looking for a ``.memory/`` directory
+
+        When no project can be found, raises :class:`click.ClickException`
+        so the CLI prints a one-line "run `engram init`" hint and exits
+        cleanly, rather than dumping a ``ProjectNotFoundError`` traceback
+        (every command funnels through here).
         """
-        # Lazy import to keep this module a pure leaf.
-        from engram.core.paths import find_project_root
+        # Lazy imports keep this module a pure leaf (no engram.cli pull-in).
+        import click
+
+        from engram.core.paths import ProjectNotFoundError, find_project_root
 
         if self.dir_override is not None:
             return self.dir_override.expanduser().resolve()
-        return find_project_root()
+        try:
+            return find_project_root()
+        except ProjectNotFoundError as exc:
+            raise click.ClickException(
+                "no engram project found here. Run `engram init` to create "
+                "one, or pass `--dir <path>` to point at an existing store."
+            ) from exc
