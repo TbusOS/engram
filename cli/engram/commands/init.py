@@ -79,6 +79,25 @@ def _pools_toml_stub() -> str:
     )
 
 
+def _ensure_engram_gitignore(control_dir: Path) -> None:
+    """Write ``.engram/.gitignore`` so the runtime control dir stays out of git.
+
+    ``.engram/`` holds machine-specific runtime state — ``graph.db`` (a
+    rebuildable SQLite cache) and ``locks/`` advisory lock files
+    (A9/F9). None of it belongs in a teammate's checkout, so a
+    ``*``-ignore at the dir root keeps the committed store limited to the
+    ``.memory/`` markdown tree. Idempotent: only writes when absent so a
+    user who customized it is never overwritten.
+    """
+    gitignore = control_dir / ".gitignore"
+    if gitignore.exists():
+        return
+    write_atomic(
+        gitignore,
+        "# engram runtime state — not portable, rebuildable from .memory/\n*\n",
+    )
+
+
 def init_project(root: Path, *, name: str | None = None, force: bool = False) -> dict[str, Path]:
     """Create (or re-initialize) the engram project tree at ``root``.
 
@@ -104,6 +123,7 @@ def init_project(root: Path, *, name: str | None = None, force: bool = False) ->
 
     engram.mkdir(parents=True, exist_ok=True)
     write_atomic(engram / "version", f"{STORE_VERSION}\n")
+    _ensure_engram_gitignore(engram)
     write_atomic(memory / "MEMORY.md", _memory_md_skeleton(project_name))
     write_atomic(memory / "pools.toml", _pools_toml_stub())
 
@@ -175,6 +195,7 @@ def adopt_project(root: Path) -> AdoptResult:
 
     engram = engram_dir(root)
     engram.mkdir(parents=True, exist_ok=True)
+    _ensure_engram_gitignore(engram)
     version_file = engram / "version"
     if not version_file.exists():
         write_atomic(version_file, f"{STORE_VERSION}\n")

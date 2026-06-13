@@ -250,6 +250,7 @@ def _stamp_source_sessions(
         SessionFrontmatter,
         parse_session_file,
         render_session_file,
+        session_frontmatter_lock,
         sessions_root,
     )
 
@@ -269,38 +270,47 @@ def _stamp_source_sessions(
             # that is not a real regular file.
             if not path.is_file() or path.is_symlink():
                 continue
+            # Cheap pre-filter: parse once (no lock) just to test
+            # membership. The authoritative read-modify-write happens
+            # under the lock below so a concurrent linkage writer (which
+            # may set prev/next on this same file) is never clobbered.
             try:
-                fm, body = parse_session_file(path)
+                probe, _ = parse_session_file(path)
             except Exception:
                 continue
-            if fm.session_id not in candidate_ids:
+            if probe.session_id not in candidate_ids:
                 continue
-            already = list(fm.distilled_into)
-            if promoted_name in already:
-                continue
-            already.append(promoted_name)
-            updated = SessionFrontmatter(
-                type=fm.type,
-                session_id=fm.session_id,
-                client=fm.client,
-                started_at=fm.started_at,
-                ended_at=fm.ended_at,
-                task_hash=fm.task_hash,
-                tool_calls=fm.tool_calls,
-                files_touched=fm.files_touched,
-                files_modified=fm.files_modified,
-                outcome=fm.outcome,
-                error_summary=fm.error_summary,
-                prev_session=fm.prev_session,
-                next_session=fm.next_session,
-                distilled_into=tuple(already),
-                scope=fm.scope,
-                enforcement=fm.enforcement,
-                confidence=fm.confidence,
-                extra=fm.extra,
-            )
             try:
-                write_atomic(path, render_session_file(updated, body))
+                with session_frontmatter_lock(path):
+                    try:
+                        fm, body = parse_session_file(path)
+                    except Exception:
+                        continue
+                    already = list(fm.distilled_into)
+                    if promoted_name in already:
+                        continue
+                    already.append(promoted_name)
+                    updated = SessionFrontmatter(
+                        type=fm.type,
+                        session_id=fm.session_id,
+                        client=fm.client,
+                        started_at=fm.started_at,
+                        ended_at=fm.ended_at,
+                        task_hash=fm.task_hash,
+                        tool_calls=fm.tool_calls,
+                        files_touched=fm.files_touched,
+                        files_modified=fm.files_modified,
+                        outcome=fm.outcome,
+                        error_summary=fm.error_summary,
+                        prev_session=fm.prev_session,
+                        next_session=fm.next_session,
+                        distilled_into=tuple(already),
+                        scope=fm.scope,
+                        enforcement=fm.enforcement,
+                        confidence=fm.confidence,
+                        extra=fm.extra,
+                    )
+                    write_atomic(path, render_session_file(updated, body))
             except OSError:
                 continue
 

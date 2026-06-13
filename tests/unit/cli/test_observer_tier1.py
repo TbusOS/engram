@@ -312,3 +312,72 @@ def test_asset_overwrite_on_rerun(tmp_path: Path) -> None:
     body = r2.asset_path.read_text()
     assert "v2" in body
     assert "v1" not in body
+
+
+def test_recompaction_preserves_linkage_fields(tmp_path: Path) -> None:
+    """A second Tier 1 pass must not erase prev/next/distilled_into/confidence
+    written by linkage + distill between the two compactions (2026-06-13)."""
+    from engram.observer.session import (
+        SessionConfidence,
+        SessionFrontmatter,
+        render_session_file,
+    )
+
+    timeline = _write_timeline(tmp_path, {"event": "tool_use", "tool": "Read"})
+    project = tmp_path / "proj"
+    (project / ".memory").mkdir(parents=True)
+
+    r1 = compact_to_session_asset(
+        "sess_abc",
+        timeline_path=timeline,
+        client="claude-code",
+        project_root=project,
+        provider=lambda _p: "## first\n- v1\n",
+    )
+
+    # Simulate the fields owned by later passes (linkage + distill + decay)
+    # plus a user scope/enforcement override and an unknown-field bag.
+    fm, body = parse_session_file(r1.asset_path)
+    stamped = SessionFrontmatter(
+        type=fm.type,
+        session_id=fm.session_id,
+        client=fm.client,
+        started_at=fm.started_at,
+        ended_at=fm.ended_at,
+        task_hash=fm.task_hash,
+        tool_calls=fm.tool_calls,
+        files_touched=fm.files_touched,
+        files_modified=fm.files_modified,
+        outcome=fm.outcome,
+        error_summary=fm.error_summary,
+        prev_session="sess_earlier",
+        next_session="sess_later",
+        distilled_into=("recurring-files",),
+        scope="user",
+        enforcement="default",
+        confidence=SessionConfidence(exposure_count=3, validated_score=1.5),
+        extra={"custom_field": "keep-me"},
+    )
+    r1.asset_path.write_text(render_session_file(stamped, body))
+
+    # Second compaction (e.g. a later batch of events for the same session).
+    compact_to_session_asset(
+        "sess_abc",
+        timeline_path=timeline,
+        client="claude-code",
+        project_root=project,
+        provider=lambda _p: "## second\n- v2\n",
+    )
+
+    fm2, body2 = parse_session_file(r1.asset_path)
+    assert fm2.prev_session == "sess_earlier"
+    assert fm2.next_session == "sess_later"
+    assert fm2.distilled_into == ("recurring-files",)
+    assert fm2.confidence.exposure_count == 3
+    assert fm2.confidence.validated_score == 1.5
+    # SPEC §4.1 — scope/enforcement override + unknown fields survive too.
+    assert fm2.scope == "user"
+    assert fm2.enforcement == "default"
+    assert fm2.extra == {"custom_field": "keep-me"}
+    # The fresh narrative still landed.
+    assert "v2" in body2

@@ -31,6 +31,23 @@ def test_init_project_creates_engram_version_file(tmp_path: Path) -> None:
     assert version_file.read_text(encoding="utf-8").strip() == STORE_VERSION
 
 
+def test_init_project_gitignores_engram_runtime_dir(tmp_path: Path) -> None:
+    """`.engram/` holds graph.db + lock files — keep it out of git (2026-06-13)."""
+    init_project(tmp_path)
+    gitignore = tmp_path / ".engram" / ".gitignore"
+    assert gitignore.exists()
+    assert gitignore.read_text(encoding="utf-8").strip().splitlines()[-1] == "*"
+
+
+def test_init_project_preserves_custom_engram_gitignore(tmp_path: Path) -> None:
+    """A user-customized .engram/.gitignore is never overwritten by re-init."""
+    (tmp_path / ".engram").mkdir(parents=True)
+    custom = tmp_path / ".engram" / ".gitignore"
+    custom.write_text("graph.db\n", encoding="utf-8")
+    init_project(tmp_path, force=True)
+    assert custom.read_text(encoding="utf-8") == "graph.db\n"
+
+
 def test_init_project_writes_memory_md_with_required_sections(tmp_path: Path) -> None:
     init_project(tmp_path, name="acme-platform")
     content = (tmp_path / ".memory" / "MEMORY.md").read_text(encoding="utf-8")

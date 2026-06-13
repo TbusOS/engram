@@ -156,14 +156,29 @@ class SingletonLock:
     def release(self) -> None:
         if self._fd is None:
             return
+        # C7 (2026-06-13): clear our PID while we still hold the flock,
+        # then release. We must NOT unlink the file after unlocking: in
+        # the window between LOCK_UN and unlink, a successor daemon can
+        # acquire the lock and write its own PID, and our unlink would
+        # then delete the *live* successor's pid file. Unlinking while
+        # still holding the lock is also wrong — a successor's open()
+        # would create a fresh inode at the path whose flock is
+        # independent of ours, so two daemons would believe they hold
+        # the lock. Truncating under the lock is the only race-free
+        # option: no other process can hold the lock to observe the
+        # emptied file, and a successor's later acquire() reads an empty
+        # PID (== None) and reclaims cleanly. The empty file is kept so
+        # the inode the flock binds to stays stable for that handshake.
         try:
-            fcntl.flock(self._fd, fcntl.LOCK_UN)
+            with suppress(OSError):
+                os.ftruncate(self._fd, 0)
+                os.fsync(self._fd)
         finally:
-            os.close(self._fd)
-            self._fd = None
-        # Best-effort cleanup; another daemon may already be re-creating it.
-        with suppress(FileNotFoundError):
-            self._path.unlink()
+            try:
+                fcntl.flock(self._fd, fcntl.LOCK_UN)
+            finally:
+                os.close(self._fd)
+                self._fd = None
 
 
 def _read_pid_from_fd(fd: int) -> int | None:

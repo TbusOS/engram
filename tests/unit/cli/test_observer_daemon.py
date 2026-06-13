@@ -33,14 +33,34 @@ def test_acquire_and_release(tmp_path: Path) -> None:
         assert int(pid_text) == os.getpid()
     finally:
         lock.release()
-    # release unlinks
-    assert not lock.path.exists()
+    # C7: release clears our PID under the lock rather than unlinking the
+    # file (unlinking races a successor that already took over). The file
+    # stays but is empty, so a re-acquire reads PID == None and reclaims.
+    assert lock.path.exists()
+    assert lock.path.read_text().strip() == ""
 
 
 def test_context_manager(tmp_path: Path) -> None:
     with SingletonLock(base=tmp_path) as lock:
         assert lock.path.exists()
-    assert not lock.path.exists()
+    # C7: pid cleared, file retained (see test_acquire_and_release).
+    assert lock.path.read_text().strip() == ""
+
+
+def test_reacquire_after_release(tmp_path: Path) -> None:
+    """A clean release leaves an empty pid file; the next acquire reclaims
+    it without being flagged as a steal (empty PID == no prior holder)."""
+    first = SingletonLock(base=tmp_path)
+    first.acquire()
+    first.release()
+
+    second = SingletonLock(base=tmp_path)
+    second.acquire()
+    try:
+        assert second.stolen is False
+        assert int(second.path.read_text().strip()) == os.getpid()
+    finally:
+        second.release()
 
 
 def test_second_lock_blocked_when_holder_alive(tmp_path: Path) -> None:

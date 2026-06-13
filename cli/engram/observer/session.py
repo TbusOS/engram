@@ -22,6 +22,8 @@ This module provides:
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -44,6 +46,8 @@ __all__ = [
     "parse_session_file",
     "parse_session_frontmatter",
     "render_session_file",
+    "session_frontmatter_lock",
+    "session_frontmatter_lock_path",
     "session_path",
     "sessions_root",
 ]
@@ -435,3 +439,52 @@ def session_path(
         started_at = started_at.replace(tzinfo=timezone.utc)
     bucket = started_at.astimezone(timezone.utc).date().isoformat()
     return sessions_root(memory_dir) / bucket / f"sess_{sid}.md"
+
+
+def session_frontmatter_lock_path(session_file: Path) -> Path:
+    """Sentinel-lock path guarding rewrites of any Session in the same store.
+
+    A9/F9 (2026-06-13). Three code paths read-modify-write Session
+    frontmatter from two different processes: cross-session linkage
+    (``prev_session`` / ``next_session``), distill's ``distilled_into``
+    back-link, and Tier 1 re-compaction. ``write_atomic`` stages a tmp
+    file and renames it over the target, so the data file's inode is
+    swapped on every write — locking the data file itself is useless,
+    because two writers end up holding flocks on different inodes and
+    lose each other's update.
+
+    The lock therefore lives on a stable sentinel derived from the
+    session file's store root (the parent of its ``sessions/`` dir):
+
+    - ``<project>/.memory/sessions/...`` → ``<project>/.engram/locks/``
+    - ``~/.engram/sessions/...``          → ``~/.engram/locks/``
+
+    One lock per store (not per session) keeps writes serialized without
+    accumulating a lock file per session over the store's multi-year
+    life, and keeps the sentinel inside the runtime ``.engram/`` dir so
+    it never lands in the committed ``.memory/`` tree.
+    """
+    store_root = session_file.parent
+    for parent in session_file.parents:
+        if parent.name == "sessions":
+            store_root = parent.parent
+            break
+    control = store_root.parent / ".engram" if store_root.name == ".memory" else store_root
+    return control / "locks" / "session-frontmatter.lock"
+
+
+@contextmanager
+def session_frontmatter_lock(session_file: Path) -> Iterator[None]:
+    """Hold the per-store advisory lock around a Session-frontmatter RMW.
+
+    See :func:`session_frontmatter_lock_path` for why locking the data
+    file directly does not work. Acquisitions are brief (parse + one
+    small ``write_atomic``); callers MUST NOT nest two acquisitions in
+    one call chain — ``acquire_lock`` opens a fresh fd each time, so a
+    nested second acquisition on the same store would self-deadlock.
+    The linkage forward/back writes are sequential, not nested.
+    """
+    from engram.core.fs import acquire_lock
+
+    with acquire_lock(session_frontmatter_lock_path(session_file)):
+        yield

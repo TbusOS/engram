@@ -376,21 +376,6 @@ def compact_to_session_asset(
     started = started_at or summary.started_at or datetime.now(tz=timezone.utc)
     ended = summary.ended_at
 
-    fm = SessionFrontmatter(
-        type="session",
-        session_id=session_id,
-        client=client,
-        started_at=started,
-        ended_at=ended,
-        task_hash=task_hash,
-        tool_calls=summary.tool_calls,
-        files_touched=tuple(summary.files_touched),
-        files_modified=tuple(summary.files_modified),
-        outcome=_normalise_outcome(summary.outcome),
-        error_summary=summary.errors[0] if summary.errors else None,
-        confidence=SessionConfidence(),
-    )
-
     if project_root is not None:
         asset_path = session_path(
             session_id, started_at=started, memory_dir=project_root / ".memory"
@@ -401,17 +386,69 @@ def compact_to_session_asset(
         )
 
     asset_path.parent.mkdir(parents=True, exist_ok=True)
-    # Code reviewer A8 — preserve user edits outside the auto block.
-    existing_body = ""
-    if asset_path.exists():
-        from contextlib import suppress
 
-        from engram.observer.session import parse_session_file
+    # Re-compaction must not erase fields owned by later passes
+    # (2026-06-13): linkage writes prev/next, distill writes
+    # distilled_into, decay/usage maintain confidence. A second batch of
+    # events for the same session re-runs Tier 1, so carry those over
+    # from the on-disk asset rather than resetting them to defaults. The
+    # whole read-modify-write is held under the per-store lock so a
+    # concurrent linkage/distill writer in another process cannot
+    # interleave (A9/F9).
+    from engram.observer.session import (
+        DEFAULT_ENFORCEMENT,
+        DEFAULT_SCOPE,
+        parse_session_file,
+        session_frontmatter_lock,
+    )
 
-        with suppress(Exception):
-            _, existing_body = parse_session_file(asset_path)
-    merged_body = merge_auto_block(existing_body, body)
-    write_atomic(asset_path, render_session_file(fm, merged_body))
+    with session_frontmatter_lock(asset_path):
+        prev_session: str | None = None
+        next_session: str | None = None
+        distilled_into: tuple[str, ...] = ()
+        confidence = SessionConfidence()
+        scope = DEFAULT_SCOPE
+        enforcement = DEFAULT_ENFORCEMENT
+        extra: dict[str, object] = {}
+        existing_body = ""
+        if asset_path.exists():
+            from contextlib import suppress
+
+            with suppress(Exception):
+                existing_fm, existing_body = parse_session_file(asset_path)
+                prev_session = existing_fm.prev_session
+                next_session = existing_fm.next_session
+                distilled_into = existing_fm.distilled_into
+                confidence = existing_fm.confidence
+                # SPEC §4.1 — scope/enforcement overrides and the unknown
+                # frontmatter bag MUST survive a re-compaction too.
+                scope = existing_fm.scope
+                enforcement = existing_fm.enforcement
+                extra = dict(existing_fm.extra)
+
+        fm = SessionFrontmatter(
+            type="session",
+            session_id=session_id,
+            client=client,
+            started_at=started,
+            ended_at=ended,
+            task_hash=task_hash,
+            tool_calls=summary.tool_calls,
+            files_touched=tuple(summary.files_touched),
+            files_modified=tuple(summary.files_modified),
+            outcome=_normalise_outcome(summary.outcome),
+            error_summary=summary.errors[0] if summary.errors else None,
+            prev_session=prev_session,
+            next_session=next_session,
+            distilled_into=distilled_into,
+            scope=scope,
+            enforcement=enforcement,
+            confidence=confidence,
+            extra=extra,
+        )
+        # Code reviewer A8 — preserve user edits outside the auto block.
+        merged_body = merge_auto_block(existing_body, body)
+        write_atomic(asset_path, render_session_file(fm, merged_body))
 
     # T-207: cross-session task linkage. Best-effort — never raises.
     if task_hash:

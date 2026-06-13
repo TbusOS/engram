@@ -147,6 +147,20 @@ def test_status_no_daemon(tmp_path: Path) -> None:
     assert "observer alive:     False" in result.output
 
 
+def test_status_handles_empty_pid_file(tmp_path: Path) -> None:
+    """A clean daemon shutdown leaves an empty pid file (C7). status must
+    read that as 'no live daemon', not crash on int('') (2026-06-13)."""
+    from engram.observer.paths import OBSERVER_PID_FILE
+
+    base = tmp_path / "engram"
+    base.mkdir()
+    (base / OBSERVER_PID_FILE).write_text("")  # emptied, not unlinked
+    runner = CliRunner()
+    result = runner.invoke(cli, ["observer", "status", "--base", str(base)])
+    assert result.exit_code == 0
+    assert "observer alive:     False" in result.output
+
+
 def test_status_reports_pending_queue(tmp_path: Path) -> None:
     base = tmp_path / "engram"
     base.mkdir()

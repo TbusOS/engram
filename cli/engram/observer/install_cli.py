@@ -312,6 +312,10 @@ def status_cmd(fmt: str, base_dir: Path | None) -> None:
     pid_value: int | None = None
     if pid_path.exists():
         try:
+            # IndexError guards the empty-file case: a clean daemon
+            # shutdown clears its PID under the lock instead of unlinking
+            # (daemon C7), so an empty pid file is the normal "stopped"
+            # state and must read as "no live daemon", not crash.
             pid_value = int(pid_path.read_text().split()[0])
             try:
                 import os as _os
@@ -322,7 +326,7 @@ def status_cmd(fmt: str, base_dir: Path | None) -> None:
                 pid_alive = False
             except PermissionError:
                 pid_alive = True
-        except (OSError, ValueError):
+        except (OSError, ValueError, IndexError):
             pid_value = None
 
     pending = list(scan_pending_sessions(base=base_dir))

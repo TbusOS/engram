@@ -20,6 +20,8 @@ from engram.observer.session import (
     parse_session_file,
     parse_session_frontmatter,
     render_session_file,
+    session_frontmatter_lock,
+    session_frontmatter_lock_path,
     session_path,
     sessions_root,
 )
@@ -298,3 +300,39 @@ def test_parse_rejects_non_utf8(tmp_path: Path) -> None:
     f.write_bytes(b"---\xff\xfe\ntype: session\n---\nbody\n")
     with pytest.raises(SessionParseError, match="UTF-8"):
         parse_session_file(f)
+
+
+# ----------------------------------------------------------------------
+# A9/F9 (2026-06-13) — per-store frontmatter lock
+# ----------------------------------------------------------------------
+
+
+def test_lock_path_for_project_store(tmp_path: Path) -> None:
+    """A .memory/ session locks under the sibling .engram/ runtime dir."""
+    sess = tmp_path / ".memory" / "sessions" / "2026-04-26" / "sess_x.md"
+    locked = session_frontmatter_lock_path(sess)
+    assert locked == tmp_path / ".engram" / "locks" / "session-frontmatter.lock"
+
+
+def test_lock_path_for_user_store(tmp_path: Path) -> None:
+    """A ~/.engram/ session locks under that same dir (it is already runtime)."""
+    sess = tmp_path / ".engram" / "sessions" / "2026-04-26" / "sess_x.md"
+    locked = session_frontmatter_lock_path(sess)
+    assert locked == tmp_path / ".engram" / "locks" / "session-frontmatter.lock"
+
+
+def test_lock_path_is_per_store_not_per_session(tmp_path: Path) -> None:
+    """Two sessions in the same store share one lock (no per-session files)."""
+    a = tmp_path / ".memory" / "sessions" / "2026-04-26" / "sess_a.md"
+    b = tmp_path / ".memory" / "sessions" / "2026-05-01" / "sess_b.md"
+    assert session_frontmatter_lock_path(a) == session_frontmatter_lock_path(b)
+
+
+def test_lock_is_reentrant_safe_across_sequential_acquire(tmp_path: Path) -> None:
+    """Sequential (non-nested) acquisitions on the same store don't deadlock."""
+    sess = tmp_path / ".memory" / "sessions" / "2026-04-26" / "sess_x.md"
+    with session_frontmatter_lock(sess):
+        pass
+    with session_frontmatter_lock(sess):
+        pass
+    assert session_frontmatter_lock_path(sess).exists()

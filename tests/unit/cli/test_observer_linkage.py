@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
+from engram.core.fs import write_atomic
 from engram.observer.linkage import (
     LinkageResult,
     find_predecessor,
@@ -324,3 +325,103 @@ def test_tier1_auto_links_when_task_hash_set(tmp_path: Path) -> None:
     fm2, _ = parse_session_file(r2.asset_path)
     assert fm2.prev_session == "first"
     assert fm1.next_session == "second"
+
+
+# ----------------------------------------------------------------------
+# A9/F9 (2026-06-13) — shared lock prevents lost updates
+# ----------------------------------------------------------------------
+
+
+def test_concurrent_frontmatter_writes_no_lost_update(tmp_path: Path) -> None:
+    """N threads each append a distinct distilled_into entry under the
+    shared per-store lock; all entries must survive.
+
+    This is the lost-update the A9/F9 fix targets: every thread does a
+    parse -> modify -> write_atomic, and write_atomic swaps the inode.
+    Locking the data file (the old behavior) serialized on the soon-to-be
+    orphaned inode and lost writes; the per-store sentinel does not.
+    """
+    import threading
+
+    from engram.observer.session import session_frontmatter_lock
+
+    started = datetime(2026, 4, 26, 14, 0, tzinfo=timezone.utc)
+    path = _write(tmp_path, sid="target", th="t1", started=started, ended=started)
+
+    def stamp(tag: str) -> None:
+        with session_frontmatter_lock(path):
+            fm, body = parse_session_file(path)
+            updated = SessionFrontmatter(
+                type=fm.type,
+                session_id=fm.session_id,
+                client=fm.client,
+                started_at=fm.started_at,
+                ended_at=fm.ended_at,
+                task_hash=fm.task_hash,
+                tool_calls=fm.tool_calls,
+                files_touched=fm.files_touched,
+                files_modified=fm.files_modified,
+                outcome=fm.outcome,
+                error_summary=fm.error_summary,
+                prev_session=fm.prev_session,
+                next_session=fm.next_session,
+                distilled_into=(*fm.distilled_into, tag),
+                scope=fm.scope,
+                enforcement=fm.enforcement,
+                confidence=fm.confidence,
+                extra=fm.extra,
+            )
+            write_atomic(path, render_session_file(updated, body))
+
+    tags = [f"d{i}" for i in range(12)]
+    threads = [threading.Thread(target=stamp, args=(t,)) for t in tags]
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join()
+
+    fm, _ = parse_session_file(path)
+    assert sorted(fm.distilled_into) == sorted(tags)
+
+
+def test_linkage_and_distilled_into_coexist(tmp_path: Path) -> None:
+    """A predecessor stamped with distilled_into keeps it after linkage
+    writes next_session (and vice versa)."""
+    from engram.observer.session import session_frontmatter_lock
+
+    early = datetime(2026, 4, 26, 10, 0, tzinfo=timezone.utc)
+    late = datetime(2026, 4, 27, 10, 0, tzinfo=timezone.utc)
+    pred = _write(tmp_path, sid="pred", th="t1", started=early, ended=early)
+    new = _write(tmp_path, sid="newer", th="t1", started=late, ended=None)
+
+    # Distill stamps the predecessor first.
+    with session_frontmatter_lock(pred):
+        fm, body = parse_session_file(pred)
+        write_atomic(
+            pred,
+            render_session_file(
+                SessionFrontmatter(
+                    type=fm.type,
+                    session_id=fm.session_id,
+                    client=fm.client,
+                    started_at=fm.started_at,
+                    ended_at=fm.ended_at,
+                    task_hash=fm.task_hash,
+                    distilled_into=("recurring-files",),
+                ),
+                body,
+            ),
+        )
+
+    # Then linkage wires next_session onto the same predecessor.
+    link_session_to_predecessor(
+        new,
+        new_session_id="newer",
+        new_started_at=late,
+        new_task_hash="t1",
+        memory_dir=tmp_path,
+    )
+
+    fm, _ = parse_session_file(pred)
+    assert fm.next_session == "newer"
+    assert fm.distilled_into == ("recurring-files",)
