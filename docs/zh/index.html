@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · 自动续接 MVP</span>
-  <span>M4 退出条件达成:P0 CLI parity 闸门现在端到端覆盖单机全命令面 —— init、memory CRUD、validate、pool、inbox、mcp、observe/observer、distill/propose、doctor、config、wisdom。搭建过程中发现并修了一个真 bug(distill/propose 忽略全局 --dir 还会在无 store 时崩 traceback;现在每个命令都给干净的「run engram init」提示)。1133 单测,ruff + mypy strict 全绿。</span>
+  <span>SPEC 里的三类资产现在全部落地:Memory(已有)、Workflow(M5 —— python3/bash/toml 可执行 spine + fixtures + metrics + copy-on-write 版本历史,engram workflow add/run/test/rollback)、Knowledge Base(M6 —— 多章节文章 + 离线规则编译的 _compiled.md 摘要 + sha256 过期检测,engram kb new-article/compile)。每个都 TDD 先行,并过并行 code-reviewer + security-reviewer 双 agent 加固(spine 执行沙箱、章节路径穿越防护、scope 误归位修复)。1206 单测,ruff + mypy strict 全绿。</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">加入讨论区</a>
 </div>
 

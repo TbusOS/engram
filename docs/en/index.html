@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · Auto-Continuation MVP</span>
-  <span>M4 exit criterion met: the P0 CLI parity gate now exercises the full single-machine command surface end to end — init, memory CRUD, validate, pool, inbox, mcp, observe/observer, distill/propose, doctor, config, wisdom. Building it surfaced and fixed a real bug (distill/propose ignored the global --dir flag and crashed on no-project; every command now exits with a clean 'run engram init' hint). 1133 tests; ruff + mypy strict clean.</span>
+  <span>All three SPEC asset classes now exist: Memory (shipped), Workflow (M5 — runnable spine in python3/bash/toml, fixtures + metrics + copy-on-write rev history, engram workflow add/run/test/rollback), and Knowledge Base (M6 — chapter articles with an offline rule-based _compiled.md digest + sha256 staleness detection, engram kb new-article/compile). Each built TDD-first and hardened by parallel code-reviewer + security-reviewer agents (spine-execution sandbox, chapter path-traversal guard, scope mis-filing fix). 1206 tests; ruff + mypy strict clean.</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">Join the discussion</a>
 </div>
 
