@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · Auto-Continuation MVP</span>
-  <span>Session-frontmatter integrity batch landed: one per-store advisory lock now serializes every prev/next, distilled_into, and re-compaction rewrite across the daemon and CLI (locking the data file was useless — write_atomic swaps the inode), re-compaction preserves all owned fields, and the daemon pid file is cleared under its lock instead of racing a successor. Every fix re-reviewed by parallel code-reviewer + security-reviewer agents. 1127 tests; ruff + mypy strict clean.</span>
+  <span>M4 exit criterion met: the P0 CLI parity gate now exercises the full single-machine command surface end to end — init, memory CRUD, validate, pool, inbox, mcp, observe/observer, distill/propose, doctor, config, wisdom. Building it surfaced and fixed a real bug (distill/propose ignored the global --dir flag and crashed on no-project; every command now exits with a clean 'run engram init' hint). 1133 tests; ruff + mypy strict clean.</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">Join the discussion</a>
 </div>
 

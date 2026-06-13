@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · 自动续接 MVP</span>
-  <span>Session frontmatter 一致性批次落地:一把按 store 的咨询锁现在串行化所有 prev/next、distilled_into、重新 compaction 的写入(横跨 daemon 与 CLI;锁数据文件本身没用 —— write_atomic 会换 inode),重新 compaction 保留全部字段,daemon pid 文件在持锁时清空而非与继任者竞争。每项修复都过并行 code-reviewer + security-reviewer 双 agent 复审。1127 单测,ruff + mypy strict 全绿。</span>
+  <span>M4 退出条件达成:P0 CLI parity 闸门现在端到端覆盖单机全命令面 —— init、memory CRUD、validate、pool、inbox、mcp、observe/observer、distill/propose、doctor、config、wisdom。搭建过程中发现并修了一个真 bug(distill/propose 忽略全局 --dir 还会在无 store 时崩 traceback;现在每个命令都给干净的「run engram init」提示)。1133 单测,ruff + mypy strict 全绿。</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">加入讨论区</a>
 </div>
 
