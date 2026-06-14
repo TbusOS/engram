@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · Auto-Continuation MVP</span>
-  <span>Cross-repo inbox loop closed: the sender now sees acknowledge/resolve/reject on its next `engram review`/`status` (reverse notification). Consistency Phase 3 activated — transitive supersedes-graph analysis (dangling / circular / fork) on top of the existing flat-reference checks. With all three asset classes + MCP read/write + the inbox loop, engram is a complete local LLM-agnostic memory system. Auto-continuation can now run at login via `engram observer install-service` (launchd/systemd). 1244 tests; ruff + mypy strict clean.</span>
+  <span>Web UI shipped: <code>engram web serve</code> opens a local browser for the whole store — Dashboard, Memory, Workflows, KB, Inbox, and the Context Preview debug page that runs the Relevance Gate live. It's stdlib-only server-rendered HTML (no node/build step, works offline), 127.0.0.1 by default, non-loopback bind requires auth. All three asset classes + MCP read/write + inbox loop + web UI = a complete local LLM-agnostic memory system. 1259 tests; ruff + mypy strict clean.</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">Join the discussion</a>
 </div>
 
