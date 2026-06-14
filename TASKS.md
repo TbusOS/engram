@@ -199,7 +199,7 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 
 | ID | Task | Status | Owner | Depends on | Notes |
 |----|------|--------|-------|------------|-------|
-| T-47r | Consistency Phase 3 references — full enable | todo | | T-46 | Promotes Phase 3 from stub to full reference-graph traversal detecting REFERENCE_ROT |
+| T-47r | Consistency Phase 3 references — full enable | done | | T-46 | Promotes Phase 3 from stub to full reference-graph traversal detecting REFERENCE_ROT [done 2026-06-14: supersedes-graph analysis — dangling/circular/fork detection, frontmatter-only, engram/consistency/phase3_references.py + 8 tests]|
 | T-48r | Consistency Phase 4 staleness — full enable | todo | | T-46 | Time decay + DBSCAN topic clustering for topic-divergence detection |
 | T-189 | Evaluator auto-proposes MERGE on body-hash similarity ≥ 0.85 | todo | | T-46 | Phase 2 already detects body-hash dupes; this surfaces MERGE proposals automatically; user still confirms |
 
