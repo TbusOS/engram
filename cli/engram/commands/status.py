@@ -150,7 +150,17 @@ def status_cmd(cfg: GlobalConfig) -> None:
     """Print project + scope summary for the current engram project."""
     root = cfg.resolve_project_root()
     status = run_status(root)
+
+    # T-96 reverse notification: surface inbox transitions on messages this
+    # repo sent since the last session (text mode only; JSON status stays a
+    # stable machine shape — use `engram review --format json` for the data).
+    from engram.inbox import collect_reverse_notifications, render_reverse_notifications
+
     if cfg.output_format == "json":
         click.echo(render_json(status))
     else:
         click.echo(render_text(status))
+        block = render_reverse_notifications(collect_reverse_notifications(root))
+        if block:
+            click.echo("")
+            click.echo(block)

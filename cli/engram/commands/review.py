@@ -148,7 +148,31 @@ def review_cmd(cfg: GlobalConfig) -> None:
     """Print an aggregated project health summary. Always exits 0."""
     root = cfg.resolve_project_root()
     report = run_review(root)
+
+    # T-96 reverse notification: surface transitions on messages this repo
+    # sent (acknowledged / resolved / rejected) since the last session.
+    from engram.inbox import collect_reverse_notifications, render_reverse_notifications
+
+    notes = collect_reverse_notifications(root)
+
     if cfg.output_format == "json":
-        click.echo(render_json(report))
+        import json
+
+        payload = json.loads(render_json(report))
+        payload["inbox_updates"] = [
+            {
+                "event": n.event,
+                "message_id": n.message_id,
+                "to": n.to,
+                "timestamp": n.timestamp,
+                "detail": n.detail,
+            }
+            for n in notes
+        ]
+        click.echo(json.dumps(payload, indent=2))
     else:
         click.echo(render_text(report))
+        block = render_reverse_notifications(notes)
+        if block:
+            click.echo("")
+            click.echo(block)

@@ -30,6 +30,11 @@ from engram.inbox.messenger import (
     SENT,
     send_message,
 )
+from engram.inbox.notify import (
+    ReverseNotification,
+    collect_reverse_notifications,
+    render_reverse_notifications,
+)
 
 __all__ = [
     "DEDUP_DETECTED",
@@ -37,9 +42,12 @@ __all__ = [
     "MAX_PER_SENDER_PER_DAY",
     "RATE_LIMIT_HIT",
     "SENT",
+    "ReverseNotification",
     "acknowledge",
+    "collect_reverse_notifications",
     "list_messages",
     "reject",
+    "render_reverse_notifications",
     "resolve",
     "resolve_repo_id",
     "send_message",
