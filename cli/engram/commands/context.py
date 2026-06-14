@@ -67,7 +67,9 @@ def _load_assets(project_root: Path) -> list[Asset]:
                 id=r["id"],
                 scope=fm.scope.value,
                 enforcement=fm.enforcement.value,
-                subscribed_at=fm.subscribed_at,
+                # Asset.subscribed_at is a str key into SCOPE_WEIGHTS; pass the
+                # enum value, not the Scope enum (else pool assets mis-weight).
+                subscribed_at=fm.subscribed_at.value if fm.subscribed_at else None,
                 body=body,
                 updated=fm.updated or date.today(),
                 size_bytes=size,

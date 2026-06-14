@@ -127,6 +127,7 @@ def _register_subcommands() -> None:
     from engram.commands.status import status_cmd
     from engram.commands.validate import validate_cmd
     from engram.commands.version import version_cmd
+    from engram.commands.web import web_group
     from engram.commands.wisdom import wisdom_cmd
     from engram.commands.workflow import workflow_group
     from engram.migrate import migrate_cmd
@@ -159,6 +160,7 @@ def _register_subcommands() -> None:
     cli.add_command(propose_group)
     cli.add_command(workflow_group)
     cli.add_command(kb_group)
+    cli.add_command(web_group)
 
 
 _register_subcommands()
