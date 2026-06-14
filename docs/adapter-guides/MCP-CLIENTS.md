@@ -132,9 +132,21 @@ If your tool supports the MCP 2024-11-05 spec, point its MCP config at:
 
 The exposed tools are:
 
+Read:
+
 - ``engram_memory_search`` — BM25 + scope/enforcement-weighted search.
 - ``engram_memory_read`` — read one asset by id.
 - ``engram_context_pack`` — Relevance Gate context assembly.
+- ``engram_inbox_list`` — list inbox messages addressed to this repo.
+
+Write (a connected client can curate the store):
+
+- ``engram_memory_add`` — create a new memory asset (project scope, ``local/``).
+- ``engram_inbox_send`` — send a cross-repo message (rate-limited, deduplicated).
+
+Enabling the server grants the connected client these mutation rights;
+writes are deliberate actions (the same consent model as ``engram
+distill promote``) and are validated + size-capped server-side.
 
 ---
 

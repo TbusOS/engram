@@ -54,9 +54,11 @@ from engram.relevance.weights import (
 __all__ = [
     "ENFORCEMENT_WEIGHTS",
     "SCOPE_WEIGHTS",
+    "MemoryWriteError",
     "apply_scope_weighting",
     "bm25_scores",
     "compute_id",
+    "create_memory",
     "derive_quick_description",
     "derive_quick_name",
     "graph_db_path",
@@ -66,6 +68,14 @@ __all__ = [
     "sha256_hex",
     "slugify",
 ]
+
+
+class MemoryWriteError(Exception):
+    """Raised by :func:`create_memory` on validation failure or id collision.
+
+    Non-click so non-CLI callers (the MCP server) can handle it; the CLI
+    converts it to a ``click.ClickException`` at the command boundary.
+    """
 
 
 # Scope + enforcement weighting — canonical implementation lives in
@@ -355,13 +365,93 @@ def _build_frontmatter(
     raw["created"] = date.today().isoformat()
 
     # Round-trip through YAML → parse_frontmatter so all SPEC §4.1 validation
-    # fires uniformly instead of us re-implementing it here.
+    # fires uniformly instead of us re-implementing it here. Raises
+    # FrontmatterError on invalid input; callers (create_memory) wrap it.
     yaml_block = yaml.dump(raw, sort_keys=False, allow_unicode=True, default_flow_style=False)
     doc = f"---\n{yaml_block}---\n"
+    return _from_yaml_doc(doc)
+
+
+def create_memory(
+    root: Path,
+    *,
+    memory_type: str,
+    name: str,
+    description: str,
+    body: str,
+    scope: str = "project",
+    enforcement: str | None = None,
+    tags: tuple[str, ...] = (),
+    source: str | None = None,
+    workflow_ref: str | None = None,
+    force: bool = False,
+    slug: str | None = None,
+) -> dict[str, Any]:
+    """Create a memory asset: write file + register in graph.db + index.
+
+    The single write path shared by ``engram memory add`` / ``quick`` and
+    the MCP ``engram_memory_add`` tool. ``body`` must already be resolved
+    (no ``-`` stdin sentinel). Pass ``slug`` to override the name-derived
+    slug (the quick path pre-resolves a collision-free slug). Raises
+    :class:`MemoryWriteError` on validation failure or an id collision
+    when ``force`` is False. Returns ``{id, path, sha256, size_bytes, name}``.
+    """
     try:
-        return _from_yaml_doc(doc)
+        fm = _build_frontmatter(
+            memory_type=memory_type,
+            name=name,
+            description=description,
+            scope=scope,
+            enforcement=enforcement,
+            tags=tags,
+            source=source,
+            workflow_ref=workflow_ref,
+        )
     except FrontmatterError as exc:
-        raise click.ClickException(str(exc)) from exc
+        raise MemoryWriteError(str(exc)) from exc
+
+    final_slug = slug or slugify(name)
+    scope_dir = "local"  # M2: everything under local/; M3 extends
+    file_path = memory_file_path(root, scope_dir, memory_type, final_slug)
+    if file_path.exists() and not force:
+        raise MemoryWriteError(
+            f"{file_path} already exists; use force=True to overwrite."
+        )
+
+    content = render_asset_file(fm, body)
+    write_atomic(file_path, content)
+
+    asset_id = compute_id(scope_dir, memory_type, final_slug)
+    rel_path = file_path.relative_to(memory_dir(root))
+    row = AssetRow(
+        id=asset_id,
+        scope=scope,
+        scope_name=None,
+        subtype=memory_type,
+        kind="memory",
+        path=str(rel_path),
+        lifecycle_state="active",
+        sha256=sha256_hex(content),
+        created=fm.created.isoformat() if fm.created else None,
+        updated=fm.updated.isoformat() if fm.updated else None,
+        enforcement=fm.enforcement.value,
+        confidence_score=0.0,
+        size_bytes=len(content.encode("utf-8")),
+    )
+    with open_graph_db(graph_db_path(root)) as conn:
+        if force:
+            conn.execute("DELETE FROM assets WHERE id = ?", (asset_id,))
+            conn.commit()
+        insert_asset(conn, row)
+
+    append_to_memory_index(root, rel_path=str(rel_path), name=name, description=description)
+    return {
+        "id": asset_id,
+        "path": str(file_path),
+        "sha256": row.sha256,
+        "size_bytes": row.size_bytes,
+        "name": name,
+    }
 
 
 def _from_yaml_doc(doc: str) -> MemoryFrontmatter:
@@ -439,70 +529,37 @@ def add_cmd(
 ) -> None:
     """Create a memory asset from flags."""
     root = cfg.resolve_project_root()
-
-    fm = _build_frontmatter(
-        memory_type=memory_type,
-        name=name,
-        description=description,
-        scope=scope,
-        enforcement=enforcement,
-        tags=tags,
-        source=source,
-        workflow_ref=workflow_ref,
-    )
-    slug = slugify(name)
-    scope_dir = "local"  # M2: everything under local/; M3 extends
-    file_path = memory_file_path(root, scope_dir, memory_type, slug)
-    if file_path.exists() and not force:
-        raise click.ClickException(f"{file_path} already exists; re-run with --force to overwrite.")
-
     body_text = _read_body_flag(body)
-    content = render_asset_file(fm, body_text)
-    write_atomic(file_path, content)
-
-    asset_id = compute_id(scope_dir, memory_type, slug)
-    rel_path = file_path.relative_to(memory_dir(root))
-    row = AssetRow(
-        id=asset_id,
-        scope=scope,
-        scope_name=None,
-        subtype=memory_type,
-        kind="memory",
-        path=str(rel_path),
-        lifecycle_state="active",
-        sha256=sha256_hex(content),
-        created=fm.created.isoformat() if fm.created else None,
-        updated=fm.updated.isoformat() if fm.updated else None,
-        enforcement=fm.enforcement.value,
-        confidence_score=0.0,
-        size_bytes=len(content.encode("utf-8")),
-    )
-    with open_graph_db(graph_db_path(root)) as conn:
-        if force:
-            conn.execute("DELETE FROM assets WHERE id = ?", (asset_id,))
-            conn.commit()
-        insert_asset(conn, row)
-
-    append_to_memory_index(
-        root,
-        rel_path=str(rel_path),
-        name=name,
-        description=description,
-    )
+    try:
+        result = create_memory(
+            root,
+            memory_type=memory_type,
+            name=name,
+            description=description,
+            body=body_text,
+            scope=scope,
+            enforcement=enforcement,
+            tags=tags,
+            source=source,
+            workflow_ref=workflow_ref,
+            force=force,
+        )
+    except MemoryWriteError as exc:
+        raise click.ClickException(str(exc)) from exc
 
     if cfg.output_format == "json":
         click.echo(
             json.dumps(
                 {
-                    "id": asset_id,
-                    "path": str(file_path),
-                    "sha256": row.sha256,
-                    "size_bytes": row.size_bytes,
+                    "id": result["id"],
+                    "path": result["path"],
+                    "sha256": result["sha256"],
+                    "size_bytes": result["size_bytes"],
                 }
             )
         )
     else:
-        click.echo(f"added {asset_id} → {file_path}")
+        click.echo(f"added {result['id']} → {result['path']}")
 
 
 # -- quick ---------------------------------------------------------
@@ -579,61 +636,35 @@ def quick_cmd(
         root, scope_dir, memory_type, base_slug, derived_name
     )
 
-    fm = _build_frontmatter(
-        memory_type=memory_type,
-        name=final_name,
-        description=derived_description,
-        scope=scope,
-        enforcement=enforcement,
-        tags=tags,
-        source=None,
-        workflow_ref=None,
-    )
-    file_path = memory_file_path(root, scope_dir, memory_type, final_slug)
-    content = render_asset_file(fm, body_text)
-    write_atomic(file_path, content)
-
-    asset_id = compute_id(scope_dir, memory_type, final_slug)
-    rel_path = file_path.relative_to(memory_dir(root))
-    row = AssetRow(
-        id=asset_id,
-        scope=scope,
-        scope_name=None,
-        subtype=memory_type,
-        kind="memory",
-        path=str(rel_path),
-        lifecycle_state="active",
-        sha256=sha256_hex(content),
-        created=fm.created.isoformat() if fm.created else None,
-        updated=fm.updated.isoformat() if fm.updated else None,
-        enforcement=fm.enforcement.value,
-        confidence_score=0.0,
-        size_bytes=len(content.encode("utf-8")),
-    )
-    with open_graph_db(graph_db_path(root)) as conn:
-        insert_asset(conn, row)
-
-    append_to_memory_index(
-        root,
-        rel_path=str(rel_path),
-        name=final_name,
-        description=derived_description,
-    )
+    try:
+        result = create_memory(
+            root,
+            memory_type=memory_type,
+            name=final_name,
+            description=derived_description,
+            body=body_text,
+            scope=scope,
+            enforcement=enforcement,
+            tags=tags,
+            slug=final_slug,
+        )
+    except MemoryWriteError as exc:
+        raise click.ClickException(str(exc)) from exc
 
     if cfg.output_format == "json":
         click.echo(
             json.dumps(
                 {
-                    "id": asset_id,
-                    "path": str(file_path),
-                    "name": final_name,
-                    "sha256": row.sha256,
-                    "size_bytes": row.size_bytes,
+                    "id": result["id"],
+                    "path": result["path"],
+                    "name": result["name"],
+                    "sha256": result["sha256"],
+                    "size_bytes": result["size_bytes"],
                 }
             )
         )
     else:
-        click.echo(f"added {asset_id} → {file_path}")
+        click.echo(f"added {result['id']} → {result['path']}")
 
 
 def _resolve_quick_slug(

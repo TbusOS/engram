@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import subprocess
 from pathlib import Path
 
 import tomli
 
 __all__ = ["resolve_repo_id", "slugify_repo_id"]
+
+# A repo id becomes a path segment under ~/.engram/inbox/<slug>/. It can
+# arrive from a model-driven MCP tool argument, so the slug MUST NOT be a
+# path-traversal token. Anything outside this allowlist collapses to '-'.
+_SLUG_BAD_RE = re.compile(r"[^A-Za-z0-9._-]+")
 
 
 def resolve_repo_id(project_root: Path) -> str:
@@ -45,5 +51,15 @@ def resolve_repo_id(project_root: Path) -> str:
 
 
 def slugify_repo_id(repo_id: str) -> str:
-    """SPEC §10.1: sender-id slug replaces ``/`` with ``-``."""
-    return repo_id.replace("/", "-")
+    """Make a repo id safe to use as a single path segment (SPEC §10.1).
+
+    Replaces ``/`` (and any other char outside ``[A-Za-z0-9._-]``, incl.
+    NUL / newline / whitespace) with ``-``. A slug that reduces to empty
+    or to a traversal token (``.`` / ``..``) is replaced with a stable
+    hash so it can never escape ``~/.engram/inbox/`` (security review:
+    ``to=".."`` previously wrote one level above the inbox tree).
+    """
+    slug = _SLUG_BAD_RE.sub("-", repo_id).strip("-")
+    if slug in ("", ".", ".."):
+        return "id-" + hashlib.sha256(repo_id.encode()).hexdigest()[:12]
+    return slug

@@ -374,3 +374,15 @@ def test_cli_inbox_list_and_lifecycle(
     assert result.exit_code == 0
     items = json.loads(result.output)
     assert any(m["message_id"] == mid for m in items)
+
+
+def test_slugify_repo_id_neutralizes_traversal() -> None:
+    from engram.inbox.identity import slugify_repo_id
+
+    assert slugify_repo_id("acme/platform") == "acme-platform"
+    assert slugify_repo_id("acme.platform_v2") == "acme.platform_v2"
+    # Traversal / empty tokens collapse to a stable hash, never '.'/'..'.
+    for bad in ("..", ".", "", "/", "../.."):
+        slug = slugify_repo_id(bad)
+        assert slug not in ("", ".", "..")
+        assert "/" not in slug
