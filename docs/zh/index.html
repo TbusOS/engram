@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · 自动续接 MVP</span>
-  <span>MCP server 现在可读可写:连接的 LLM(Claude Desktop、Cursor 等)可以用 engram_memory_add 维护记忆、用 engram_inbox_send/list 给其它仓库发消息,叠加在 search/read/context_pack 之上。三类资产(Memory/Workflow/KB)全部落地后,engram 作为 本地、不绑 LLM 的记忆系统已能端到端使用。经并行 code+security 双 review 加固(inbox 路径穿越修复、字段上限)。1217 单测,ruff + mypy strict 全绿。</span>
+  <span>跨仓库 inbox 闭环打通:发送方现在能在下次 `engram review`/`status` 看到对方的 acknowledge/resolve/reject(反向通知)。一致性引擎 Phase 3 启用 —— 在已有的扁平引用检查之上,加了 supersedes 图的传递分析(悬空/成环/分叉)。三类资产 + MCP 读写 + inbox 闭环齐备,engram 已是完整的本地、不绑 LLM 的记忆系统。1235 单测,ruff + mypy strict 全绿。</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">加入讨论区</a>
 </div>
 
