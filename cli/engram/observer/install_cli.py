@@ -20,6 +20,7 @@ from typing import Any
 
 import click
 
+from engram.core.fs import write_atomic
 from engram.observer.install import (
     INSTALL_TARGETS,
     InstallTargetUnknown,
@@ -364,6 +365,73 @@ def status_cmd(fmt: str, base_dir: Path | None) -> None:
         )
     for row in pending_rows[:10]:
         click.echo(f"  - {row['session_id']}  ({row['queue_size_bytes']} bytes)")
+
+
+# ----------------------------------------------------------------------
+# engram observer install-service (persistent launchd / systemd unit)
+# ----------------------------------------------------------------------
+
+
+@observer_group.command(
+    "install-service",
+    help="Generate a launchd (macOS) / systemd (Linux) unit so the daemon "
+    "runs at login.",
+)
+@click.option("--start", is_flag=True, default=False, help="Load the service after writing it.")
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Print the unit and target path without writing anything.",
+)
+@click.option(
+    "--base",
+    "base_dir",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    default=None,
+    hidden=True,
+)
+def install_service_cmd(start: bool, dry_run: bool, base_dir: Path | None) -> None:
+    import subprocess
+
+    from engram.observer.service import ServiceUnsupportedError, build_service_plan
+
+    try:
+        plan = build_service_plan(base=base_dir)
+    except ServiceUnsupportedError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if dry_run:
+        click.echo(f"# would write {plan.platform} unit to: {plan.target_path}")
+        click.echo(plan.content)
+        click.echo(f"# then load with: {' '.join(plan.load_command)}")
+        return
+
+    plan.target_path.parent.mkdir(parents=True, exist_ok=True)
+    write_atomic(plan.target_path, plan.content)
+    click.echo(f"wrote {plan.platform} unit: {plan.target_path}")
+
+    if not start:
+        click.echo("to start it now, run:")
+        click.echo(f"  {' '.join(plan.load_command)}")
+        click.echo(f"to remove it later:\n  {' '.join(plan.unload_command)}")
+        return
+
+    try:
+        proc = subprocess.run(
+            plan.load_command, capture_output=True, text=True, check=False, timeout=15
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
+        raise click.ClickException(
+            f"could not run {plan.load_command[0]}: {exc}. The unit is written; "
+            f"load it manually with: {' '.join(plan.load_command)}"
+        ) from exc
+    if proc.returncode != 0:
+        raise click.ClickException(
+            f"{' '.join(plan.load_command)} failed (exit {proc.returncode}): "
+            f"{proc.stderr.strip()}"
+        )
+    click.echo(f"service loaded: {' '.join(plan.load_command)}")
 
 
 def _read_last_journal_error(path: Path) -> dict[str, Any] | None:
