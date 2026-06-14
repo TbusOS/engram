@@ -43,7 +43,7 @@
 ════════════════════════════════════════════ -->
 <div style="background:var(--anth-bg-subtle); padding:var(--space-3) var(--space-5); display:flex; align-items:center; gap:var(--space-4); justify-content:center; font-size:14px; font-family:var(--font-heading);">
   <span class="anth-badge" style="background:var(--anth-orange); color:#ffffff;">v0.2 · 自动续接 MVP</span>
-  <span>SPEC 里的三类资产现在全部落地:Memory(已有)、Workflow(M5 —— python3/bash/toml 可执行 spine + fixtures + metrics + copy-on-write 版本历史,engram workflow add/run/test/rollback)、Knowledge Base(M6 —— 多章节文章 + 离线规则编译的 _compiled.md 摘要 + sha256 过期检测,engram kb new-article/compile)。每个都 TDD 先行,并过并行 code-reviewer + security-reviewer 双 agent 加固(spine 执行沙箱、章节路径穿越防护、scope 误归位修复)。1206 单测,ruff + mypy strict 全绿。</span>
+  <span>MCP server 现在可读可写:连接的 LLM(Claude Desktop、Cursor 等)可以用 engram_memory_add 维护记忆、用 engram_inbox_send/list 给其它仓库发消息,叠加在 search/read/context_pack 之上。三类资产(Memory/Workflow/KB)全部落地后,engram 作为 本地、不绑 LLM 的记忆系统已能端到端使用。经并行 code+security 双 review 加固(inbox 路径穿越修复、字段上限)。1217 单测,ruff + mypy strict 全绿。</span>
   <a class="anth-link" href="https://github.com/TbusOS/engram/discussions">加入讨论区</a>
 </div>
 
