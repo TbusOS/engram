@@ -27,7 +27,7 @@ from engram.core.paths import user_root
 from engram.observer.config import load_tier_provider
 from engram.observer.daemon import PendingSession
 from engram.observer.providers import Provider, mechanical_provider
-from engram.observer.tier0 import compact_session
+from engram.observer.tier0 import compact_session, session_timeline_path
 from engram.observer.tier1 import compact_to_session_asset
 
 __all__ = [
@@ -127,7 +127,7 @@ def make_tier1_runner(
             return mechanical_provider
 
     def _run(pending: PendingSession) -> None:
-        timeline_path = tdir / f"{pending.session_id}.timeline.jsonl"
+        timeline_path = session_timeline_path(pending.session_id, sessions_dir=tdir)
         client = read_client_from_timeline(timeline_path) or "manual"
         compact_to_session_asset(
             pending.session_id,

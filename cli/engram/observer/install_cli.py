@@ -232,20 +232,21 @@ def daemon_cmd(
     )
     from engram.observer.runners import make_tier0_runner, make_tier1_runner
 
-    config_kwargs: dict[str, float | int | None] = {}
-    if poll_interval is not None:
-        config_kwargs["poll_interval_seconds"] = poll_interval
-    if idle_threshold is not None:
-        config_kwargs["session_idle_threshold_seconds"] = idle_threshold
-    if once:
-        if max_iterations not in (None, 1):
-            raise click.UsageError(
-                "--once and --max-iterations are mutually exclusive"
-            )
-        config_kwargs["max_iterations"] = 1
-    elif max_iterations is not None:
-        config_kwargs["max_iterations"] = max_iterations
-    config = DaemonConfig(**config_kwargs)  # type: ignore[arg-type]
+    if once and max_iterations not in (None, 1):
+        raise click.UsageError("--once and --max-iterations are mutually exclusive")
+    config = DaemonConfig(
+        poll_interval_seconds=(
+            poll_interval
+            if poll_interval is not None
+            else DaemonConfig.poll_interval_seconds
+        ),
+        session_idle_threshold_seconds=(
+            idle_threshold
+            if idle_threshold is not None
+            else DaemonConfig.session_idle_threshold_seconds
+        ),
+        max_iterations=1 if once else max_iterations,
+    )
 
     tier0 = make_tier0_runner(base=base_dir)
     tier1 = make_tier1_runner(
