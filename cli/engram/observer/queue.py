@@ -18,7 +18,7 @@ not the system of record (Tier 0 / Tier 1 / Tier 2 sessions are).
 from __future__ import annotations
 
 import fcntl
-import time
+import os
 from pathlib import Path
 from typing import Any
 
@@ -93,6 +93,7 @@ def enqueue(
     max_events_per_session: int = DEFAULT_MAX_EVENTS_PER_SESSION,
     max_total_sessions: int = DEFAULT_MAX_TOTAL_SESSIONS,
     raw_retention: bool = False,
+    raw_payload: str | None = None,
 ) -> EnqueueResult:
     """Append ``event`` to its session queue.
 
@@ -104,9 +105,13 @@ def enqueue(
       F8) — protects against a flood of distinct session ids that
       would exhaust inodes / disk.
 
-    When ``raw_retention`` is True, the full pre-trim payload is also
-    appended to ``~/.engram/raw/sessions/<id>.full.jsonl``. The trimmed
-    line still goes to the main queue.
+    When ``raw_retention`` is True, ``raw_payload`` — compact JSON of the
+    full pre-trim event, captured before ``parse_event`` filtered and
+    size-truncated it — is appended to
+    ``~/.engram/raw/sessions/<id>.full.jsonl`` so prompt / stderr bodies
+    survive for later re-analysis. Falls back to the trimmed queue line
+    when ``raw_payload`` is None. The trimmed line goes to the main queue
+    regardless.
     """
     queue_path = queue_file_for_session(event.session_id, base=base)
     queue_path.parent.mkdir(parents=True, exist_ok=True)
@@ -150,7 +155,7 @@ def enqueue(
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     if raw_retention:
-        _append_raw(event, encoded, base=base)
+        _append_raw(event, encoded, base=base, raw_payload=raw_payload)
 
     return EnqueueResult(queued_at=event.server_t, queue_depth=depth_after, path=queue_path)
 
@@ -221,21 +226,33 @@ def _write_count_locked(count_path: Path, depth: int) -> None:
     tmp.replace(count_path)
 
 
-def _append_raw(event: ObserveEvent, primary_line: bytes, *, base: Path | None) -> None:
-    """Append the full pre-trim payload to the per-session raw jsonl."""
+def _append_raw(
+    event: ObserveEvent,
+    primary_line: bytes,
+    *,
+    base: Path | None,
+    raw_payload: str | None = None,
+) -> None:
+    """Append the full-fidelity event to the per-session raw jsonl.
+
+    ``raw_payload`` is compact JSON of the pre-trim event (captured before
+    ``parse_event`` filtered and size-truncated it), so prompt / stderr
+    bodies survive for later re-analysis. Falls back to the trimmed
+    ``primary_line`` when None — the raw file stays valid jsonl either way.
+    Not fsync'd (opt-in buffer, 30-day TTL); a crash can drop the last lines.
+    """
     raw_path = raw_session_file(event.session_id, base=base)
-    raw_path.parent.mkdir(parents=True, exist_ok=True)
-    # Use the same line we wrote to the main queue. raw retention's
-    # value is keeping the *event* — re-deriving full prompt/stderr from
-    # an already-trimmed dict is impossible, so when raw_retention is
-    # True the caller is responsible for invoking enqueue *before* trim
-    # if they need the original. For now, we store the trimmed line —
-    # raw retention v2 will plumb the pre-trim payload through.
-    _ = time.time()  # placeholder: hook for future fsync policy
+    raw_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    line = (raw_payload + "\n").encode("utf-8") if raw_payload is not None else primary_line
     with open(raw_path, "ab") as rf:
+        # Owner-only (security review M1): the raw file uniquely holds the
+        # full pre-trim prompt / stderr bodies the normal pipeline drops —
+        # exactly where secret values live. Enforce 0600 on every open so a
+        # pre-existing looser file is tightened too.
+        os.fchmod(rf.fileno(), 0o600)
         fcntl.flock(rf.fileno(), fcntl.LOCK_EX)
         try:
-            rf.write(primary_line)
+            rf.write(line)
             rf.flush()
         finally:
             fcntl.flock(rf.fileno(), fcntl.LOCK_UN)

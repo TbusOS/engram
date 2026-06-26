@@ -8,7 +8,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from engram.observer.cli import observe_cmd
-from engram.observer.paths import queue_file_for_session
+from engram.observer.paths import queue_file_for_session, raw_session_file
 
 
 def _run(runner: CliRunner, args: list[str], stdin: str | None = None):
@@ -77,6 +77,44 @@ def test_observe_writes_to_queue_file(tmp_path: Path) -> None:
     line = json.loads(path.read_text().strip())
     assert line["tool"] == "Edit"
     assert line["client"] == "cursor"
+
+
+def test_observe_raw_retention_keeps_full_prompt(tmp_path: Path) -> None:
+    """C8 end-to-end — a prompt large enough that parse_event trims it from
+    the queue line still lands in full in the raw-retention file."""
+    runner = CliRunner()
+    big = "Z" * 6000
+    _run(
+        runner,
+        [
+            "--session", "sess_abc",
+            "--client", "claude-code",
+            "--event", json.dumps({"event": "tool_use", "tool": "Edit", "prompt": big}),
+            "--raw-retention",
+            "--base", str(tmp_path),
+        ],
+    )
+    queue_line = queue_file_for_session("sess_abc", base=tmp_path).read_text()
+    assert big not in queue_line  # trimmed out of the queue line
+    raw = raw_session_file("sess_abc", base=tmp_path).read_text()
+    assert big in raw  # preserved in full in the raw file
+
+
+def test_observe_payload_session_id_does_not_override_cli(tmp_path: Path) -> None:
+    """F15 — the CLI --session is the source of truth; a session_id smuggled
+    in the event payload never redirects the queue file."""
+    runner = CliRunner()
+    _run(
+        runner,
+        [
+            "--session", "sess_good",
+            "--client", "claude-code",
+            "--event", json.dumps({"event": "tool_use", "tool": "Read", "session_id": "evil"}),
+            "--base", str(tmp_path),
+        ],
+    )
+    assert queue_file_for_session("sess_good", base=tmp_path).exists()
+    assert not queue_file_for_session("evil", base=tmp_path).exists()
 
 
 def test_observe_text_format(tmp_path: Path) -> None:

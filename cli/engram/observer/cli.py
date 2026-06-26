@@ -87,7 +87,8 @@ def _emit(payload: dict[str, Any], *, fmt: str) -> None:
     "event_payload",
     metavar="JSON",
     default=None,
-    help="Event payload as JSON. If omitted, reads one JSON object from stdin.",
+    help="Event payload as JSON (visible in ps / process listings — prefer "
+    "stdin for anything sensitive). If omitted, reads one JSON object from stdin.",
 )
 @click.option(
     "--from",
@@ -123,7 +124,10 @@ def _emit(payload: dict[str, Any], *, fmt: str) -> None:
 @click.option(
     "--raw-retention/--no-raw-retention",
     default=False,
-    help="Also append to ~/.engram/raw/sessions/<id>.full.jsonl (opt-in, 30-day TTL).",
+    help="Also append the full pre-trim event — full unredacted prompt / "
+    "stderr bodies, in an owner-only (0600) file — to "
+    "~/.engram/raw/sessions/<id>.full.jsonl (opt-in, 30-day TTL; not fsync'd, "
+    "so a crash can drop the last lines).",
 )
 @click.option(
     "--base",
@@ -182,6 +186,15 @@ def observe_cmd(
             sys.exit(2)
         payload = translated
 
+    # C8: snapshot the full pre-trim event for --raw-retention before
+    # parse_event filters + truncates it. Only serialised when retention is
+    # on, so the common path pays nothing.
+    raw_snapshot = (
+        json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+        if raw_retention
+        else None
+    )
+
     try:
         event = parse_event(payload, session_id=session_id, client=client)
     except ProtocolError as exc:
@@ -195,6 +208,7 @@ def observe_cmd(
             max_events_per_session=max_events_per_session,
             max_total_sessions=max_total_sessions,
             raw_retention=raw_retention,
+            raw_payload=raw_snapshot,
         )
     except QueueFullError as exc:
         # Queue full is a non-fatal advisory; we exit 0 with ok=false so

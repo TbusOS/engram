@@ -142,6 +142,19 @@ def test_raw_retention_on_writes_full_file(tmp_path: Path) -> None:
     assert json.loads(content)["client"] == "claude-code"
 
 
+def test_raw_retention_stores_provided_full_payload(tmp_path: Path) -> None:
+    """C8 — raw_payload (the pre-trim event) is stored verbatim, so prompt /
+    stderr bodies that parse_event would truncate survive in the raw file."""
+    full = '{"event":"tool_use","tool":"Edit","prompt":"' + "X" * 6000 + '"}'
+    enqueue(_event(), base=tmp_path, raw_retention=True, raw_payload=full)
+    raw_path = raw_session_file("sess_abc", base=tmp_path)
+    content = raw_path.read_text().strip()
+    assert content == full
+    assert "X" * 6000 in content
+    # M1: owner-only — the raw file holds full unredacted prompt/stderr bodies.
+    assert (raw_path.stat().st_mode & 0o777) == 0o600
+
+
 # ------------------------------------------------------------------
 # A3/F10 (2026-05-02) — O(1) sidecar count
 # ------------------------------------------------------------------
