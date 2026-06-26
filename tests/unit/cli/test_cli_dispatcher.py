@@ -264,3 +264,25 @@ def test_help_mentions_global_flags() -> None:
     assert "--format" in result.output
     assert "--quiet" in result.output
     assert "--debug" in result.output
+
+
+def test_require_posix_noop_on_posix() -> None:
+    """C2 — the platform guard is a no-op on macOS / Linux."""
+    from engram.cli import _require_posix
+
+    _require_posix("linux")
+    _require_posix("darwin")
+
+
+def test_require_posix_exits_on_windows() -> None:
+    """C2 — on Windows it exits cleanly (EX_TEMPFAIL) with a 'use WSL'
+    message instead of a cryptic ModuleNotFoundError from fcntl."""
+    import io
+
+    from engram.cli import _require_posix
+
+    buf = io.StringIO()
+    with pytest.raises(SystemExit) as exc:
+        _require_posix("win32", stream=buf)
+    assert exc.value.code == 69
+    assert "WSL" in buf.getvalue()

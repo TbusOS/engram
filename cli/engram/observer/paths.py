@@ -32,6 +32,17 @@ __all__ = [
 # components (no dots, no slashes, no whitespace).
 _SESSION_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,95}$")
 
+# Windows reserves these device names as filenames (case-insensitive, with or
+# without an extension), so a session id like ``con`` would produce an unusable
+# ``con.jsonl`` queue file. engram is POSIX-only at runtime, but session assets
+# live in ``.memory/`` which may be checked out on Windows — reject them at this
+# single chokepoint every session-id -> filename mapping passes through. B1.
+_WINDOWS_RESERVED = frozenset(
+    {"con", "prn", "aux", "nul"}
+    | {f"com{i}" for i in range(0, 10)}
+    | {f"lpt{i}" for i in range(0, 10)}
+)
+
 OBSERVER_PID_FILE = "observer.pid"
 
 
@@ -52,6 +63,11 @@ def validate_session_id(session_id: str) -> str:
         raise InvalidSessionIdError(
             f"session_id {session_id!r} must match {_SESSION_ID_RE.pattern} "
             "(lowercase alphanumeric, underscore, hyphen; first char alphanumeric; <= 96 chars)"
+        )
+    if session_id in _WINDOWS_RESERVED:
+        raise InvalidSessionIdError(
+            f"session_id {session_id!r} is a reserved device name on Windows "
+            "(would make an unusable filename); choose another id"
         )
     return session_id
 

@@ -20,7 +20,9 @@ Global flags (DESIGN §9.3 config resolution order):
 from __future__ import annotations
 
 import logging
+import sys
 from pathlib import Path
+from typing import TextIO
 
 import click
 
@@ -163,6 +165,26 @@ def _register_subcommands() -> None:
     cli.add_command(web_group)
 
 
+def _require_posix(platform: str | None = None, *, stream: TextIO | None = None) -> None:
+    """Fail fast with a clear message on Windows (C2).
+
+    engram relies on ``fcntl`` advisory locking throughout — ``core.fs`` and
+    the observer queue / daemon — so it runs on macOS / Linux only. Without
+    this guard, importing a command module on Windows dies with an opaque
+    ``ModuleNotFoundError: No module named 'fcntl'``. Called at import time,
+    before subcommand registration pulls fcntl in.
+    """
+    plat = sys.platform if platform is None else platform
+    if plat == "win32":
+        out = sys.stderr if stream is None else stream
+        out.write(
+            "engram is POSIX-only (macOS / Linux): it relies on fcntl file "
+            "locking. On Windows, run it inside WSL.\n"
+        )
+        raise SystemExit(69)  # EX_UNAVAILABLE — permanent, not retry-later
+
+
+_require_posix()
 _register_subcommands()
 
 

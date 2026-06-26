@@ -45,6 +45,21 @@ def test_validate_rejects_uppercase() -> None:
         validate_session_id("ABC")
 
 
+def test_validate_rejects_windows_reserved_names() -> None:
+    """B1 — a session id of e.g. 'con' would make an unusable 'con.jsonl'
+    queue file on Windows (and the asset travels in .memory/)."""
+    for name in ("con", "prn", "aux", "nul", "com0", "com1", "com9", "lpt0", "lpt9"):
+        with pytest.raises(InvalidSessionIdError):
+            validate_session_id(name)
+
+
+def test_validate_accepts_reserved_like_but_not_exact() -> None:
+    """Only the exact reserved device names are rejected."""
+    assert validate_session_id("console") == "console"
+    assert validate_session_id("com10") == "com10"
+    assert validate_session_id("lpt10") == "lpt10"
+
+
 def test_validate_rejects_path_separators() -> None:
     with pytest.raises(InvalidSessionIdError):
         validate_session_id("abc/def")
