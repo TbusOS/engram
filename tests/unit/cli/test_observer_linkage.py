@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pytest
+
 from engram.core.fs import write_atomic
 from engram.observer.linkage import (
     LinkageResult,
@@ -137,6 +139,81 @@ def test_find_predecessor_excludes_future_sessions(tmp_path: Path) -> None:
         memory_dir=tmp_path,
     )
     assert found is None
+
+
+def test_find_predecessor_cross_midnight_end_wins(tmp_path: Path) -> None:
+    """A session in an older *start-date* bucket that ENDED later still wins.
+
+    Date buckets are keyed by ``started_at``'s UTC date, but predecessors
+    rank by ``ended_at`` — so a newest-first scan must not stop at the first
+    bucket that holds a match. ``spanner`` started Apr 25 (older bucket) but
+    ended after ``earlybird`` which started and ended Apr 26.
+    """
+    _write(
+        tmp_path,
+        sid="spanner",
+        th="x",
+        started=datetime(2026, 4, 25, 23, 0, tzinfo=timezone.utc),
+        ended=datetime(2026, 4, 26, 13, 0, tzinfo=timezone.utc),
+    )
+    _write(
+        tmp_path,
+        sid="earlybird",
+        th="x",
+        started=datetime(2026, 4, 26, 8, 0, tzinfo=timezone.utc),
+        ended=datetime(2026, 4, 26, 9, 0, tzinfo=timezone.utc),
+    )
+    found = find_predecessor(
+        new_session_id="new",
+        new_started_at=datetime(2026, 4, 27, 14, 0, tzinfo=timezone.utc),
+        new_task_hash="x",
+        memory_dir=tmp_path,
+    )
+    assert found is not None
+    assert found[0] == "spanner"
+
+
+def test_find_predecessor_early_stops_past_old_buckets(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Newest-first scan stops before parsing buckets too old to win.
+
+    A4: ``find_predecessor`` must not parse every session on the store each
+    time Tier 1 finalises one. A recent predecessor plus ten much-older
+    same-task sessions: the scan finds the recent one without touching the
+    ancient buckets.
+    """
+    _write(
+        tmp_path,
+        sid="pred",
+        th="x",
+        started=datetime(2026, 4, 26, 14, 0, tzinfo=timezone.utc),
+        ended=datetime(2026, 4, 26, 15, 0, tzinfo=timezone.utc),
+    )
+    for i in range(1, 11):
+        d = datetime(2026, 4, i, 12, 0, tzinfo=timezone.utc)
+        _write(tmp_path, sid=f"old{i}", th="x", started=d, ended=d)
+
+    import engram.observer.linkage as linkage_mod
+
+    real_parse = linkage_mod.parse_session_file
+    parsed: list[str] = []
+
+    def _counting(path: Path) -> tuple[SessionFrontmatter, str]:
+        parsed.append(path.name)
+        return real_parse(path)
+
+    monkeypatch.setattr(linkage_mod, "parse_session_file", _counting)
+
+    found = find_predecessor(
+        new_session_id="new",
+        new_started_at=datetime(2026, 4, 27, 14, 0, tzinfo=timezone.utc),
+        new_task_hash="x",
+        memory_dir=tmp_path,
+    )
+    assert found is not None and found[0] == "pred"
+    # Only the recent bucket is parsed; the April 1-10 buckets are skipped.
+    assert parsed == ["sess_pred.md"], parsed
 
 
 # ----------------------------------------------------------------------

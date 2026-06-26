@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from engram.core.fs import write_atomic
@@ -67,21 +67,69 @@ class LinkageResult:
     next_back_reference_written: bool
 
 
-def _iter_session_paths(memory_dir: Path) -> Iterator[Path]:
-    """Yield every session asset path that is a real regular file.
+# A session in an older start-date bucket can still be the most recent
+# predecessor if it ended later (e.g. it crossed midnight). This is the
+# largest such span the newest-first scan accounts for before it stops
+# walking older buckets. Generous on purpose — real sessions span minutes
+# to hours, so the early stop never skips a genuine most-recent predecessor.
+_MAX_SESSION_SPAN_DAYS = 7
 
-    Security reviewer F5 — refuse to follow symlinks. A malicious
-    project bootstrap could plant ``sess_x.md -> /etc/passwd`` and
-    have its content slurped into the next Tier 1 / Tier 2 prompt.
+
+def _parse_bucket_date(name: str) -> date | None:
+    """Return the UTC date a ``<YYYY-MM-DD>`` bucket name encodes, or None."""
+    try:
+        return date.fromisoformat(name)
+    except ValueError:
+        return None
+
+
+def _iter_bucket_sessions(scan_dir: Path) -> Iterator[Path]:
+    """Yield real (non-symlink) ``sess_*.md`` files directly in ``scan_dir``.
+
+    Security reviewer F5 — refuse to follow symlinks. A malicious project
+    bootstrap could plant ``sess_x.md -> /etc/passwd`` and have its content
+    slurped into the next Tier 1 / Tier 2 prompt.
     """
-    root = sessions_root(memory_dir)
-    if not root.is_dir():
-        return iter(())
     return (
         p
-        for p in root.rglob("sess_*.md")
+        for p in scan_dir.glob("sess_*.md")
         if p.is_file() and not p.is_symlink()
     )
+
+
+def _iter_scan_dirs_newest_first(root: Path) -> Iterator[tuple[Path, date | None]]:
+    """Yield ``(dir, bucket_date)`` to scan for sessions, date buckets newest first.
+
+    Session assets live at ``sessions/<YYYY-MM-DD>/sess_<id>.md`` where the
+    bucket is the UTC date of ``started_at`` — so a reverse-lexical sort of
+    the bucket names is reverse-chronological. The yield order is:
+
+    1. ``root`` itself, then any non-date subdir (``bucket_date=None``).
+       These are always scanned and never act as an early-stop boundary, so
+       a stray top-level or oddly-named file is still found.
+    2. date buckets, newest first.
+
+    The walk descends one level — the on-disk contract above. The old flat
+    ``rglob`` recursed deeper, but engram only ever writes depth-1 date
+    buckets, so this is equivalent in practice.
+
+    Emitting every ``None`` dir before the dated ones means the caller's
+    early stop (which only fires on a dated bucket) can never skip a
+    non-date dir that happened to sort low. Symlinked dirs are skipped (F5).
+    """
+    yield root, None
+    dated: list[tuple[Path, date]] = []
+    for d in root.iterdir():
+        if not d.is_dir() or d.is_symlink():
+            continue
+        bucket_date = _parse_bucket_date(d.name)
+        if bucket_date is None:
+            yield d, None
+        else:
+            dated.append((d, bucket_date))
+    dated.sort(key=lambda t: t[1], reverse=True)
+    for d, bucket_date in dated:
+        yield d, bucket_date
 
 
 def find_predecessor(
@@ -93,34 +141,52 @@ def find_predecessor(
 ) -> tuple[str, Path] | None:
     """Find the most recent same-task-hash session whose ``ended_at`` precedes us.
 
-    Returns ``(session_id, path)`` or ``None``. The new session itself
-    is excluded by id so re-running Tier 1 cannot create a self-link.
+    Returns ``(session_id, path)`` or ``None``. The new session itself is
+    excluded by id so re-running Tier 1 cannot create a self-link.
+
+    A4: scans date buckets newest-first and stops once an older bucket
+    cannot hold a candidate that ended after the best so far (given a
+    session spans at most :data:`_MAX_SESSION_SPAN_DAYS`). When a recent
+    predecessor exists — the common case — this parses a handful of files
+    instead of every session in the store.
     """
     if not new_task_hash:
+        return None
+    root = sessions_root(memory_dir)
+    if not root.is_dir():
         return None
 
     best_id: str | None = None
     best_path: Path | None = None
     best_ts: datetime | None = None
 
-    for path in _iter_session_paths(memory_dir):
-        try:
-            fm, _ = parse_session_file(path)
-        except (OSError, SessionParseError):
-            continue
-        if fm.session_id == new_session_id:
-            continue
-        if fm.task_hash != new_task_hash:
-            continue
-        candidate_ts = fm.ended_at if fm.ended_at is not None else fm.started_at
-        if candidate_ts is None:
-            continue
-        if candidate_ts >= new_started_at:
-            continue
-        if best_ts is None or candidate_ts > best_ts:
-            best_id = fm.session_id
-            best_path = path
-            best_ts = candidate_ts
+    for scan_dir, bucket_date in _iter_scan_dirs_newest_first(root):
+        if (
+            best_ts is not None
+            and bucket_date is not None
+            and bucket_date + timedelta(days=_MAX_SESSION_SPAN_DAYS) < best_ts.date()
+        ):
+            # Dated buckets arrive newest-first and every non-date dir has
+            # already been yielded, so nothing left can end after best_ts.
+            break
+        for path in _iter_bucket_sessions(scan_dir):
+            try:
+                fm, _ = parse_session_file(path)
+            except (OSError, SessionParseError):
+                continue
+            if fm.session_id == new_session_id:
+                continue
+            if fm.task_hash != new_task_hash:
+                continue
+            candidate_ts = fm.ended_at if fm.ended_at is not None else fm.started_at
+            if candidate_ts is None:
+                continue
+            if candidate_ts >= new_started_at:
+                continue
+            if best_ts is None or candidate_ts > best_ts:
+                best_id = fm.session_id
+                best_path = path
+                best_ts = candidate_ts
 
     if best_id is None or best_path is None:
         return None
