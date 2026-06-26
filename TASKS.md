@@ -4,8 +4,10 @@
 
 **Version target**: v0.2.0 (first public release) and beyond
 **Status**: active — claim tasks via GitHub Issue + self-assign
-**Last updated**: 2026-04-25
+**Last updated**: 2026-06-27
 **Canonical**: https://github.com/TbusOS/engram/blob/main/TASKS.md
+
+> **Board reconciled against `git log` at HEAD `81a9b6f` on 2026-06-27.** The 2026-06-14 pass left several shipped tasks stale. This audit flips **T-96** → done and **T-189** → done, marks **T-92**/**T-97** partial, and reconciles **M7** (web UI shipped via stdlib server-side rendering, not FastAPI + SvelteKit — see the M7 note; T-110/T-114 abandoned as superseded). Verified status, not invented: each flip cites a commit or file. Authority chain unchanged: SPEC > DESIGN > TASKS.
 
 ---
 
@@ -201,7 +203,7 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 |----|------|--------|-------|------------|-------|
 | T-47r | Consistency Phase 3 references — full enable | done | | T-46 | Promotes Phase 3 from stub to full reference-graph traversal detecting REFERENCE_ROT [done 2026-06-14: supersedes-graph analysis — dangling/circular/fork detection, frontmatter-only, engram/consistency/phase3_references.py + 8 tests]|
 | T-48r | Consistency Phase 4 staleness — full enable | todo | | T-46 | Time decay + DBSCAN topic clustering for topic-divergence detection |
-| T-189 | Evaluator auto-proposes MERGE on body-hash similarity ≥ 0.85 | todo | | T-46 | Phase 2 already detects body-hash dupes; this surfaces MERGE proposals automatically; user still confirms |
+| T-189 | Evaluator auto-proposes MERGE on body-hash similarity ≥ 0.85 | done | | T-46 | Phase 2 already detects body-hash dupes; this surfaces MERGE proposals automatically; user still confirms. [done (17a0cdc): `phase2_semantic.py` `_FUZZY_MERGE_THRESHOLD = 0.85`, 3-word Jaccard shingle → MERGE proposal.] |
 
 #### Week 9-12 (M6) — Evolve Engine (从不退化升级到主动变好)
 
@@ -260,12 +262,12 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 |----|------|--------|-------|------------|-------|
 | T-90 | `engram/kb/` module + CLI subcommands: new-article / compile / list / read | done | | T-13, T-14 | KB directory structure per SPEC §7; `new-article` creates chapter skeleton [reconciled 2026-06-14: engram/kb/ module + CLI (new-article/list/read/compile) shipped (SPEC §6).]|
 | T-91 | `engram/kb/compiler.py` — `_compiled.md` generation with `_compile_state.toml` | done | | T-90 | Calls LLM provider (configurable); writes digest; records chapter hashes [reconciled 2026-06-14: engram/kb/compiler.py rule-based offline digest + _compile_state.toml.]|
-| T-92 | KB chapter watcher → stale digest detection in `engram review` | todo | | T-90, T-91 | Compares stored chapter hashes vs current; flags stale in review output |
+| T-92 | KB chapter watcher → stale digest detection in `engram review` | partial | | T-90, T-91 | Compares stored chapter hashes vs current; flags stale in review output. [reconciled 2026-06-27: `kb/compiler.py::check_staleness` + `engram kb compile --check` + the web UI KB page surface staleness; NOT yet wired into `engram review` output — that wiring is the remaining work.] |
 | T-93 | `engram/consistency/phase3_llm.py` — LLM-assisted review (optional, opt-in per config) | todo | | T-46, T-47, T-48 | Disabled by default; provider-agnostic; prompts LLM to review conflict proposals |
 | T-94 | `engram/consistency/phase4_execution.py` — fixture verification for workflows | todo | | T-71, T-72, T-93 | Runs workflow fixtures; marks workflow-decay conflicts when fixtures fail |
 | T-95 | Pool propagation `notify` + `pinned` modes (beyond M3's auto-sync) | todo | | T-30, T-31 | `notify`: journal entry + `engram review` flag; `pinned`: lock to revision ID in pools.toml |
-| T-96 | Inbox reverse notification: sender sees resolution on next session startup | todo | | T-50 | Adds `resolved_at` + `resolution_note` to inbox journal; shown in startup summary |
-| T-97 | Full `engram_inbox_*` MCP tools (write tools: send / acknowledge / resolve / reject) | todo | | T-52, T-50 | Extends M4 read-only MCP to include write operations |
+| T-96 | Inbox reverse notification: sender sees resolution on next session startup | done | | T-50 | Adds `resolved_at` + `resolution_note` to inbox journal; shown in startup summary. [done (a855e3e): `inbox/notify.py` wired into `engram review`; count-cursor watermark avoids same-second miss.] |
+| T-97 | Full `engram_inbox_*` MCP tools (write tools: send / acknowledge / resolve / reject) | partial | | T-52, T-50 | Extends M4 read-only MCP to include write operations. [reconciled 2026-06-27: `engram_inbox_send` + `engram_inbox_list` + `engram_memory_add` shipped (d4c207d); `acknowledge`/`resolve`/`reject` MCP tools still todo.] |
 | T-98 | Usage outcome journal → confidence update batch pipeline | todo | | T-14, T-15 | Reads outcome events from journal; recomputes `confidence_score` per DESIGN §9 |
 | T-99 | E2E: cross-repo inbox roundtrip (send → acknowledge → resolve → reverse-notify) | todo | | T-50, T-96 | Two fixture repos in `tests/fixtures/`; asserts all four states reached |
 
@@ -273,22 +275,24 @@ After M8, work shifts to P2 items from DESIGN §13.3: multi-machine sync daemon,
 
 ### M7 — Web UI P0
 
+> **Delivered via stdlib server-side rendering (commit `f3ae149`), not the FastAPI + SvelteKit stack these rows describe.** Per the zero-dependency core principle (authority SPEC > DESIGN > TASKS), the web UI is `http.server` + server-rendered HTML in `engram/web/{server,pages,render}.py`. The 6 P0 pages + Health ship **read-only** (POST → 405, optional HTTP Basic, non-loopback bind forces auth). Reconciled 2026-06-27: T-110/T-114 abandoned as superseded; T-111/T-112/T-115/T-122 (SSE / watcher / i18n / Playwright) deferred-not-dropped; T-120 inbox is read-only listing (send form deferred); other pages done. Live push + write controls are a later batch.
+
 | ID | Task | Status | Owner | Depends on | Notes |
 |----|------|--------|-------|------------|-------|
-| T-110 | `web/backend/` FastAPI scaffold + `engram web serve / open` CLI hook | todo | | T-14 | Python 3.11+; uvicorn; auto-open browser on `open` |
+| T-110 | `web/backend/` FastAPI scaffold + `engram web serve / open` CLI hook | abandoned | | T-14 | Python 3.11+; uvicorn; auto-open browser on `open` |
 | T-111 | `web/backend/app/sse.py` — Server-Sent Events for live updates | todo | | T-110 | One SSE stream per connected client; sends asset-change events from watcher |
 | T-112 | `web/backend/app/watcher.py` — inotify (Linux) / FSEvents (macOS) filesystem watcher | todo | | T-110 | Emits events to SSE; debounces at 200ms; ignores `.git/` and `__pycache__/` |
-| T-113 | `web/backend/app/auth.py` — none / basic / token auth modes (config-driven) | todo | | T-110 | Default = none (localhost only); basic and token via `config.toml`; no cloud auth |
-| T-114 | `web/frontend/` SvelteKit scaffold | todo | | T-110 | SvelteKit + Vite; served from FastAPI static mount in dev; built to `web/frontend/build/` |
+| T-113 | `web/backend/app/auth.py` — none / basic / token auth modes (config-driven) | done | | T-110 | Default = none (localhost only); basic and token via `config.toml`; no cloud auth |
+| T-114 | `web/frontend/` SvelteKit scaffold | abandoned | | T-110 | SvelteKit + Vite; served from FastAPI static mount in dev; built to `web/frontend/build/` |
 | T-115 | i18n files: `en.json` + `zh.json` | todo | | T-114 | All UI strings externalized from day 1; no hardcoded English in `.svelte` files |
-| T-116 | Dashboard page (P0) | todo | | T-114, T-115, T-111 | Asset counts, wisdom sparklines, attention items (validate errors + stale KB + inbox unread) |
-| T-117 | Memory Detail page | todo | | T-116 | Frontmatter + body read-only view; inbound/outbound references; blame timeline from journal |
-| T-118 | Workflow Detail page (view only — run from CLI) | todo | | T-116 | Shows doc + spine side-by-side; rev list with scores; last autolearn round summary |
-| T-119 | KB Article page (read only) | todo | | T-116 | Source chapters + `_compiled.md` side-by-side; stale badge when digest is out of date |
-| T-120 | Inbox page | todo | | T-116, T-111 | Lists messages by state (unread / acknowledged / resolved); send form |
-| T-121 | Context Preview page (the critical debug page from DESIGN §7.1) | todo | | T-116, T-40 | Task input → simulated context pack → shows each loaded asset with rank + reason |
+| T-116 | Dashboard page (P0) | done | | T-114, T-115, T-111 | Asset counts, wisdom sparklines, attention items (validate errors + stale KB + inbox unread) |
+| T-117 | Memory Detail page | done | | T-116 | Frontmatter + body read-only view; inbound/outbound references; blame timeline from journal |
+| T-118 | Workflow Detail page (view only — run from CLI) | done | | T-116 | Shows doc + spine side-by-side; rev list with scores; last autolearn round summary |
+| T-119 | KB Article page (read only) | done | | T-116 | Source chapters + `_compiled.md` side-by-side; stale badge when digest is out of date |
+| T-120 | Inbox page | partial | | T-116, T-111 | Lists messages by state (unread / acknowledged / resolved); send form |
+| T-121 | Context Preview page (the critical debug page from DESIGN §7.1) | done | | T-116, T-40 | Task input → simulated context pack → shows each loaded asset with rank + reason |
 | T-122 | Playwright smoke tests for all 6 P0 pages | todo | | T-116, T-117, T-118, T-119, T-120, T-121 | No 500s; no broken links; WCAG AA via axe-playwright |
-| T-123 | `engram web serve / open` CLI integration | todo | | T-110, T-114 | `serve` starts backend; `open` opens browser; `--port` flag; graceful shutdown |
+| T-123 | `engram web serve / open` CLI integration | done | | T-110, T-114 | `serve` starts backend; `open` opens browser; `--port` flag; graceful shutdown |
 
 ---
 

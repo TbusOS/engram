@@ -225,7 +225,7 @@
         <rect x="40" y="24"  width="900" height="70" rx="12" fill="#788c5d" opacity="0.1"/>
         <rect x="40" y="24"  width="4"   height="70" rx="2"  fill="#788c5d"/>
         <text x="56"  y="52" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#788c5d">L5  Observation</text>
-        <text x="56"  y="71" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f">engram-web (FastAPI + Svelte) — Dashboard · Graph · Context Preview · Inbox · Autolearn Console</text>
+        <text x="56"  y="71" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f">engram-web (stdlib, server-rendered) — Dashboard · Memory · Workflows · KB · Inbox · Context Preview</text>
         <!-- label badge -->
         <rect x="960" y="32" width="82" height="20" rx="10" fill="#788c5d" opacity="0.15"/>
         <text x="1001" y="46" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#788c5d" text-anchor="middle">optional</text>
@@ -876,45 +876,44 @@ engram wisdom report       # see the four self-improvement curves</code></pre>
     </div>
     <div class="engram-roadmap">
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot engram-roadmap-dot--current">M1</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M1</div>
         <p class="engram-roadmap-title">SPEC Freeze</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">External design review underway</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">SPEC + DESIGN v0.2 frozen — 14 chapters each; external review open</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M2</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M2</div>
         <p class="engram-roadmap-title">Core CLI</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">done — 15 tasks, 291 tests, 95% coverage</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">done — full CRUD + validate + review, 15 tasks</p>
       </div>
       <div class="engram-roadmap-step">
         <div class="engram-roadmap-dot engram-roadmap-dot--done">M3</div>
         <p class="engram-roadmap-title">Scope + Pool</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">M3 complete — T-30–T-39 all green (456 tests).</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">full 2-axis scope, enforcement</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">done — full 2-axis scope, pool subscription, v0.1→v0.2 migrate</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot engram-roadmap-dot--current">M4</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M4</div>
         <p class="engram-roadmap-title">Intelligence + Auto-Continuation</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">M4 done — Auto-Continuation T-200~T-212 complete (queue / daemon / Tier 0 / Session asset / Tier 1 LLM / 5-client hook install / Stage 0 / task linkage / Tier 2 distill / Tier 3 propose / confidence decay / wisdom C7+C8 / cross-5-session E2E). 1043 tests.</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">done — Relevance Gate, Consistency Phase 1–3, MCP, 5 adapters, 4-tier auto-continuation (T-200–T-212)</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M5</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M5</div>
         <p class="engram-roadmap-title">Workflow + Autolearn</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">spine execution, outcome tracking</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">Workflow asset class shipped — spine / fixtures / rev. Autolearn ratchet still open</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M6</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M6</div>
         <p class="engram-roadmap-title">KB + Inbox</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">Knowledge Base class, inter-repo messaging</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">KB class + inbox roundtrip & reverse-notify + Consistency Phase 3. Phase 4 staleness pending</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M7</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M7</div>
         <p class="engram-roadmap-title">Web UI</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">FastAPI + Svelte dashboard</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">done — stdlib server-rendered, 6 read-only P0 pages, no node/build step</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M8</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--current">M8</div>
         <p class="engram-roadmap-title">Full Evolve + SDK</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">TypeScript SDK, migrate suite, GA</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">next: benchmark-driven retrieval (RRF / rerank), Evolve Engine, TypeScript SDK</p>
       </div>
     </div>
   </div>

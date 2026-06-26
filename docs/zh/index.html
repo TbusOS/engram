@@ -215,7 +215,7 @@
         <rect x="40" y="24"  width="900" height="70" rx="12" fill="#788c5d" opacity="0.1"/>
         <rect x="40" y="24"  width="4"   height="70" rx="2"  fill="#788c5d"/>
         <text x="56"  y="52" font-family="Poppins,Arial,sans-serif" font-size="13" font-weight="600" fill="#788c5d">L5  观察层</text>
-        <text x="56"  y="71" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f">engram-web (FastAPI + Svelte) — 总览 · 图谱 · 上下文预览 · 收件箱 · 自学习控制台</text>
+        <text x="56"  y="71" font-family="Poppins,Arial,sans-serif" font-size="11" fill="#6b6a5f">engram-web (stdlib 服务端渲染) — 总览 · 记忆 · 工作流 · 知识库 · 收件箱 · 上下文预览</text>
         <rect x="960" y="32" width="82" height="20" rx="10" fill="#788c5d" opacity="0.15"/>
         <text x="1001" y="46" font-family="Poppins,Arial,sans-serif" font-size="10" fill="#788c5d" text-anchor="middle">可选</text>
 
@@ -824,45 +824,44 @@ engram wisdom report       # 看四组自改进曲线</code></pre>
     </div>
     <div class="engram-roadmap">
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot engram-roadmap-dot--current">M1</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M1</div>
         <p class="engram-roadmap-title">SPEC 冻结</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">外部设计评审进行中</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">SPEC + DESIGN v0.2 已冻结 —— 各 14 章;外部评审开放中</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M2</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M2</div>
         <p class="engram-roadmap-title">核心 CLI</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">完成 —— 15 个任务,291 单测,95% 覆盖</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">完成 —— 完整 CRUD + validate + review,15 个任务</p>
       </div>
       <div class="engram-roadmap-step">
         <div class="engram-roadmap-dot engram-roadmap-dot--done">M3</div>
         <p class="engram-roadmap-title">Scope + Pool</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">M3 完工 —— T-30 到 T-39 全绿(456 单测)。</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">完整 2 轴 scope，enforcement</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">完成 —— 完整 2 轴 scope、pool 订阅、v0.1→v0.2 迁移</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot engram-roadmap-dot--current">M4</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M4</div>
         <p class="engram-roadmap-title">智能 + 自动续接</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">M4 完工 —— 自动续接 T-200~T-212 全部交付(队列 / daemon / Tier 0 / Session 资产 / Tier 1 LLM / 5 客户端 hook 安装 / Stage 0 / 任务链 / Tier 2 蒸馏 / Tier 3 propose / confidence 衰减 / wisdom C7+C8 / 跨 5 session E2E)。1043 单测。</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">完成 —— Relevance Gate、Consistency Phase 1–3、MCP、5 个 adapter、4 层自动续接(T-200–T-212)</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M5</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M5</div>
         <p class="engram-roadmap-title">Workflow + 自学习</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">spine 执行，结果追踪</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">Workflow 资产类已交付 —— spine / fixtures / rev。Autolearn ratchet 仍未做</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M6</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M6</div>
         <p class="engram-roadmap-title">KB + 收件箱</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">知识库类，跨仓消息</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">KB 类 + inbox 闭环 & 反向通知 + Consistency Phase 3。Phase 4 staleness 待做</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M7</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--done">M7</div>
         <p class="engram-roadmap-title">Web UI</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">FastAPI + Svelte 控制台</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">完成 —— stdlib 服务端渲染,6 个只读 P0 页,无 node/构建步骤</p>
       </div>
       <div class="engram-roadmap-step">
-        <div class="engram-roadmap-dot">M8</div>
+        <div class="engram-roadmap-dot engram-roadmap-dot--current">M8</div>
         <p class="engram-roadmap-title">演化 + SDK</p>
-        <p class="anth-caption" style="padding:0 var(--space-2);">TypeScript SDK，迁移套件，GA</p>
+        <p class="anth-caption" style="padding:0 var(--space-2);">下一步:基准驱动的检索(RRF / rerank)、Evolve 引擎、TypeScript SDK</p>
       </div>
     </div>
   </div>
