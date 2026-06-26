@@ -1,31 +1,31 @@
 """``engram memory`` — CRUD + BM25 search over project-scope memories.
 
-M2 scope covers what an operator needs to start using engram in a single
-project: add a memory from flags, list / read / update / archive existing
-ones, and search them with a pure-Python BM25 implementation. Other scopes
-(org / team / user / pool) and the full Relevance Gate (DESIGN §5.1) arrive
-in M3 and M4 respectively; this module intentionally stays narrow.
+This module is the click/CLI layer: the ``memory`` command group and its
+``add`` / ``quick`` / ``list`` / ``read`` / ``update`` / ``archive`` /
+``search`` subcommands. The domain logic lives in the :mod:`engram.memory`
+package — id/path helpers (``ident``), serialization (``render``), the
+MEMORY.md index (``index_md``), quick-derivation (``derive``), and the shared
+write path (``write``).
+
+For backward compatibility this module re-exports that surface, so existing
+callers (``from engram.commands.memory import graph_db_path`` /
+``create_memory`` / ``slugify`` / …) keep working unchanged.
 
 **M2 deviation from DESIGN §3.2**: graph.db lives at
-``<project>/.engram/graph.db`` instead of ``~/.engram/graph.db``. The
-cross-project query story requires a schema gap fix
-(``(project_path, path)`` uniqueness) that belongs to M3. See the project
-memory ``project_graph_db_location_m2_vs_design`` for the follow-up plan.
+``<project>/.engram/graph.db`` instead of ``~/.engram/graph.db`` (see
+:func:`engram.memory.ident.graph_db_path` and the project memory
+``project_graph_db_location_m2_vs_design``).
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
-import re
 import shutil
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Any
 
 import click
-import yaml
 
 from engram.config_types import GlobalConfig
 from engram.core.frontmatter import (
@@ -37,13 +37,23 @@ from engram.core.frontmatter import (
     parse_file,
 )
 from engram.core.fs import write_atomic
-from engram.core.graph_db import (
-    AssetRow,
-    get_asset,
-    insert_asset,
-    open_graph_db,
+from engram.core.graph_db import get_asset, open_graph_db
+from engram.core.paths import memory_dir, user_root
+from engram.memory.derive import derive_quick_description, derive_quick_name
+from engram.memory.ident import (
+    compute_id,
+    graph_db_path,
+    memory_file_path,
+    sha256_hex,
+    slugify,
 )
-from engram.core.paths import engram_dir, memory_dir, user_root
+from engram.memory.index_md import remove_from_memory_index
+from engram.memory.render import frontmatter_to_dict, render_asset_file
+from engram.memory.write import (
+    MemoryWriteError,
+    create_memory,
+    resolve_quick_slug,
+)
 from engram.relevance.bm25 import bm25_scores as _bm25_scores
 from engram.relevance.weights import (
     ENFORCEMENT_WEIGHTS,
@@ -70,394 +80,11 @@ __all__ = [
 ]
 
 
-class MemoryWriteError(Exception):
-    """Raised by :func:`create_memory` on validation failure or id collision.
-
-    Non-click so non-CLI callers (the MCP server) can handle it; the CLI
-    converts it to a ``click.ClickException`` at the command boundary.
-    """
-
-
-# Scope + enforcement weighting — canonical implementation lives in
-# engram.relevance.weights so the Relevance Gate (T-40) can import it
-# without triggering click's command registration chain. Re-exported
-# here (via the import block above) for backward compatibility with
-# existing tests and callers.
-
-
-# ------------------------------------------------------------------
-# Helpers
-# ------------------------------------------------------------------
-
-
-_SLUG_RE = re.compile(r"[^a-z0-9]+")
-
-
-def slugify(text: str) -> str:
-    """Lower-case and replace non-alphanumeric runs with single underscores."""
-    slug = _SLUG_RE.sub("_", text.lower()).strip("_")
-    return slug or "untitled"
-
-
-_HEADING_PREFIX_RE = re.compile(r"^#+\s*")
-_QUICK_NAME_CAP = 80
-_QUICK_DESC_CAP = 150
-
-
-def _first_non_blank_line(body: str) -> str:
-    for raw in body.splitlines():
-        line = raw.strip()
-        if line:
-            return _HEADING_PREFIX_RE.sub("", line).strip()
-    return ""
-
-
-def derive_quick_name(body: str) -> str:
-    """Extract a memory name from ``body`` for ``engram memory quick``.
-
-    Rules: first non-blank line, leading markdown ``#`` stripped, capped at
-    80 chars. Falls back to ``"untitled"`` for empty input.
-    """
-    head = _first_non_blank_line(body)
-    if not head:
-        return "untitled"
-    return head[:_QUICK_NAME_CAP]
-
-
-def derive_quick_description(body: str) -> str:
-    """Extract a description from ``body`` for ``engram memory quick``.
-
-    Rules: collapse newlines to single spaces, strip leading markdown
-    heading marks on the first line, cap at 150 chars (truncate with
-    ``...`` when longer). Returns empty string for empty input.
-    """
-    head = _first_non_blank_line(body)
-    if not head:
-        return ""
-    # Collapse remaining body into single-line description; the first line
-    # already had heading marks stripped via _first_non_blank_line.
-    rest_lines = []
-    seen_first = False
-    for raw in body.splitlines():
-        line = raw.strip()
-        if not line:
-            continue
-        if not seen_first:
-            seen_first = True
-            rest_lines.append(head)
-        else:
-            rest_lines.append(line)
-    flat = " ".join(rest_lines)
-    if len(flat) <= _QUICK_DESC_CAP:
-        return flat
-    return flat[: _QUICK_DESC_CAP - 3] + "..."
-
-
-def compute_id(scope_dir: str, subtype: str, slug: str) -> str:
-    """SPEC §4.1 asset id: ``<scope_dir>/<subtype>_<slug>`` (no extension)."""
-    return f"{scope_dir}/{subtype}_{slug}"
-
-
-def memory_file_path(project_root: Path, scope_dir: str, subtype: str, slug: str) -> Path:
-    return memory_dir(project_root) / scope_dir / f"{subtype}_{slug}.md"
-
-
-def graph_db_path(project_root: Path) -> Path:
-    """Location of the SQLite graph index for this project (M2 choice)."""
-    return engram_dir(project_root) / "graph.db"
-
-
-def sha256_hex(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def remove_from_memory_index(project_root: Path, *, rel_path: str) -> None:
-    """Strip any line in MEMORY.md whose target equals ``rel_path``.
-
-    Mirrors :func:`append_to_memory_index`: we only touch the ``Recently
-    added`` section so manual edits elsewhere stay intact. Best-effort —
-    no-op when MEMORY.md is missing or the link isn't present. Called
-    from ``engram memory archive`` so archived assets do not leave
-    dangling links (validate E-IDX-001) behind.
-    """
-    index = memory_dir(project_root) / "MEMORY.md"
-    if not index.is_file():
-        return
-    text = index.read_text(encoding="utf-8")
-    if rel_path not in text:
-        return
-
-    marker = "## Recently added"
-    section_start = text.find(marker)
-    if section_start < 0:
-        return
-    body_start = text.find("\n", section_start) + 1
-    rest = text[body_start:]
-    next_section_idx = rest.find("\n## ")
-    section_body = rest if next_section_idx < 0 else rest[:next_section_idx]
-    after_section = "" if next_section_idx < 0 else rest[next_section_idx:]
-
-    kept_lines: list[str] = []
-    for line in section_body.splitlines():
-        if line.startswith("- ") and rel_path in line:
-            continue
-        if line.strip():
-            kept_lines.append(line)
-    rebuilt_section = "\n".join(kept_lines) + ("\n" if kept_lines else "")
-    new_text = text[:body_start] + rebuilt_section + after_section
-    if new_text != text:
-        write_atomic(index, new_text)
-
-
-def append_to_memory_index(
-    project_root: Path,
-    *,
-    rel_path: str,
-    name: str,
-    description: str,
-    max_recent: int = 5,
-) -> None:
-    """Insert one ``- [name](rel_path) — description`` line under
-    ``## Recently added`` in MEMORY.md (T-181 / SPEC §7.2).
-
-    Best-effort: no-op when MEMORY.md is missing or already lists the
-    asset. Keeps the section bounded to ``max_recent`` lines so the
-    landing index does not balloon over time. Newest entry is inserted
-    at the top of the section.
-    """
-    index = memory_dir(project_root) / "MEMORY.md"
-    if not index.is_file():
-        return
-    text = index.read_text(encoding="utf-8")
-    if rel_path in text:
-        return
-
-    marker = "## Recently added"
-    section_start = text.find(marker)
-    if section_start < 0:
-        # No section to append to — refuse silently rather than corrupt
-        # the file. T-181 P1 lands a more aggressive doctor check.
-        return
-
-    body_start = text.find("\n", section_start) + 1
-    rest = text[body_start:]
-    next_section_idx = rest.find("\n## ")
-    section_body = rest if next_section_idx < 0 else rest[:next_section_idx]
-    after_section = "" if next_section_idx < 0 else rest[next_section_idx:]
-
-    existing_lines = [
-        line for line in section_body.splitlines() if line.startswith("- ")
-    ]
-    new_line = f"- [{name}]({rel_path}) — {description}"
-    new_lines = [new_line] + [line for line in existing_lines if line != new_line]
-    new_lines = new_lines[:max_recent]
-
-    rebuilt_section = "\n".join(new_lines) + ("\n" if new_lines else "")
-    new_text = text[:body_start] + rebuilt_section + after_section
-    write_atomic(index, new_text)
-
-
-def render_asset_file(fm: MemoryFrontmatter, body: str) -> str:
-    """Serialize a MemoryFrontmatter + body to a SPEC-compliant .md file."""
-    data = _frontmatter_to_dict(fm)
-    yaml_block = yaml.dump(
-        data,
-        sort_keys=False,
-        allow_unicode=True,
-        default_flow_style=False,
-    )
-    body_tail = body if body.endswith("\n") else body + "\n"
-    return f"---\n{yaml_block}---\n\n{body_tail}"
-
-
-def _frontmatter_to_dict(fm: MemoryFrontmatter) -> dict[str, Any]:
-    """Ordered dict suitable for YAML dump. Omits None / empty optional fields."""
-    data: dict[str, Any] = {
-        "name": fm.name,
-        "description": fm.description,
-        "type": fm.type.value,
-        "scope": fm.scope.value,
-        "enforcement": fm.enforcement.value,
-    }
-    for field_name, field_value in (
-        ("org", fm.org),
-        ("team", fm.team),
-        ("pool", fm.pool),
-        ("subscribed_at", fm.subscribed_at.value if fm.subscribed_at else None),
-    ):
-        if field_value:
-            data[field_name] = field_value
-
-    _maybe_date(data, "created", fm.created)
-    _maybe_date(data, "updated", fm.updated)
-    if fm.tags:
-        data["tags"] = list(fm.tags)
-    _maybe_date(data, "expires", fm.expires)
-    _maybe_date(data, "valid_from", fm.valid_from)
-    _maybe_date(data, "valid_to", fm.valid_to)
-    if fm.source:
-        data["source"] = fm.source
-    if fm.references:
-        data["references"] = list(fm.references)
-    if fm.overrides:
-        data["overrides"] = fm.overrides
-    if fm.supersedes:
-        data["supersedes"] = fm.supersedes
-    if fm.limitations:
-        data["limitations"] = list(fm.limitations)
-    if fm.confidence:
-        data["confidence"] = {
-            "validated_count": fm.confidence.validated_count,
-            "contradicted_count": fm.confidence.contradicted_count,
-            "last_validated": fm.confidence.last_validated.isoformat(),
-            "usage_count": fm.confidence.usage_count,
-        }
-    if fm.workflow_ref:
-        data["workflow_ref"] = fm.workflow_ref
-
-    # Unknown fields preserved last (SPEC §4.1).
-    for k, v in fm.extra.items():
-        if k not in data:
-            data[k] = v
-
-    return data
-
-
-def _maybe_date(data: dict[str, Any], key: str, value: date | None) -> None:
-    if value is not None:
-        data[key] = value.isoformat()
-
-
 def _read_body_flag(raw: str) -> str:
     """Resolve --body; ``-`` reads from stdin."""
     if raw == "-":
         return sys.stdin.read()
     return raw
-
-
-def _build_frontmatter(
-    *,
-    memory_type: str,
-    name: str,
-    description: str,
-    scope: str,
-    enforcement: str | None,
-    tags: tuple[str, ...],
-    source: str | None,
-    workflow_ref: str | None,
-) -> MemoryFrontmatter:
-    """Construct + validate a MemoryFrontmatter from CLI flags."""
-    # Defer enforcement default to the frontmatter validator so feedback gets
-    # its required-field check.
-    raw: dict[str, Any] = {
-        "name": name,
-        "description": description,
-        "type": memory_type,
-        "scope": scope,
-        "tags": list(tags),
-    }
-    if enforcement is not None:
-        raw["enforcement"] = enforcement
-    if source is not None:
-        raw["source"] = source
-    if workflow_ref is not None:
-        raw["workflow_ref"] = workflow_ref
-    raw["created"] = date.today().isoformat()
-
-    # Round-trip through YAML → parse_frontmatter so all SPEC §4.1 validation
-    # fires uniformly instead of us re-implementing it here. Raises
-    # FrontmatterError on invalid input; callers (create_memory) wrap it.
-    yaml_block = yaml.dump(raw, sort_keys=False, allow_unicode=True, default_flow_style=False)
-    doc = f"---\n{yaml_block}---\n"
-    return _from_yaml_doc(doc)
-
-
-def create_memory(
-    root: Path,
-    *,
-    memory_type: str,
-    name: str,
-    description: str,
-    body: str,
-    scope: str = "project",
-    enforcement: str | None = None,
-    tags: tuple[str, ...] = (),
-    source: str | None = None,
-    workflow_ref: str | None = None,
-    force: bool = False,
-    slug: str | None = None,
-) -> dict[str, Any]:
-    """Create a memory asset: write file + register in graph.db + index.
-
-    The single write path shared by ``engram memory add`` / ``quick`` and
-    the MCP ``engram_memory_add`` tool. ``body`` must already be resolved
-    (no ``-`` stdin sentinel). Pass ``slug`` to override the name-derived
-    slug (the quick path pre-resolves a collision-free slug). Raises
-    :class:`MemoryWriteError` on validation failure or an id collision
-    when ``force`` is False. Returns ``{id, path, sha256, size_bytes, name}``.
-    """
-    try:
-        fm = _build_frontmatter(
-            memory_type=memory_type,
-            name=name,
-            description=description,
-            scope=scope,
-            enforcement=enforcement,
-            tags=tags,
-            source=source,
-            workflow_ref=workflow_ref,
-        )
-    except FrontmatterError as exc:
-        raise MemoryWriteError(str(exc)) from exc
-
-    final_slug = slug or slugify(name)
-    scope_dir = "local"  # M2: everything under local/; M3 extends
-    file_path = memory_file_path(root, scope_dir, memory_type, final_slug)
-    if file_path.exists() and not force:
-        raise MemoryWriteError(
-            f"{file_path} already exists; use force=True to overwrite."
-        )
-
-    content = render_asset_file(fm, body)
-    write_atomic(file_path, content)
-
-    asset_id = compute_id(scope_dir, memory_type, final_slug)
-    rel_path = file_path.relative_to(memory_dir(root))
-    row = AssetRow(
-        id=asset_id,
-        scope=scope,
-        scope_name=None,
-        subtype=memory_type,
-        kind="memory",
-        path=str(rel_path),
-        lifecycle_state="active",
-        sha256=sha256_hex(content),
-        created=fm.created.isoformat() if fm.created else None,
-        updated=fm.updated.isoformat() if fm.updated else None,
-        enforcement=fm.enforcement.value,
-        confidence_score=0.0,
-        size_bytes=len(content.encode("utf-8")),
-    )
-    with open_graph_db(graph_db_path(root)) as conn:
-        if force:
-            conn.execute("DELETE FROM assets WHERE id = ?", (asset_id,))
-            conn.commit()
-        insert_asset(conn, row)
-
-    append_to_memory_index(root, rel_path=str(rel_path), name=name, description=description)
-    return {
-        "id": asset_id,
-        "path": str(file_path),
-        "sha256": row.sha256,
-        "size_bytes": row.size_bytes,
-        "name": name,
-    }
-
-
-def _from_yaml_doc(doc: str) -> MemoryFrontmatter:
-    from engram.core.frontmatter import parse_frontmatter
-
-    return parse_frontmatter(doc)
 
 
 # ------------------------------------------------------------------
@@ -632,7 +259,7 @@ def quick_cmd(
     root = cfg.resolve_project_root()
     scope_dir = "local"
     base_slug = slugify(derived_name)
-    final_slug, final_name = _resolve_quick_slug(
+    final_slug, final_name = resolve_quick_slug(
         root, scope_dir, memory_type, base_slug, derived_name
     )
 
@@ -665,26 +292,6 @@ def quick_cmd(
         )
     else:
         click.echo(f"added {result['id']} → {result['path']}")
-
-
-def _resolve_quick_slug(
-    project_root: Path,
-    scope_dir: str,
-    subtype: str,
-    base_slug: str,
-    base_name: str,
-) -> tuple[str, str]:
-    """Return a non-colliding (slug, display_name). Appends ``_2``, ``_3``, ..."""
-    candidate = base_slug
-    suffix = 2
-    while memory_file_path(project_root, scope_dir, subtype, candidate).exists():
-        candidate = f"{base_slug}_{suffix}"
-        suffix += 1
-    if candidate == base_slug:
-        return candidate, base_name
-    # Reflect the disambiguation in the display name so MEMORY.md / list output
-    # is not surprising.
-    return candidate, f"{base_name} ({suffix - 1})"
 
 
 # -- list ----------------------------------------------------------
@@ -751,7 +358,7 @@ def read_cmd(cfg: GlobalConfig, memory_id: str) -> None:
                 {
                     "id": memory_id,
                     "path": str(file_path),
-                    "frontmatter": _frontmatter_to_dict(fm),
+                    "frontmatter": frontmatter_to_dict(fm),
                     "body": body,
                 }
             )
