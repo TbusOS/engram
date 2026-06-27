@@ -1,0 +1,13 @@
+# Retrieval gold-set: one {query, relevant: [asset_id], difficulty} per line.
+# difficulty=easy: query shares the key terms (BM25 should rank it top).
+# difficulty=hard: query paraphrases (low lexical overlap) — the gap a semantic layer closes.
+{"query": "how do we authenticate API requests", "relevant": ["local/project_auth_jwt"], "difficulty": "easy"}
+{"query": "what cryptographic scheme protects our session tokens", "relevant": ["local/project_auth_jwt"], "difficulty": "hard"}
+{"query": "how are new releases rolled out to production", "relevant": ["local/project_deploy_blue_green"], "difficulty": "hard"}
+{"query": "changing the database schema safely", "relevant": ["local/project_db_migrations"], "difficulty": "easy"}
+{"query": "throttling abusive clients", "relevant": ["local/project_rate_limit"], "difficulty": "hard"}
+{"query": "what is the minimum test coverage", "relevant": ["local/project_testing_policy"], "difficulty": "easy"}
+{"query": "what should I check first when paged at 3am", "relevant": ["local/reference_oncall_runbook"], "difficulty": "hard"}
+{"query": "where do application credentials live", "relevant": ["local/project_secrets"], "difficulty": "easy"}
+{"query": "speeding up repeated read queries", "relevant": ["local/project_caching"], "difficulty": "hard"}
+{"query": "the process after a major customer-facing outage", "relevant": ["local/reference_incident_postmortem"], "difficulty": "hard"}
