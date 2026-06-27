@@ -39,6 +39,12 @@ dev = [
   "mypy>=1.8",
   "types-PyYAML>=6.0",
 ]
+# Optional local semantic retrieval backend (ONNX, no torch). See the
+# retrieval-quality design spec §4.1 / §8. Floor >= 0.4 for TextCrossEncoder
+# (cross-encoder reranking) + bge-m3 support.
+ml = [
+  "fastembed>=0.4",
+]
 
 [project.scripts]
 engram = "engram.cli:main"
@@ -67,3 +73,9 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
 strict = true
 python_version = "3.10"
 files = ["engram"]
+
+# fastembed is an optional extra (engram[ml]), not installed in the base/dev
+# env, so let mypy treat it as untyped rather than error on the lazy import.
+[[tool.mypy.overrides]]
+module = ["fastembed.*"]
+ignore_missing_imports = true
