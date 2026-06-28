@@ -236,3 +236,96 @@ def test_result_token_total_matches_included_estimates() -> None:
     )
     result = run_relevance_gate(req)
     assert result.total_tokens == sum(c.tokens_est for c in result.included)
+
+
+# ------------------------------------------------------------------
+# Stage 3 — vector recall + RRF fusion (T-41)
+# ------------------------------------------------------------------
+
+
+def test_empty_vector_scores_is_bm25_only() -> None:
+    """Default (no vector_scores) keeps the BM25-only path: a zero-BM25 doc
+    is still dropped, exactly as before the semantic layer."""
+    req = RelevanceRequest(
+        query="kernel",
+        assets=(_a("unrelated", "cake sugar"), _a("match", "kernel kernel")),
+        budget_tokens=10_000,
+        now=NOW,
+    )
+    result = run_relevance_gate(req)
+    assert [c.asset.id for c in result.included] == ["match"]
+
+
+def test_vector_scores_rescue_zero_bm25_doc() -> None:
+    """A doc with no lexical overlap (BM25=0) is recalled when its vector
+    score is positive — the paraphrase gap the semantic layer closes."""
+    req = RelevanceRequest(
+        query="kernel",
+        assets=(_a("kw", "kernel kernel"), _a("sem", "no shared words here")),
+        budget_tokens=10_000,
+        now=NOW,
+        vector_scores={"sem": 0.8, "kw": 0.2},
+    )
+    result = run_relevance_gate(req)
+    ids = [c.asset.id for c in result.included]
+    assert "sem" in ids  # rescued despite zero BM25
+    assert "kw" in ids
+
+
+def test_rrf_ranks_dual_signal_doc_first() -> None:
+    """RRF rewards agreement: a doc ranked top by BOTH BM25 and vector
+    outranks docs that lead only one ranker."""
+    req = RelevanceRequest(
+        query="alpha",
+        assets=(
+            _a("both", "alpha alpha"),  # bm25 #1
+            _a("kw_only", "alpha"),  # bm25 #2, no vector
+            _a("sem_only", "unrelated"),  # bm25 0, vector only
+        ),
+        budget_tokens=10_000,
+        now=NOW,
+        vector_scores={"both": 0.9, "sem_only": 0.7},  # both #1, sem_only #2
+    )
+    result = run_relevance_gate(req)
+    assert result.included[0].asset.id == "both"
+
+
+def test_vector_weight_can_promote_semantic_match() -> None:
+    """Raising the vector weight lets a strong vector-only doc outrank a
+    BM25-only doc — the knob the benchmark tunes."""
+    heavy_vec = run_relevance_gate(
+        RelevanceRequest(
+            query="alpha",
+            assets=(_a("kw_only", "alpha"), _a("sem_only", "unrelated")),
+            budget_tokens=10_000,
+            now=NOW,
+            vector_scores={"sem_only": 0.9},
+            rrf_weight_vector=5.0,
+        )
+    )
+    assert heavy_vec.included[0].asset.id == "sem_only"
+
+
+def test_bm25_only_default_unaffected_by_fusion_fields() -> None:
+    """The fusion fields are inert with empty vector_scores: ranking is
+    byte-identical to a request that never sets them."""
+    assets = (_a("a", "alpha beta"), _a("b", "beta gamma"), _a("c", "delta"))
+    plain = run_relevance_gate(
+        RelevanceRequest(query="beta", assets=assets, budget_tokens=10_000, now=NOW)
+    )
+    with_fields = run_relevance_gate(
+        RelevanceRequest(
+            query="beta",
+            assets=assets,
+            budget_tokens=10_000,
+            now=NOW,
+            rrf_k=10,
+            rrf_weight_vector=9.0,
+        )
+    )
+    assert [c.asset.id for c in plain.included] == [
+        c.asset.id for c in with_fields.included
+    ]
+    assert [c.final_score for c in plain.included] == [
+        c.final_score for c in with_fields.included
+    ]

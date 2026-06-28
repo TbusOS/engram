@@ -5,9 +5,10 @@ Orchestrates six stages of candidate selection for a given query:
 1. **Mandatory bypass** — every ``enforcement=mandatory`` asset is
    unconditionally returned (DESIGN §5.1 Stage 1).
 2. **BM25 recall** — keyword score on asset body (T-42).
-3. **Vector recall** — deferred to T-41; the gate passes through when
-   no embedder is configured. Present as a named hook so T-41 is a
-   drop-in addition later.
+3. **Vector recall + fusion** — when the caller supplies
+   ``vector_scores`` (cosine similarities from a configured embedder),
+   they are fused with BM25 by reciprocal-rank fusion; with none, the
+   gate runs BM25-only (identical to before, zero dependency).
 4. **Temporal boost** — when the query contains a "last week" /
    "yesterday" / "N weeks ago" phrase, candidates whose ``updated``
    date falls near the reference receive up to 40% distance reduction
@@ -27,8 +28,8 @@ the ``Asset`` tuples from ``graph.db`` + filesystem and interpret the
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import date
 
 from engram.relevance.bm25 import bm25_scores
@@ -127,6 +128,15 @@ class RelevanceRequest:
     sessions: Sequence[SessionContinuation] = ()
     stage0_max_sessions: int = STAGE0_MAX_SESSIONS
     stage0_budget_fraction: float = STAGE0_DEFAULT_BUDGET_FRACTION
+    # Stage 3 (T-41): optional vector recall. The caller computes per-asset
+    # cosine similarities with a configured embedder (built once, reused) and
+    # passes them here keyed by asset id; the gate fuses them with BM25 via
+    # reciprocal-rank fusion. Empty (default) keeps the pure BM25 path —
+    # identical behavior, zero dependency.
+    vector_scores: Mapping[str, float] = field(default_factory=dict)
+    rrf_k: int = 60
+    rrf_weight_bm25: float = 1.0
+    rrf_weight_vector: float = 1.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -157,6 +167,46 @@ def _recency_decay(asset: Asset, now: date, halflife_days: float) -> float:
     """DESIGN §5.1 Stage 5 recency decay: exp(-days / halflife_days)."""
     days = max(0, (now - asset.updated).days)
     return math.exp(-days / halflife_days) if halflife_days > 0 else 1.0
+
+
+def _rrf_fuse(
+    bm25: Mapping[str, float],
+    vector: Mapping[str, float],
+    *,
+    k: int,
+    w_bm25: float,
+    w_vector: float,
+) -> dict[str, float]:
+    """Reciprocal-rank fusion of two score maps into one score per id.
+
+    Each ranker contributes ``weight / (k + rank)`` for the ids it scores
+    positively (1-based rank, descending score, id as a deterministic
+    tie-breaker). Being rank-based, the two rankers' incomparable score
+    scales (BM25 magnitude vs cosine) never need normalizing, and a doc
+    only one ranker found still survives — that is how a zero-BM25
+    paraphrase gets recalled by the vector side.
+    """
+
+    def _ranks(scores: Mapping[str, float]) -> dict[str, int]:
+        positive = sorted(
+            ((i, s) for i, s in scores.items() if s > 0.0),
+            key=lambda x: (-x[1], x[0]),
+        )
+        return {i: rank for rank, (i, _) in enumerate(positive, start=1)}
+
+    br = _ranks(bm25)
+    vr = _ranks(vector)
+    fused: dict[str, float] = {}
+    for id_ in br.keys() | vr.keys():
+        score = 0.0
+        # Guard the denominator: a misconfigured non-positive k must never
+        # divide by zero. rank >= 1 always, so k > -1 keeps denom positive.
+        if id_ in br and k + br[id_] > 0:
+            score += w_bm25 / (k + br[id_])
+        if id_ in vr and k + vr[id_] > 0:
+            score += w_vector / (k + vr[id_])
+        fused[id_] = score
+    return fused
 
 
 def select_session_continuations(
@@ -228,8 +278,20 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
     documents = [(a.id, a.body) for a in ranking_pool]
     raw = dict(bm25_scores(request.query, documents))
 
-    # ------------- Stage 3 — vector recall (T-41 placeholder) -----
-    # No-op until an embedder is wired in.
+    # ------------- Stage 3 — vector recall + RRF fusion (T-41) -----
+    # When the caller supplies vector_scores, fuse them with BM25 by
+    # reciprocal rank. Empty → fused is None → the pure BM25 base below.
+    fused = (
+        _rrf_fuse(
+            raw,
+            request.vector_scores,
+            k=request.rrf_k,
+            w_bm25=request.rrf_weight_bm25,
+            w_vector=request.rrf_weight_vector,
+        )
+        if request.vector_scores
+        else None
+    )
 
     # ------------- Stage 4 — temporal boost ----------------
     ref_date = parse_temporal_hint(request.query, now=request.now)
@@ -242,7 +304,11 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
     ranked: list[RankedCandidate] = []
     for a in ranking_pool:
         bm = raw.get(a.id, 0.0)
-        if bm <= 0.0:
+        # Fused mode blends BM25 + vector by reciprocal rank; BM25-only mode
+        # keeps the raw keyword score. Either way a non-positive base means
+        # neither signal recalled the asset, so it is dropped.
+        base = fused.get(a.id, 0.0) if fused is not None else bm
+        if base <= 0.0:
             continue
         temp_mult = temporal_distance_multiplier(a.updated, ref_date)
         scope_w = _scope_weight_for(a)
@@ -254,7 +320,7 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
             # temporal multiplier is distance-space — invert into score-space.
             score_temp = 1.0 / temp_mult if temp_mult > 0 else 1.0
             decay = _recency_decay(a, request.now, request.recency_halflife_days)
-        final = bm * scope_w * enf_w * decay * score_temp
+        final = base * scope_w * enf_w * decay * score_temp
         ranked.append(
             RankedCandidate(
                 asset=a,
