@@ -19,6 +19,7 @@ assertion never depends on brittle score arithmetic.
 
 from __future__ import annotations
 
+import math
 from datetime import date, timedelta
 
 from engram.relevance.gate import (
@@ -329,3 +330,56 @@ def test_bm25_only_default_unaffected_by_fusion_fields() -> None:
     assert [c.final_score for c in plain.included] == [
         c.final_score for c in with_fields.included
     ]
+
+
+def test_all_nonpositive_vector_scores_stay_on_bm25_path() -> None:
+    """A vector map with no positive entry must not switch the base off BM25:
+    a zero-BM25 doc stays dropped, exactly like the default path."""
+    req = RelevanceRequest(
+        query="kernel",
+        assets=(_a("unrelated", "cake sugar"), _a("match", "kernel kernel")),
+        budget_tokens=10_000,
+        now=NOW,
+        vector_scores={"unrelated": 0.0, "match": 0.0},
+    )
+    result = run_relevance_gate(req)
+    assert [c.asset.id for c in result.included] == ["match"]
+
+
+def test_fused_ties_break_by_id_deterministically() -> None:
+    """Two docs that fuse to the same score (one BM25-rank-1, one vector-rank-1,
+    equal weights) order by id, independent of input order."""
+    a_sem = _a("a_sem", "unrelated")  # vector rank 1 only
+    z_kw = _a("z_kw", "alpha")  # bm25 rank 1 only
+    vs = {"a_sem": 0.9}
+    forward = run_relevance_gate(
+        RelevanceRequest(
+            query="alpha", assets=(z_kw, a_sem), budget_tokens=10_000, now=NOW,
+            vector_scores=vs,
+        )
+    )
+    reverse = run_relevance_gate(
+        RelevanceRequest(
+            query="alpha", assets=(a_sem, z_kw), budget_tokens=10_000, now=NOW,
+            vector_scores=vs,
+        )
+    )
+    order = [c.asset.id for c in forward.included]
+    assert order == ["a_sem", "z_kw"]  # id-ascending on the tie
+    assert order == [c.asset.id for c in reverse.included]  # input-order-independent
+
+
+def test_nonfinite_vector_score_does_not_crash() -> None:
+    """A NaN/inf cosine from a misbehaving embedder must not crash or corrupt:
+    NaN is dropped by the positive-score filter; the BM25 doc still ranks."""
+    req = RelevanceRequest(
+        query="kernel",
+        assets=(_a("kw", "kernel kernel"), _a("sem", "unrelated")),
+        budget_tokens=10_000,
+        now=NOW,
+        vector_scores={"sem": float("nan"), "kw": float("inf")},
+    )
+    result = run_relevance_gate(req)
+    ids = [c.asset.id for c in result.included]
+    assert "kw" in ids
+    assert all(math.isfinite(c.final_score) for c in result.included)

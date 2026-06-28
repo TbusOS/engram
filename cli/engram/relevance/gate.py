@@ -199,8 +199,9 @@ def _rrf_fuse(
     fused: dict[str, float] = {}
     for id_ in br.keys() | vr.keys():
         score = 0.0
-        # Guard the denominator: a misconfigured non-positive k must never
-        # divide by zero. rank >= 1 always, so k > -1 keeps denom positive.
+        # Guard each term's denominator: rank >= 1 always, so this skips only
+        # the terms a non-positive k would zero/invert. Safe for any int k
+        # (a negative k just drops its lowest ranks); never divides by zero.
         if id_ in br and k + br[id_] > 0:
             score += w_bm25 / (k + br[id_])
         if id_ in vr and k + vr[id_] > 0:
@@ -281,6 +282,9 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
     # ------------- Stage 3 — vector recall + RRF fusion (T-41) -----
     # When the caller supplies vector_scores, fuse them with BM25 by
     # reciprocal rank. Empty → fused is None → the pure BM25 base below.
+    # Fuse only when the caller actually supplied a positive vector signal.
+    # An empty or all-non-positive map must not switch the base off BM25's
+    # scale (which would silently change ranking magnitudes for no gain).
     fused = (
         _rrf_fuse(
             raw,
@@ -289,7 +293,7 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
             w_bm25=request.rrf_weight_bm25,
             w_vector=request.rrf_weight_vector,
         )
-        if request.vector_scores
+        if any(s > 0.0 for s in request.vector_scores.values())
         else None
     )
 
@@ -308,7 +312,7 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
         # keeps the raw keyword score. Either way a non-positive base means
         # neither signal recalled the asset, so it is dropped.
         base = fused.get(a.id, 0.0) if fused is not None else bm
-        if base <= 0.0:
+        if not base > 0.0:  # also drops NaN (NaN > 0 is False)
             continue
         temp_mult = temporal_distance_multiplier(a.updated, ref_date)
         scope_w = _scope_weight_for(a)
@@ -320,6 +324,14 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
             # temporal multiplier is distance-space — invert into score-space.
             score_temp = 1.0 / temp_mult if temp_mult > 0 else 1.0
             decay = _recency_decay(a, request.now, request.recency_halflife_days)
+        # CALIBRATION (pending the extended benchmark): in fused mode `base`
+        # is an RRF score whose dynamic range is compressed (~1.02x between
+        # adjacent ranks), so these multipliers — tuned against BM25's much
+        # wider range — weigh more heavily than in BM25 mode and can flip
+        # rankings. The current gold-set is uniform scope/date, so it cannot
+        # tune this; no caller passes vector_scores yet. The RRF/multiplier
+        # composition must be resolved with a mixed-scope/temporal gold-set
+        # before any caller is wired to the fused path.
         final = base * scope_w * enf_w * decay * score_temp
         ranked.append(
             RankedCandidate(
@@ -333,7 +345,10 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
             )
         )
 
-    ranked.sort(key=lambda c: c.final_score, reverse=True)
+    # id as a deterministic tie-break: RRF scores quantize, so exact ties are
+    # common in fused mode; without it, tied output order would track caller
+    # hydration order — fragile for a frozen benchmark.
+    ranked.sort(key=lambda c: (-c.final_score, c.asset.id))
 
     # ------------- Stage 6 — budget pack -------------------
     # Greedy fill by score-per-token descending (DESIGN §5.1 Stage 7).
@@ -342,8 +357,7 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
     excluded: list[RankedCandidate] = []
     by_density = sorted(
         ranked,
-        key=lambda c: (c.final_score / max(1, c.tokens_est)),
-        reverse=True,
+        key=lambda c: (-(c.final_score / max(1, c.tokens_est)), c.asset.id),
     )
     for c in by_density:
         if c.tokens_est <= remaining_budget:
@@ -354,7 +368,7 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
 
     # Re-sort kept candidates by their final score so the caller's output
     # respects the ranking order, not the packing order.
-    included.sort(key=lambda c: c.final_score, reverse=True)
+    included.sort(key=lambda c: (-c.final_score, c.asset.id))
 
     return RelevanceResult(
         included=tuple(included),
