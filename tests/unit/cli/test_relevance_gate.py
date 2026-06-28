@@ -383,3 +383,24 @@ def test_nonfinite_vector_score_does_not_crash() -> None:
     ids = [c.asset.id for c in result.included]
     assert "kw" in ids
     assert all(math.isfinite(c.final_score) for c in result.included)
+
+
+def test_fused_relevance_beats_higher_scope_distractor() -> None:
+    """Calibration guard: a more-relevant low-scope (org, 0.8) doc must outrank a
+    less-relevant high-scope (project, 1.5) distractor in fused mode.
+
+    The step-3 compressed-RRF base let the scope multiplier flip these (measured
+    scope MRR 0.33). The harmonic-rank base (1/rank) restores BM25-like spread so
+    relevance wins the large gap; scope only breaks near-ties.
+    """
+    org_hit = _a("org_hit", "alpha alpha", scope="org")  # strongest relevance
+    proj_near = _a("proj_near", "alpha beta", scope="project")  # weaker, higher scope
+    req = RelevanceRequest(
+        query="alpha",
+        assets=(org_hit, proj_near),
+        budget_tokens=10_000,
+        now=NOW,
+        vector_scores={"org_hit": 0.9, "proj_near": 0.85},
+    )
+    result = run_relevance_gate(req)
+    assert result.included[0].asset.id == "org_hit"

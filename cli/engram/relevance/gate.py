@@ -285,17 +285,26 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
     # Fuse only when the caller actually supplied a positive vector signal.
     # An empty or all-non-positive map must not switch the base off BM25's
     # scale (which would silently change ranking magnitudes for no gain).
-    fused = (
-        _rrf_fuse(
+    #
+    # RRF gives a robust combined ORDER from the BM25 + vector ranks, but its
+    # scores are compressed (~1.02x between adjacent ranks). DESIGN §5.1 Stage 6
+    # multiplies the base by scope/enforcement/recency, weights tuned for BM25's
+    # much wider range — against a compressed RRF base those multipliers dominate
+    # and flip rankings (measured on the calibration goldset: scope MRR 0.33 vs
+    # 1.00). So we keep RRF only for the order, then assign a harmonic base
+    # 1/(rank) whose spread (1, 1/2, 1/3, …) is BM25-like: multipliers break
+    # near-ties, relevance still wins large gaps. See the retrieval-quality spec.
+    fused_base: dict[str, float] | None = None
+    if any(s > 0.0 for s in request.vector_scores.values()):
+        rrf = _rrf_fuse(
             raw,
             request.vector_scores,
             k=request.rrf_k,
             w_bm25=request.rrf_weight_bm25,
             w_vector=request.rrf_weight_vector,
         )
-        if any(s > 0.0 for s in request.vector_scores.values())
-        else None
-    )
+        fused_order = sorted(rrf, key=lambda i: (-rrf[i], i))
+        fused_base = {id_: 1.0 / (rank + 1) for rank, id_ in enumerate(fused_order)}
 
     # ------------- Stage 4 — temporal boost ----------------
     ref_date = parse_temporal_hint(request.query, now=request.now)
@@ -308,10 +317,10 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
     ranked: list[RankedCandidate] = []
     for a in ranking_pool:
         bm = raw.get(a.id, 0.0)
-        # Fused mode blends BM25 + vector by reciprocal rank; BM25-only mode
-        # keeps the raw keyword score. Either way a non-positive base means
-        # neither signal recalled the asset, so it is dropped.
-        base = fused.get(a.id, 0.0) if fused is not None else bm
+        # Fused mode uses the harmonic-rank base (1/rank over the RRF order);
+        # BM25-only mode keeps the raw keyword score. Either way a non-positive
+        # base means neither signal recalled the asset, so it is dropped.
+        base = fused_base.get(a.id, 0.0) if fused_base is not None else bm
         if not base > 0.0:  # also drops NaN (NaN > 0 is False)
             continue
         temp_mult = temporal_distance_multiplier(a.updated, ref_date)
@@ -324,14 +333,6 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
             # temporal multiplier is distance-space — invert into score-space.
             score_temp = 1.0 / temp_mult if temp_mult > 0 else 1.0
             decay = _recency_decay(a, request.now, request.recency_halflife_days)
-        # CALIBRATION (pending the extended benchmark): in fused mode `base`
-        # is an RRF score whose dynamic range is compressed (~1.02x between
-        # adjacent ranks), so these multipliers — tuned against BM25's much
-        # wider range — weigh more heavily than in BM25 mode and can flip
-        # rankings. The current gold-set is uniform scope/date, so it cannot
-        # tune this; no caller passes vector_scores yet. The RRF/multiplier
-        # composition must be resolved with a mixed-scope/temporal gold-set
-        # before any caller is wired to the fused path.
         final = base * scope_w * enf_w * decay * score_temp
         ranked.append(
             RankedCandidate(
