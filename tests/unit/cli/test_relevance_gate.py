@@ -404,3 +404,19 @@ def test_fused_relevance_beats_higher_scope_distractor() -> None:
     )
     result = run_relevance_gate(req)
     assert result.included[0].asset.id == "org_hit"
+
+
+def test_fused_temporal_boost_prefers_recent() -> None:
+    """In fused mode a temporal query still boosts the recent doc: recency decay
+    + the temporal multiplier compose with the harmonic base as in BM25 mode."""
+    recent = _a("recent", "deploy topic", updated=NOW - timedelta(days=2))
+    old = _a("old", "deploy topic", updated=NOW - timedelta(days=200))
+    req = RelevanceRequest(
+        query="deploy topic last week",
+        assets=(old, recent),
+        budget_tokens=10_000,
+        now=NOW,
+        vector_scores={"recent": 0.8, "old": 0.8},
+    )
+    result = run_relevance_gate(req)
+    assert result.included[0].asset.id == "recent"

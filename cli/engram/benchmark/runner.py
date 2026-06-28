@@ -21,8 +21,10 @@ from engram.benchmark.metrics import mrr_at_k, ndcg_at_k, recall_at_k
 from engram.core.frontmatter import FrontmatterError, parse_file
 from engram.relevance.gate import Asset, RelevanceRequest, run_relevance_gate
 
-# Fixed so the temporal stage never varies the benchmark (the gate only decays
-# when the query carries a time phrase; the gold-set queries do not).
+# Fixed "now" so the benchmark is deterministic. The gold-set's temporal
+# queries resolve relative to this date (e.g. "last week" -> 2025-12-25), and
+# the calibration fixtures are dated around it, so the temporal stage is
+# exercised reproducibly rather than against a moving wall clock.
 _FIXED_DATE = date(2026, 1, 1)
 _UNBOUNDED_BUDGET = 10_000_000
 

@@ -1,0 +1,14 @@
+# Calibration gold-set (2026-06-29): exercises the Stage-5 multiplier composition
+# (DESIGN §5.1 Stage 6) that the relevance gold-set cannot — its docs are uniform
+# scope/date. Docs here vary scope (org/user/project) and date, so the fused base
+# scaling is measurable. "kind" = which prior the query tests (runner ignores it).
+#
+# scope: the relevant doc is correct *and* must survive its scope multiplier —
+#   org docs (weight 0.8) must still win on relevance; project (1.5) wins near-ties.
+# temporal: "last week" boosts the recent runbook; the no-phrase query must NOT
+#   decay the old one out.
+{"query": "how many approvals to merge a hotfix in this service", "relevant": ["local/project_pr_override"], "difficulty": "easy", "kind": "scope"}
+{"query": "what is the organization-wide pull request approval policy", "relevant": ["local/org_pr_policy"], "difficulty": "easy", "kind": "scope"}
+{"query": "how long does the company retain customer records", "relevant": ["local/org_data_retention"], "difficulty": "easy", "kind": "scope"}
+{"query": "how do we release the mobile app as of last week", "relevant": ["local/runbook_mobile_pipeline"], "difficulty": "hard", "kind": "temporal"}
+{"query": "the old manual mobile app release steps", "relevant": ["local/runbook_mobile_manual"], "difficulty": "easy", "kind": "temporal"}
