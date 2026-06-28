@@ -868,9 +868,55 @@ engram wisdom report       # 看四组自改进曲线</code></pre>
 </section>
 
 <!-- ═══════════════════════════════════════════
-     O. 灵感来源
+     N2. 检索 —— 关键词 vs 语义
 ════════════════════════════════════════════ -->
 <section class="anth-section">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:680px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">检索</span>
+      <h2 style="margin-top:var(--space-3);">把对的记忆捞出来</h2>
+      <p>每个任务,Relevance Gate 决定哪些记忆进入上下文预算。排得准不准<em>就是</em>这个产品的核心质量 —— 所以检索要对着一个冻结的基准量化,且只许变好。默认走纯关键词;需要时再开一个可选模型,补上语义和跨语言匹配。</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-6);">
+
+      <div class="anth-card">
+        <span class="anth-badge">默认</span>
+        <h3 style="margin-top:var(--space-3);">关键词(BM25)</h3>
+        <p>纯 stdlib 的词项排序。无模型、无下载、无额外依赖 —— 出厂默认,即时、离线可用。</p>
+        <p class="anth-caption" style="margin-top:var(--space-3);">查询和记忆有共同词时就够用。</p>
+        <p class="anth-caption">盲区:"怎么发到生产"匹配不到标题为"蓝绿发布"的记忆;中文查询匹配不到英文记录。</p>
+        <p class="anth-caption" style="color:var(--anth-green);">已上线 · 零依赖基线</p>
+      </div>
+
+      <div class="anth-card">
+        <span class="anth-badge">可选 · 本地</span>
+        <h3 style="margin-top:var(--space-3);">语义,在本机</h3>
+        <p>一个小的多语言嵌入模型 + 一个 cross-encoder 重排器,用 ONNX 在本地跑 —— 无 PyTorch、无 API key、不联网。补上关键词路径漏掉的改写和跨语言匹配,再把头部候选拿来"把查询和记忆一起读"重排一遍。</p>
+        <p class="anth-caption" style="margin-top:var(--space-3);">开启:<code>pip install engram[ml]</code>。</p>
+        <p class="anth-caption">模型按 id + revision 钉死,基准才可复现。</p>
+        <p class="anth-caption" style="color:var(--anth-orange);">可选 · M8 落地中,受基准约束</p>
+      </div>
+
+      <div class="anth-card">
+        <span class="anth-badge">可选 · 远程</span>
+        <h3 style="margin-top:var(--space-3);">语义,托管</h3>
+        <p>同样两段,交给你自己选的端点 —— 本机的 Ollama,或 OpenAI / Cohere / Voyage。不用本地下载;代价是一次网络调用、以及把文本发出本机。</p>
+        <p class="anth-caption" style="margin-top:var(--space-3);">给已经在跑嵌入端点的团队。</p>
+        <p class="anth-caption">默认关闭。端点校验 scheme;key 从环境变量读,不进日志。</p>
+        <p class="anth-caption" style="color:var(--anth-blue);">可选 · 计划中,M8 快速跟进</p>
+      </div>
+
+    </div>
+    <p style="text-align:center; margin-top:var(--space-6); font-family:var(--font-heading); font-size:14px; color:var(--anth-text-secondary);">
+      默认就是兜底的:没有配置模型、或某个 provider 连不上时,该次查询自动退回关键词检索。基础安装始终保持纯 stdlib —— 模型是你主动开启的能力,不是被动继承的依赖。
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     O. 灵感来源
+════════════════════════════════════════════ -->
+<section class="anth-section anth-section--subtle">
   <div class="anth-container anth-container--wide">
     <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
       <span class="anth-badge">灵感来源</span>

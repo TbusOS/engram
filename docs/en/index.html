@@ -920,9 +920,55 @@ engram wisdom report       # see the four self-improvement curves</code></pre>
 </section>
 
 <!-- ═══════════════════════════════════════════
-     O. INSPIRATIONS
+     N2. RETRIEVAL — KEYWORD VS SEMANTIC
 ════════════════════════════════════════════ -->
 <section class="anth-section">
+  <div class="anth-container anth-container--wide">
+    <div style="text-align:center; max-width:680px; margin:0 auto var(--space-7);">
+      <span class="anth-badge">Retrieval</span>
+      <h2 style="margin-top:var(--space-3);">Finding the right memory</h2>
+      <p>On every task the Relevance Gate decides which memories enter the context budget. How well it ranks them <em>is</em> the product's core quality — so retrieval is measured against a frozen benchmark and only allowed to improve. It runs on plain keywords by default; an optional model adds semantic and cross-lingual matching when you want it.</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-6);">
+
+      <div class="anth-card">
+        <span class="anth-badge">Default</span>
+        <h3 style="margin-top:var(--space-3);">Keyword (BM25)</h3>
+        <p>Lexical ranking in pure stdlib. No model, no download, no extra dependency — the shipped default, instant and offline.</p>
+        <p class="anth-caption" style="margin-top:var(--space-3);">Enough when the query shares words with the memory.</p>
+        <p class="anth-caption">Blind spot: "how do we ship to prod" won't match a note titled "blue-green rollout"; a Chinese query won't match an English note.</p>
+        <p class="anth-caption" style="color:var(--anth-green);">Shipped · the zero-dependency baseline</p>
+      </div>
+
+      <div class="anth-card">
+        <span class="anth-badge">Optional · local</span>
+        <h3 style="margin-top:var(--space-3);">Semantic, on-device</h3>
+        <p>A small multilingual embedding model plus a cross-encoder reranker, run locally via ONNX — no PyTorch, no API key, no network. It catches paraphrases and cross-lingual matches the keyword path misses, then reranks the top hits by reading query and memory together.</p>
+        <p class="anth-caption" style="margin-top:var(--space-3);">Turn on with <code>pip install engram[ml]</code>.</p>
+        <p class="anth-caption">Models pinned by id + revision, so the benchmark stays reproducible.</p>
+        <p class="anth-caption" style="color:var(--anth-orange);">Opt-in · landing in M8, benchmark-gated</p>
+      </div>
+
+      <div class="anth-card">
+        <span class="anth-badge">Optional · remote</span>
+        <h3 style="margin-top:var(--space-3);">Semantic, hosted</h3>
+        <p>The same two stages served by an endpoint you choose — Ollama on your own machine, or OpenAI / Cohere / Voyage. No local download; the trade is a network call and sending text off-device.</p>
+        <p class="anth-caption" style="margin-top:var(--space-3);">For teams already running an embedding endpoint.</p>
+        <p class="anth-caption">Default off. Endpoints scheme-validated; keys read from env, never logged.</p>
+        <p class="anth-caption" style="color:var(--anth-blue);">Opt-in · planned, M8 fast-follow</p>
+      </div>
+
+    </div>
+    <p style="text-align:center; margin-top:var(--space-6); font-family:var(--font-heading); font-size:14px; color:var(--anth-text-secondary);">
+      Graceful by default: if no model is configured or a provider is unreachable, retrieval falls back to keyword search for that query. The base install stays pure-stdlib — the model is a capability you opt into, never a dependency you inherit.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     O. INSPIRATIONS
+════════════════════════════════════════════ -->
+<section class="anth-section anth-section--subtle">
   <div class="anth-container anth-container--wide">
     <div style="text-align:center; max-width:640px; margin:0 auto var(--space-7);">
       <span class="anth-badge">Inspiration</span>
