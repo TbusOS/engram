@@ -86,7 +86,12 @@ class Asset:
 
 @dataclass(frozen=True, slots=True)
 class RankedCandidate:
-    """One asset's position in the Gate's output ranking."""
+    """One asset's position in the Gate's output ranking.
+
+    ``bm25`` is the raw keyword score. In fused mode it is informational only —
+    ``final_score`` derives from the fused rank, not from ``bm25`` (a
+    vector-rescued doc carries ``bm25=0.0`` yet a positive ``final_score``).
+    """
 
     asset: Asset
     bm25: float
@@ -180,11 +185,14 @@ def _rrf_fuse(
     """Reciprocal-rank fusion of two score maps into one score per id.
 
     Each ranker contributes ``weight / (k + rank)`` for the ids it scores
-    positively (1-based rank, descending score, id as a deterministic
-    tie-breaker). Being rank-based, the two rankers' incomparable score
-    scales (BM25 magnitude vs cosine) never need normalizing, and a doc
-    only one ranker found still survives — that is how a zero-BM25
-    paraphrase gets recalled by the vector side.
+    positively (1-based competition rank, descending score). Being rank-based,
+    the two rankers' incomparable score scales (BM25 magnitude vs cosine) never
+    need normalizing, and a doc only one ranker found still survives — that is
+    how a zero-BM25 paraphrase gets recalled by the vector side.
+
+    Ties share a rank (competition ranking, no id tie-break): two equally-scored
+    docs get the same rank in every channel, hence equal fused scores, so the
+    *caller* can let scope/enforcement — not id spelling — settle the tie.
     """
 
     def _ranks(scores: Mapping[str, float]) -> dict[str, int]:
@@ -192,7 +200,15 @@ def _rrf_fuse(
             ((i, s) for i, s in scores.items() if s > 0.0),
             key=lambda x: (-x[1], x[0]),
         )
-        return {i: rank for rank, (i, _) in enumerate(positive, start=1)}
+        out: dict[str, int] = {}
+        last_score: float | None = None
+        last_rank = 0
+        for pos, (i, s) in enumerate(positive, start=1):
+            if s != last_score:
+                last_rank = pos
+                last_score = s
+            out[i] = last_rank
+        return out
 
     br = _ranks(bm25)
     vr = _ranks(vector)
@@ -294,6 +310,12 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
     # 1.00). So we keep RRF only for the order, then assign a harmonic base
     # 1/(rank) whose spread (1, 1/2, 1/3, …) is BM25-like: multipliers break
     # near-ties, relevance still wins large gaps. See the retrieval-quality spec.
+    #
+    # RRF ties (equally-relevant docs — competition ranking gives them equal
+    # scores) are settled by scope then enforcement, not id, so an equally-
+    # relevant project doc still outranks an org one at the very top, matching
+    # DESIGN §5.1 Stage 6 and BM25 mode. Distinct relevance never reaches the
+    # tie-break, so this cannot flip a genuinely more-relevant doc.
     fused_base: dict[str, float] | None = None
     if any(s > 0.0 for s in request.vector_scores.values()):
         rrf = _rrf_fuse(
@@ -303,7 +325,20 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
             w_bm25=request.rrf_weight_bm25,
             w_vector=request.rrf_weight_vector,
         )
-        fused_order = sorted(rrf, key=lambda i: (-rrf[i], i))
+        pool_by_id = {a.id: a for a in ranking_pool}
+
+        def _fused_tiebreak(i: str) -> tuple[float, float, float, str]:
+            a = pool_by_id.get(i)
+            if a is None:
+                return (-rrf[i], 0.0, 0.0, i)
+            return (
+                -rrf[i],
+                -_scope_weight_for(a),
+                -ENFORCEMENT_WEIGHTS.get(a.enforcement, 1.0),
+                i,
+            )
+
+        fused_order = sorted((i for i in rrf if i in pool_by_id), key=_fused_tiebreak)
         fused_base = {id_: 1.0 / (rank + 1) for rank, id_ in enumerate(fused_order)}
 
     # ------------- Stage 4 — temporal boost ----------------
@@ -346,9 +381,10 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
             )
         )
 
-    # id as a deterministic tie-break: RRF scores quantize, so exact ties are
-    # common in fused mode; without it, tied output order would track caller
-    # hydration order — fragile for a frozen benchmark.
+    # id as a deterministic final tie-break: equal final scores still occur from
+    # multiplier coincidences (e.g. rank-0 * hint == rank-1 * default); without it
+    # tied output order would track caller hydration order — fragile for a frozen
+    # benchmark. (Scope/enforcement already settled fused-base ties upstream.)
     ranked.sort(key=lambda c: (-c.final_score, c.asset.id))
 
     # ------------- Stage 6 — budget pack -------------------

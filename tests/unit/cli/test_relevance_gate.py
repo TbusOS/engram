@@ -420,3 +420,28 @@ def test_fused_temporal_boost_prefers_recent() -> None:
     )
     result = run_relevance_gate(req)
     assert result.included[0].asset.id == "recent"
+
+
+def test_fused_equal_relevance_scope_decides_not_id() -> None:
+    """Two exactly-equally-relevant docs (same body, same vector score) differing
+    only in scope: the higher-scope (project) wins, independent of id spelling —
+    not the alphabetically-first id. Locks the step-3 review MEDIUM: competition
+    ranking makes their RRF tie, and the fused order settles the tie by scope.
+    """
+    org = _a("aaa_org", "topic topic", scope="org")  # id sorts first
+    proj = _a("zzz_proj", "topic topic", scope="project")  # higher scope
+    vs = {"aaa_org": 0.5, "zzz_proj": 0.5}
+    forward = run_relevance_gate(
+        RelevanceRequest(
+            query="topic", assets=(org, proj), budget_tokens=10_000, now=NOW,
+            vector_scores=vs,
+        )
+    )
+    reverse = run_relevance_gate(
+        RelevanceRequest(
+            query="topic", assets=(proj, org), budget_tokens=10_000, now=NOW,
+            vector_scores=vs,
+        )
+    )
+    assert forward.included[0].asset.id == "zzz_proj"  # scope, not id, decides
+    assert reverse.included[0].asset.id == "zzz_proj"  # input-order-independent
