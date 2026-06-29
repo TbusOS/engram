@@ -348,7 +348,9 @@ def test_all_nonpositive_vector_scores_stay_on_bm25_path() -> None:
 
 def test_fused_ties_break_by_id_deterministically() -> None:
     """Two docs that fuse to the same score (one BM25-rank-1, one vector-rank-1,
-    equal weights) order by id, independent of input order."""
+    equal weights) order by id when scope and enforcement are also equal — id is
+    the *final* tiebreak after scope/enforcement, not the only one (here both
+    docs are project/default, so the tie falls through to id)."""
     a_sem = _a("a_sem", "unrelated")  # vector rank 1 only
     z_kw = _a("z_kw", "alpha")  # bm25 rank 1 only
     vs = {"a_sem": 0.9}

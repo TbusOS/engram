@@ -328,9 +328,10 @@ def run_relevance_gate(request: RelevanceRequest) -> RelevanceResult:
         pool_by_id = {a.id: a for a in ranking_pool}
 
         def _fused_tiebreak(i: str) -> tuple[float, float, float, str]:
-            a = pool_by_id.get(i)
-            if a is None:
-                return (-rrf[i], 0.0, 0.0, i)
+            # i is always in pool_by_id (the sort filters on it), so scope and
+            # enforcement always resolve; RRF ties settle by scope, then
+            # enforcement, then id.
+            a = pool_by_id[i]
             return (
                 -rrf[i],
                 -_scope_weight_for(a),
